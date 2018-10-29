@@ -1,0 +1,6 @@
+# Index of Degree of Freedom (DOF)
+# Group    StartIdx    IdxLength
+M2_Hex_Pos    0            5
+Cam_Hex_Pos   5            5
+M1M3_Bend    10           20
+M2_Bend      30           20

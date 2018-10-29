@@ -1,0 +1,3 @@
+# Optical Feedback Control (OFC) in Python
+
+*This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors. The process contains: (1) estimate the optical state in the basis of DOF and (2) estimate the offset by minimizing the cost function. This is to fulfill the requirement that the scientist wants to change the OFC algorithm in Python script. This module will provide the interface python script to OFC in LabVIEW.*

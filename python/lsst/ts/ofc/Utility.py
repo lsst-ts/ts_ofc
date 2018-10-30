@@ -7,6 +7,21 @@ class InstName(Enum):
     LSST = 1
     COMCAM = 2
 
+class FilterType(Enum):
+    U = 1
+    G = 2
+    R = 3
+    I = 4
+    Z = 5
+    Y = 6
+    REF = 7
+
+class DofGroup(Enum):
+    M2HexPos = 1
+    CamHexPos = 2
+    M1M3Bend = 3
+    M2Bend = 4
+
 def getSetting(filePath, param, arrayParamList=[]):
     """Get the setting value.
 
@@ -44,10 +59,13 @@ def getSetting(filePath, param, arrayParamList=[]):
                 continue
                 
             if line.startswith(param):                    
-                val = line.split()[1]
+                val = line.split()[1:]
+
+            if (val is not None) and (len(val) == 1):
+                val = val[0]
 
             # Search for the array value if necessary
-            if (param in arrayParamList) and (val is not None):
+            if (val is not None) and (param in arrayParamList):
                 assignedLine = int(val)
                 val = None
 

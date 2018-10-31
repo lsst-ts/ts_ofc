@@ -37,7 +37,7 @@ class OptStateEsti(object):
                y2CorrectionFileName="y2.txt",
                idxDofFileName="idxDOF.txt"):
         """Do the configuration of optical state estimator.
-        
+
         Parameters
         ----------
         configDir : str
@@ -111,13 +111,28 @@ class OptStateEsti(object):
         Returns
         -------
         numpy.ndarray
-            Non-zero index array
+            Non-zero index array.
         """
-        
-        array = np.array(strArray.split(), dtype=int)
-        nonZeroIdxArray = np.where(array!=0)[0]
 
-        return nonZeroIdxArray
+        array = np.array(strArray.split(), dtype=int)
+
+        return self._getNonZeroIdx(array)
+
+    def _getNonZeroIdx(self, array):
+        """Get the non-zero index array.
+
+        Parameters
+        ----------
+        array : numpy.ndarray or list
+            Array to look for the non-zero index.
+
+        Returns
+        -------
+        numpy.ndarray
+            Non-zero index array.
+        """
+
+        return np.where(np.array(array) != 0)[0]
 
     def _setSenM(self):
         """Set the sensitivity matrix M from file with the assigned index
@@ -150,31 +165,41 @@ class OptStateEsti(object):
             Sensitivity matrix M file path.
         """
 
-        dirPath = os.path.join(self.configDir, self.instName.name)
-        filePaths = getDirFiles(dirPath)
+        filePaths = getDirFiles(self._getInstDir())
         senMFilePath = getMatchFilePath(reMatchStr, filePaths)
 
         return senMFilePath
 
+    def _getInstDir(self):
+        """Get the instrument directory.
+
+        Returns
+        -------
+        str
+            Instrument directory.
+        """
+
+        return os.path.join(self.configDir, self.instName.name.lower())
+
     def _getSenMshape(self, senMFileName):
         """Get the shape of sensitivity matrix M.
-        
+
         Parameters
         ----------
         senMFileName : str
             Sensitivity matrix M file name.
-        
+
         Returns
         -------
         tuple
             Shape of sensitivity matrix M.
-        
+
         Raises
         ------
         RuntimeError
             Cannot match the shape of M.
         """
-        
+
         shape = None
 
         m = re.match(r"\S+_(\d+)_(\d+)_(\d+)\S+", senMFileName)
@@ -195,7 +220,7 @@ class OptStateEsti(object):
         numpy.ndarray
             Index array of DOF.
         """
-        
+
         return self.dofIdx
 
     def getZn3Idx(self):
@@ -233,7 +258,7 @@ class OptStateEsti(object):
         rcond : float, optional
             Cutoff for small singular values. (the default is 1e-4.)
         """
-        
+
         self._setSenA(fieldIdx)
         self._setPinvA(rcond)
 
@@ -244,7 +269,7 @@ class OptStateEsti(object):
         ----------
         fieldIdx : numpy.ndarray[int] or list[int]
             Field index array.
-        
+
         Raises
         ------
         RuntimeError
@@ -301,15 +326,14 @@ class OptStateEsti(object):
         ----------
         sensorNameArray : list
             Array of abbreviated sensor name.
-        
+
         Returns
         -------
         list
             Field index array.
         """
-        
-        filePath = os.path.join(self.configDir, self.instName.name,
-                                self.mappingFileName)
+
+        filePath = os.path.join(self._getInstDir(), self.mappingFileName)
 
         fieldIdx = []
         for sensorName in sensorNameArray:
@@ -328,21 +352,22 @@ class OptStateEsti(object):
         ----------
         filterType : enum 'FilterType'
             Active filter type.
-        
+
         Returns
         -------
         float
             Effective wavelength in um.
         """
 
-        filePath = os.path.join(self.configDir, self.wavelengthTable)   
+        filePath = os.path.join(self.configDir, self.wavelengthTable)
         param = filterType.name.lower()
         effWave = float(getSetting(filePath, param))
 
         return effWave
 
     def getY2Corr(self, fieldIdx, isNby1Array=False):
-        """Get the y2 correction array.
+        """Get the y2 correction array. This is the zk offset between the
+        camera center and corner.
 
         Parameters
         ----------
@@ -357,8 +382,8 @@ class OptStateEsti(object):
         numpy.ndarray
             y2 correction array.
         """
-        
-        filePath = os.path.join(self.configDir, self.instName.name,
+
+        filePath = os.path.join(self._getInstDir(),
                                 self.y2CorrectionFileName)
         y2c = np.loadtxt(filePath)
         y2c = y2c[np.ix_(fieldIdx, self.zn3Idx)]
@@ -376,7 +401,7 @@ class OptStateEsti(object):
         ----------
         dofGroup : enum 'DofGroup'
             DOF group.
-        
+
         Returns
         -------
         int
@@ -385,7 +410,7 @@ class OptStateEsti(object):
             Index length of group.
         """
 
-        # Assign the parameter name        
+        # Assign the parameter name
         dofVal = dofGroup.value
         if (dofVal == 1):
             param = "M2_Hex_Pos"
@@ -424,34 +449,178 @@ class OptStateEsti(object):
         # Reset the sensitivity matrix M
         self._setSenM()
 
-    def setZkAndDofInGroups(self):
-        pass
+    def setZkAndDofInGroups(self, zkToUse=np.ones(19, dtype=int),
+                            m2HexPos=np.ones(5, dtype=int),
+                            camHexPos=np.ones(5, dtype=int),
+                            m1m3Bend=np.ones(20, dtype=int),
+                            m2Bend=np.ones(20, dtype=int)):
+        """Set the index array of Zk and DOF in groups (M2 hexapod,
+        camera hexapod, M1M3 bending mode, and M2 bending mode).
 
-    def estiOptState(self):
-        pass
- 
-    def getWfFromFile(self):
-        pass
+        For the element in input index array, use 1 for True and 0 for
+        False. For example, if the m2HexPos is [1, 1, 1, 0, 0], only the
+        first three positions will be used.
 
-    def getWfFromShwfsFile(self):
-        pass
+        Parameters
+        ----------
+        zkToUse : numpy.ndarray[int] or list[int], optional
+            z3 to zn. (the default is np.ones(19, dtype=int))
+        m2HexPos : numpy.ndarray[int] or list[int], optional
+            M2 hexapod position. (the default is np.ones(5, dtype=int))
+        camHexPos : numpy.ndarray[int] or list[int], optional
+            Camera hexapod position. (the default is np.ones(5, dtype=int))
+        m1m3Bend : numpy.ndarray[int] or list[int], optional
+            M1M3 bending mode. (the default is np.ones(20, dtype=int))
+        m2Bend : numpy.ndarray[int] or list[int], optional
+            M2 bending mode. (the default is np.ones(20, dtype=int))
+        """
 
-    def _getIntrincZk(self):
-        pass
+        if (len(zkToUse) != self.zn3Max):
+            raise RuntimeError("The length of 'zkToUse' should be %d."
+                               % self.zn3Max)
+
+        # Get the index of zk to use
+        zn3Idx = self._getNonZeroIdx(zkToUse)
+
+        # Assign the order for the following iteration
+        dofInputs = [m2HexPos, camHexPos, m1m3Bend, m2Bend]
+
+        dofIdx = np.array([], dtype=int)
+        for dofInput, dofGroup in zip(dofInputs, DofGroup):
+            startIdx, groupLeng = self.getGroupIdxAndLeng(dofGroup)
+
+            if (len(dofInput) != groupLeng):
+                raise RuntimeError("The length of DOF is incorrect.")
+
+            idx = self._getNonZeroIdx(dofInput)
+            dofIdx = np.append(dofIdx, idx+startIdx)
+
+        self.setZkAndDofIdxArrays(zn3Idx, dofIdx)
+
+    def getWfAndFieldIdFromFile(self, wfFilePath, sensorNameArray):
+        """Get the wavefront error and field Id from the file.
+
+        Parameters
+        ----------
+        wfFilePath : str
+            Wavefront error file path.
+        sensorNameArray : list
+            List of abbreviated sensor name.
+
+        Returns
+        -------
+        numpy.ndarray
+            Wavefront error.
+        list
+            Field index array.
+
+        Raises
+        ------
+        RuntimeError
+            Number of sensors does not match the file.
+        """
+
+        wfErr = np.loadtxt(wfFilePath)
+        fieldIdx = self.getFieldIdx(sensorNameArray)
+
+        if (len(fieldIdx) != wfErr.shape[0]):
+            raise RuntimeError("Number of sensors does not match the file.")
+
+        return wfErr, fieldIdx
+
+    def getWfAndFieldIdFromShwfsFile(self, wfFilePath, sensorName="R22_S11"):
+        """Get the wavefront error and field Id from the SHWFS file.
+
+        SHWFS: Shack-Hartmann wavefront sensor.
+
+        Parameters
+        ----------
+        wfFilePath : str
+            Wavefront error file path.
+        sensorName : str, optional
+            Sensor name. (the default is "R22_S11", which uses the central
+            position of main camera. This is to get the sensitivity matrix.)
+
+        Returns
+        -------
+        numpy.ndarray
+            Wavefront error.
+        list
+            Field index array.
+        """
+
+        # Only z3 to zn is considered
+        wfErr = np.loadtxt(wfFilePath, usecols=1)[3:]
+        fieldIdx = self.getFieldIdx([sensorName])
+
+        return wfErr, fieldIdx
+
+    def estiOptState(self, filterType, wfErr, fieldIdx):
+        """Estimate the optical state in the basis of degree of
+        freedom (DOF).
+
+        Parameters
+        ----------
+        filterType : enum 'FilterType'
+            Active filter type.
+        wfErr : numpy.ndarray
+            Wavefront error im um.
+        fieldIdx : numpy.ndarray[int] or list[int]
+            Field index array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Optical state in the basis of DOF.
+        """
+
+        wfErr = wfErr[:, self.zn3Idx].reshape(-1, 1)
+        intrinsicZk = self._getIntrinsicZk(filterType, fieldIdx)
+        y2c = self.getY2Corr(fieldIdx, isNby1Array=True)
+
+        # Solve y = A*x by x = pinv(A)*y
+        y = wfErr - intrinsicZk - y2c
+        x = self.pinvA.dot(y)
+
+        return x.ravel()
+
+    def _getIntrinsicZk(self, filterType, fieldIdx):
+        """Get the intrinsic zk of specific filter based on the array of
+        field index. The output array shape is nx1.
+
+        Parameters
+        ----------
+        filterType : enum 'FilterType'
+            Active filter type.
+        fieldIdx : numpy.ndarray[int] or list[int]
+            Field index array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Instrinsic Zk of specific effective wavelength in um.
+        """
+
+        # Get the intrinsicZk file path
+        reMatchStrTail = ""
+        if (filterType != FilterType.REF):
+            reMatchStrTail = "_" + filterType.name
+
+        reMatchStr = "\A" + self.intrincZkFileName + reMatchStrTail + ".\S+"
+        filePaths = getDirFiles(self._getInstDir())
+        zkFilePath = getMatchFilePath(reMatchStr, filePaths)
+
+        # Remap the zk index for z0-z2
+        zkIdx = self.zn3Idx + 3
+
+        # Get the intrinsicZk with the consideration of effective wavelength
+        intrinsicZk = np.loadtxt(zkFilePath)
+        intrinsicZk = intrinsicZk[np.ix_(fieldIdx, zkIdx)]
+        intrinsicZk = intrinsicZk*self.getEffWave(filterType)
+        intrinsicZk = intrinsicZk.reshape(-1, 1)
+
+        return intrinsicZk
+
 
 if __name__ == "__main__":
-    
-    optStateEsti = OptStateEsti()
-
-    configDir = "/home/ttsai/Documents/github/ts_tcs_ofcPython/configData"
-    optStateEsti.config(configDir, instName=InstName.LSST)
-    optStateEsti.setAandPinvA([0, 1, 2])
-    fieldIdx = optStateEsti.getFieldIdx(["R22_S11", "R22_S12"])
-    effWave = optStateEsti.getEffWave(FilterType.REF)
-    y2c = optStateEsti.getY2Corr(fieldIdx, isNby1Array=True)
-
-    startIdx, groupLeng = optStateEsti.getGroupIdxAndLeng(DofGroup.M2Bend)
-
-    zn3Idx = [1, 2, 3]
-    dofIdx = [3, 4, 5, 6,7]
-    optStateEsti.setZkAndDofIdxArrays(zn3Idx, dofIdx)
+    pass

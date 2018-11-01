@@ -14,7 +14,6 @@ class OptStateEsti(object):
 
         self.configDir = None
         self.instName = None
-        self.configFileName = None
         self.mappingFileName = None
         self.wavelengthTable = None
         self.intrincZkFileName = None
@@ -64,7 +63,6 @@ class OptStateEsti(object):
         # Assign the attributes
         self.configDir = configDir
         self.instName = instName
-        self.configFileName = configFileName
         self.mappingFileName = mappingFileName
         self.wavelengthTable = wavelengthTable
         self.intrincZkFileName = intrincZkFileName
@@ -72,15 +70,21 @@ class OptStateEsti(object):
         self.idxDofFileName = idxDofFileName
 
         # Read the setting file
-        self._readSetting()
+        self._readSetting(configFileName)
 
         # Set the sensitivity matrix M
         self._setSenM()
 
-    def _readSetting(self):
-        """Read the configuration setting file of optical state estimator."""
+    def _readSetting(self, configFileName):
+        """Read the configuration setting file of optical state estimator.
 
-        filePath = os.path.join(self.configDir, self.configFileName)
+        Parameters
+        ----------
+        configFileName : str
+            Name of configuration file.
+        """
+
+        filePath = os.path.join(self.configDir, configFileName)
         arrayParamList = ["izn3", "icomp"]
 
         # Assign the strategy to estimate the optical state

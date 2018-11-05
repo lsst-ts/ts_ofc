@@ -42,8 +42,7 @@ class OptCtrl(object):
         instName : enum 'InstName', optional
             Instrument name. (the default is InstName.LSST.)
         configFileName : str, optional
-            Name of configuration file. (the default is "optiPSSN_x00.ctrl",
-            which minimizes the cost function with reference point 'x00'.)
+            Name of configuration file. (the default is "optiPSSN_x00.ctrl".)
         state0InDofFileName : str, optional
             File name to read the telescope state 0, which depends on the
             instrument. (the default is "state0inDof.txt".)
@@ -51,7 +50,8 @@ class OptCtrl(object):
             Weighting file name for image quality. (the default is
             "imgQualWgt.txt".)
         pssnAlphaFileName : str, optional
-            PSSN alpha file name. (the default is "pssn_alpha.txt".)
+            Normalized point source sensitivity (PSSN) alpha file name.
+            (the default is "pssn_alpha.txt".)
         rigidBodyStrokeFileName : str, optional
             Rigid body stroke file name. (the default is "rbStroke.txt".)
         m1m3ActuatorForceFileName : str, optional
@@ -96,7 +96,7 @@ class OptCtrl(object):
         self.strategy = getSetting(filePath, "control_strategy")
         self.xRef = getSetting(filePath, "xref")
 
-        # Set the penalities
+        # Set the penality
         self.penality["M1M3Act"] = float(getSetting(filePath,
                                                     "M1M3_actuator_penalty"))
         self.penality["M2Act"] = float(getSetting(filePath,
@@ -104,7 +104,7 @@ class OptCtrl(object):
         self.penality["Motion"] = float(getSetting(filePath, "Motion_penalty"))
 
     def _setState0ByFile(self, state0InDofFileName):
-        """Set the state 0 (x0) in degree of freedom (DOF) based on the file.
+        """Set the state 0 in degree of freedom (DOF) based on the file.
 
         Parameters
         ----------
@@ -161,7 +161,6 @@ class OptCtrl(object):
         m2Authority = self._calcMirrorAuth("M2", m2ActuatorForceFileName,
                                            usecols=usecols)
 
-        # Set the authority with the consideration of penality
         self.authority = np.concatenate((rbStrokeAuthority,
                                         self.penality["M1M3Act"]*m1m3Authority,
                                         self.penality["M2Act"]*m2Authority))
@@ -169,11 +168,13 @@ class OptCtrl(object):
     def _calcRigidBodyAuth(self):
         """Calculate the distribution of control authority of rigid body.
 
+        The first five terms are the M2 hexapod positions. And the following
+        five are the camera hexapod positions.
+
         Returns
         -------
         numpy.ndarray
-            Authority of riigid body. The first fives are the M2 hexapod.
-            And the following fives are the camera hexapod.
+            Authority of riigid body.
         """
 
         rbStroke = self._getRbStrokeFromFile()
@@ -183,8 +184,9 @@ class OptCtrl(object):
         return authority
 
     def _getRbStrokeFromFile(self):
-        """Get the rigid body stroke from the file. The order is the M2
-        hexapod followed by the camera hexapod.
+        """Get the rigid body stroke from the file.
+
+        The order is the M2 hexapod followed by the camera hexapod.
 
         Returns
         -------
@@ -202,6 +204,9 @@ class OptCtrl(object):
                         usecols=None):
         """Calculate the distribution of control authority of mirror.
 
+        This is based on the standard deviation of actuator forces for each
+        bending mode is used. The unit is 1 N RMS.
+
         Parameters
         ----------
         mirrorDirName : str
@@ -216,16 +221,12 @@ class OptCtrl(object):
         Returns
         -------
         numpy.ndarray
-            Authority of mirror. The standard deviation of actuator forces
-            for each bending mode is used. The unit is 1 N RMS.
+            Authority of mirror.
         """
 
         filePath = os.path.join(self.configDir, mirrorDirName,
                                 actuatorForceFileName)
         bendingMode = np.loadtxt(filePath, usecols=usecols)
-
-        # Use the standard deviation of actuator force as an index to
-        # decide the authority.
         authority = np.std(bendingMode, axis=0)
 
         return authority
@@ -435,8 +436,9 @@ class OptCtrl(object):
         self.matF = self._calcF(qMat, matH)
 
     def _getQwgtFromFile(self):
-        """Get the weighting ratio of image quality from file. This is
-        used in the Q matrix calculation.
+        """Get the weighting ratio of image quality from file.
+
+        This is used in the Q matrix calculation.
 
         Returns
         -------
@@ -491,20 +493,19 @@ class OptCtrl(object):
         return matH
 
     def _calcCCmat(self, pssnAlpha, effWave, zn3Idx):
-        """Calculate the CC matrix used in matrix Q. It is C.T * C
-        used in Q = A.T * (C.T * C) * A.
+        """Calculate the CC matrix used in matrix Q.
 
-        Cost function: J = x.T * Q * x + rho * u.T * H * u
+        Cost function: J = x.T * Q * x + rho * u.T * H * u.
         Choose x.T * Q * x = p.T * p
         p = C * y = C * (A * x)
         p.T * p = (C * A * x).T * C * A * x
                 = x.T * (A.T * C.T * C * A) * x = x.T * Q * x
-        CCmat is C.T *C above
+        CCmat is C.T *C above.
 
         Parameters
         ----------
         pssnAlpha : numpy.ndarray
-            PSSN alpha.
+            Normalized point source sensitivity (PSSN) alpha.
         effWave : float
             Effective wavelength in um.
         zn3Idx : numpy.ndarray[int] or list[int]
@@ -524,6 +525,9 @@ class OptCtrl(object):
     def _calcQmat(self, ccMat, senM, qWgt):
         """Calculate the Q matrix used in the cost function.
 
+        Qi = A.T * C.T * C * A for each field point.
+        Final Q := sum_i (wi * Qi).
+
         Parameters
         ----------
         ccMat : numpy.ndarray
@@ -531,7 +535,7 @@ class OptCtrl(object):
         senM : numpy.ndarray
             Sensitivity matrix M.
         qWgt : numpy.ndarray
-            Weighting ratio for the iamge quality Q matrix calculation.
+            Weighting ratio for the image quality Q matrix calculation.
 
         Returns
         -------
@@ -539,8 +543,6 @@ class OptCtrl(object):
             Q matrix used in cost functin.
         """
 
-        # Qi = A.T * C.T * C * A for each field point
-        # Final Q := sum_i (wi * Qi)
         qMat = 0
         for aMat, wgt in zip(senM, qWgt):
             qMat += wgt * aMat.T.dot(ccMat).dot(aMat)
@@ -548,12 +550,12 @@ class OptCtrl(object):
         return qMat
 
     def _calcF(self, qMat, matH):
-        """Calculate the F matrix. F = inv(A.T * C.T * C * A + rho * H).
+        """Calculate the F matrix.
 
         u = - A.T * C.T * C * A / (A.T * C.T * C * A + rho * H) * x0
           = - F * (A.T * C.T * C * A) * x0
-        F = inv( A.T * C.T * C * A + rho * H )
         Q = A.T * C.T * C * A
+        F = inv( A.T * C.T * C * A + rho * H )
 
         Parameters
         ----------
@@ -604,6 +606,8 @@ class OptCtrl(object):
         """Calculate the effective FWHM by Gaussian quadrature.
 
         FWHM: Full width at half maximum.
+        FWHM = eta * FWHM_{atm} * sqrt(1/PSSN -1).
+        Effective GQFWHM = sum_{i} (w_{i}* FWHM_{i}).
 
         Parameters
         ----------
@@ -622,8 +626,6 @@ class OptCtrl(object):
             Effective FWHM in arcsec by Gaussain quadrature.
         """
 
-        # FWHM = eta * FWHM_{atm} * sqrt(1/PSSN -1)
-        # Effective GQFWHM = sum_{i} (w_{i}* FWHM_{i})
         qWgt = self._getQwgtFromFile()
         fwhm = eta * fwhmAtm * np.sqrt(1/np.array(pssn) - 1)
         fwhmGq = np.sum(qWgt[fieldIdx] * fwhm)
@@ -682,18 +684,17 @@ class OptCtrl(object):
         """Calculate the Qx.
 
         Qx = sum_{wi * A.T * C.T * C * (A * yk + y2k)}.
-        DOF: Degree of freedom.
 
         Parameters
         ----------
         qWgt : numpy.ndarray
-            Weighting ratio for the iamge quality Q matrix calculation.
+            Weighting ratio for the image quality Q matrix calculation.
         senM : numpy.ndarray
             Sensitivity matrix M.
         ccMat : numpy.ndarray
             C.T * C matrix.
         optSt : numpy.ndarray
-            Optical state in the basis of DOF.
+            Optical state in the basis of degree of freedom (DOF).
         y2c : numpy.ndarray
             y2 correction array.
 
@@ -768,7 +769,7 @@ class OptCtrl(object):
         """Calculate uk by referencing to "0".
 
         The offset will trace the real value and target for 0.
-        uk = -gain * F' * (QX + rho**2 * H * S)
+        uk = -gain * F' * (QX + rho**2 * H * S).
 
         Parameters
         ----------
@@ -795,7 +796,7 @@ class OptCtrl(object):
 
         The offset will only trace the relative changes of offset without
         regarding the real value.
-        uk = -gain * F' * [QX + rho**2 * H * (S - S0)]
+        uk = -gain * F' * [QX + rho**2 * H * (S - S0)].
 
         Parameters
         ----------

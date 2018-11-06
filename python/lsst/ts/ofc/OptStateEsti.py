@@ -53,14 +53,13 @@ class OptStateEsti(object):
             File name of effective wavelength for each filter in um. (the
             default is "effWaveLength.txt".)
         intrincZkFileName : str, optional
-            Intric Zk file name. (the default is "intrinsic_zn".)
+            Intric zk file name. (the default is "intrinsic_zn".)
         y2CorrectionFileName : str, optional
             y2 correction file name. (the default is "y2.txt".)
         idxDofFileName : str, optional
             Index of DOF file name. (the default is "idxDOF.txt".)
         """
 
-        # Assign the attributes
         self.configDir = configDir
         self.instName = instName
         self.mappingFileName = mappingFileName
@@ -69,10 +68,7 @@ class OptStateEsti(object):
         self.y2CorrectionFileName = y2CorrectionFileName
         self.idxDofFileName = idxDofFileName
 
-        # Read the setting file
         self._readSetting(configFileName)
-
-        # Set the sensitivity matrix M
         self._setSenM()
 
     def _readSetting(self, configFileName):
@@ -96,11 +92,9 @@ class OptStateEsti(object):
         self.zn3Max = getSetting(filePath, "znmax", arrayParamList)
         self.zn3Max = int(self.zn3Max)-3
 
-        # Get the index array of z3-zn
         self.zn3Idx = getSetting(filePath, "izn3", arrayParamList)
         self.zn3Idx = self._getNonZeroIdxFronStrArray(self.zn3Idx)
 
-        # Get the index array of DOF
         self.dofIdx = getSetting(filePath, "icomp", arrayParamList)
         self.dofIdx = self._getNonZeroIdxFronStrArray(self.dofIdx)
 
@@ -140,7 +134,7 @@ class OptStateEsti(object):
 
     def _setSenM(self):
         """Set the sensitivity matrix M from file with the assigned index
-        arrays of Zk and DOF."""
+        arrays of zk and degree of freedom (DOF)."""
 
         # Get the sensitivity matrix M file path
         filePath = self._getSenMfilePath(reMatchStr="\AsenM\S+")
@@ -486,7 +480,7 @@ class OptStateEsti(object):
         # Get the index of zk to use
         zn3Idx = self._getNonZeroIdx(zkToUse)
 
-        # Assign the order for the following iteration
+        # Assign the order for the following iteration with zip
         dofInputs = [m2HexPos, camHexPos, m1m3Bend, m2Bend]
 
         dofIdx = np.array([], dtype=int)
@@ -563,6 +557,8 @@ class OptStateEsti(object):
         """Estimate the optical state in the basis of degree of
         freedom (DOF).
 
+        Solve y = A*x by x = pinv(A)*y.
+
         Parameters
         ----------
         filterType : enum 'FilterType'
@@ -582,7 +578,6 @@ class OptStateEsti(object):
         intrinsicZk = self._getIntrinsicZk(filterType, fieldIdx)
         y2c = self.getY2Corr(fieldIdx, isNby1Array=True)
 
-        # Solve y = A*x by x = pinv(A)*y
         y = wfErr - intrinsicZk - y2c
         x = self.pinvA.dot(y)
 
@@ -590,7 +585,7 @@ class OptStateEsti(object):
 
     def _getIntrinsicZk(self, filterType, fieldIdx):
         """Get the intrinsic zk of specific filter based on the array of
-        field index. The output array shape is nx1.
+        field index.
 
         Parameters
         ----------
@@ -602,7 +597,8 @@ class OptStateEsti(object):
         Returns
         -------
         numpy.ndarray
-            Instrinsic Zk of specific effective wavelength in um.
+            Instrinsic zk of specific effective wavelength in um. The shape
+            is nx1.
         """
 
         # Get the intrinsicZk file path
@@ -620,7 +616,7 @@ class OptStateEsti(object):
         # Get the intrinsicZk with the consideration of effective wavelength
         intrinsicZk = np.loadtxt(zkFilePath)
         intrinsicZk = intrinsicZk[np.ix_(fieldIdx, zkIdx)]
-        intrinsicZk = intrinsicZk*self.getEffWave(filterType)
+        intrinsicZk = intrinsicZk * self.getEffWave(filterType)
         intrinsicZk = intrinsicZk.reshape(-1, 1)
 
         return intrinsicZk

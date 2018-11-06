@@ -63,21 +63,17 @@ class OptCtrl(object):
             Number of mirror bending mode. (the default is 20.)
         """
 
-        # Assign the attributes
         self.configDir = configDir
         self.instName = instName
         self.rigidBodyStrokeFileName = rigidBodyStrokeFileName
         self.weightingFileName = weightingFileName
         self.pssnAlphaFileName = pssnAlphaFileName
 
-        # Read the setting file
         self._readSetting(configFileName)
 
-        # Set the state0 and state
         self._setState0ByFile(state0InDofFileName)
         self.initStateToState0()
 
-        # Set the authority
         self._setAuthority(m1m3ActuatorForceFileName, m2ActuatorForceFileName,
                            int(numOfBendingMode))
 

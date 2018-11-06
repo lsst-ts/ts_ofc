@@ -7,6 +7,7 @@ class InstName(Enum):
     LSST = 1
     COMCAM = 2
 
+
 class FilterType(Enum):
     U = 1
     G = 2
@@ -16,11 +17,13 @@ class FilterType(Enum):
     Y = 6
     REF = 7
 
+
 class DofGroup(Enum):
     M2HexPos = 1
     CamHexPos = 2
     M1M3Bend = 3
     M2Bend = 4
+
 
 def getSetting(filePath, param, arrayParamList=[]):
     """Get the setting value.
@@ -46,7 +49,7 @@ def getSetting(filePath, param, arrayParamList=[]):
     RuntimeError
         No setting value is found.
     """
-    
+
     val = None
     lineCount = 0
     assignedLine = -1
@@ -55,10 +58,10 @@ def getSetting(filePath, param, arrayParamList=[]):
             line = line.strip()
 
             # Skip the comment or empty line
-            if line.startswith("#") or (len(line)==0):
+            if line.startswith("#") or (len(line) == 0):
                 continue
-                
-            if line.startswith(param):                    
+
+            if line.startswith(param):
                 val = line.split()[1:]
 
             if (val is not None) and (len(val) == 1):
@@ -79,11 +82,11 @@ def getSetting(filePath, param, arrayParamList=[]):
             if (val is not None):
                 break
 
-    # Raise the error if the value is not found
     if (val is None):
         raise RuntimeError("Can not find the setting of %s." % param)
 
     return val
+
 
 def getDirFiles(dirPath):
     """Get the file paths in the directory.
@@ -104,6 +107,7 @@ def getDirFiles(dirPath):
     filePaths = [os.path.join(dirPath, f) for f in onlyFiles]
 
     return filePaths
+
 
 def getMatchFilePath(reMatchStr, filePaths):
     """Get the matched file path.
@@ -126,7 +130,7 @@ def getMatchFilePath(reMatchStr, filePaths):
         Cannot find the matched file.
     """
 
-    # Look for the matched file by the regular expression
+    # Look for the matched file
     matchFilePath = None
     for filePath in filePaths:
 
@@ -137,7 +141,6 @@ def getMatchFilePath(reMatchStr, filePaths):
             matchFilePath = filePath
             break
 
-    # Raise the error if can not find the matched file
     if matchFilePath is None:
         raise RuntimeError("Cannot find the matched file.")
 
@@ -145,8 +148,4 @@ def getMatchFilePath(reMatchStr, filePaths):
 
 
 if __name__ == "__main__":
-    
-    filePath = "/home/ttsai/Documents/github/ts_tcs_ofcPython/configData/pinv.esti"
-    param = "icomp"
-    val = getSetting(filePath, param, arrayParamList=["izn3", "icomp"])
-    print(val)
+    pass

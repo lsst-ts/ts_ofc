@@ -479,7 +479,7 @@ if __name__ == "__main__":
     uk = ztaac.estiUk(wfErr, sensorNameList)
     ztaac.aggState(uk)
 
-    dof = ztaac.getGroupDof(dofGroup=DofGroup.M2HexPos)
+    dof = ztaac.getGroupDof(DofGroup.M2HexPos)
     print(dof)
 
  

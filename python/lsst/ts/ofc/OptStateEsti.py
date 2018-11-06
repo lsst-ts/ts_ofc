@@ -316,14 +316,14 @@ class OptStateEsti(object):
 
         return self.pinvA
 
-    def getFieldIdx(self, sensorNameArray):
-        """Get the array of field index based on the abbreviated sensor
+    def getFieldIdx(self, sensorNameList):
+        """Get the list of field index based on the abbreviated sensor
         name (e.g. R22_S11) and mapping file.
 
         Parameters
         ----------
-        sensorNameArray : list
-            Array of abbreviated sensor name.
+        sensorNameList : list
+            List of abbreviated sensor name.
 
         Returns
         -------
@@ -334,7 +334,7 @@ class OptStateEsti(object):
         filePath = os.path.join(self._getInstDir(), self.mappingFileName)
 
         fieldIdx = []
-        for sensorName in sensorNameArray:
+        for sensorName in sensorNameList:
             field = getSetting(filePath, sensorName)
             fieldIdx.append(int(field))
 
@@ -495,14 +495,14 @@ class OptStateEsti(object):
 
         self.setZkAndDofIdxArrays(zn3Idx, dofIdx)
 
-    def getWfAndFieldIdFromFile(self, wfFilePath, sensorNameArray):
+    def getWfAndFieldIdFromFile(self, wfFilePath, sensorNameList):
         """Get the wavefront error and field Id from the file.
 
         Parameters
         ----------
         wfFilePath : str
             Wavefront error file path.
-        sensorNameArray : list
+        sensorNameList : list
             List of abbreviated sensor name.
 
         Returns
@@ -519,7 +519,7 @@ class OptStateEsti(object):
         """
 
         wfErr = np.loadtxt(wfFilePath)
-        fieldIdx = self.getFieldIdx(sensorNameArray)
+        fieldIdx = self.getFieldIdx(sensorNameList)
 
         if (len(fieldIdx) != wfErr.shape[0]):
             raise RuntimeError("Number of sensors does not match the file.")

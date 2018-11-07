@@ -345,10 +345,10 @@ class ZTAAC(object):
                                                fieldIdx)
 
         # Estimate uk
-        zn3Idx = self.optStateEsti.zn3Idx
-        dofIdx = self.optStateEsti.dofIdx
+        zn3Idx = self.optStateEsti.getZn3Idx()
+        dofIdx = self.optStateEsti.getDofIdx()
         effWave = self.optStateEsti.getEffWave(self.filterType)
-        senM = self.optStateEsti.senM
+        senM = self.optStateEsti.getSenM()
         fieldNumInQwgt = self.optCtrl.getNumOfFieldInQwgt()
         y2c = self.optStateEsti.getY2Corr(
                                 np.arange(fieldNumInQwgt), isNby1Array=False)

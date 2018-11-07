@@ -1,9 +1,8 @@
 import os
 import numpy as np
 
-from lsst.ts.ofc.OptStateEsti import InstName, FilterType, getSetting, DofGroup
-from lsst.ts.ofc.OptStateEsti import OptStateEsti
-from lsst.ts.ofc.OptCtrl import OptCtrl
+from lsst.ts.ofc.OptStateEsti import getSetting, DofGroup
+
 
 class ZTAAC(object):
 
@@ -20,8 +19,8 @@ class ZTAAC(object):
         """
 
         self.optStateEsti = optStateEsti
-        self.optCtrl = optCtrl        
-        
+        self.optCtrl = optCtrl
+
         self.configDir = None
         self.sensorIdToNameFileName = None
         self.filterType = None
@@ -72,7 +71,7 @@ class ZTAAC(object):
         filterType : enum 'FilterType'
             Active filter type.
         """
-        
+
         self.filterType = filterType
 
     def getFilter(self):
@@ -83,7 +82,7 @@ class ZTAAC(object):
         enum 'FilterType'
             Active filter type.
         """
-        
+
         return self.filterType
 
     def setState0(self, state0InDof):
@@ -94,7 +93,7 @@ class ZTAAC(object):
         state0InDof : numpy.ndarray or list
             State 0 in DOF.
         """
-        
+
         self.optCtrl.setState0(state0InDof)
 
     def getState0(self):
@@ -105,7 +104,7 @@ class ZTAAC(object):
         numpy.ndarray
             State 0 in DOF.
         """
-        
+
         numOfState0 = self.optCtrl.getNumOfState0()
         dofIdx = np.arange(numOfState0)
 
@@ -113,20 +112,20 @@ class ZTAAC(object):
 
     def setStateToState0(self):
         """Set the state to state 0."""
-        
+
         self.optCtrl.initStateToState0()
 
     def mapSensorIdToName(self, sensorIdList):
         """Map the list of sensor Id to sensor name.
-        
+
         If no sensor name is found for a specific Id, there will be no returned
         value.
-        
+
         Parameters
         ----------
         sensorIdList : list[int]
             List of sensor Id.
-        
+
         Returns
         -------
         list
@@ -153,13 +152,13 @@ class ZTAAC(object):
         ----------
         sensorNameList : list[str]
             List of abbreviated sensor names.
-        
+
         Returns
         -------
         list[int]
             List of sensor Id.
         """
-        
+
         filePath = self._getMapSensorIdAndNameFilePath()
 
         sensorIdList = []
@@ -189,18 +188,18 @@ class ZTAAC(object):
             File path.
         sensorName : str
             Abbreviated sensor name.
-        
+
         Returns
         -------
         int
             Sensor Id.
-        
+
         Raises
         ------
         ValueError
             Can not find the sensor Id of input sensor name.
         """
-        
+
         sensorId = None
         with open(filePath) as file:
             for line in file:
@@ -217,7 +216,8 @@ class ZTAAC(object):
                     break
 
         if (sensorId is None):
-            raise ValueError("Can not find the sensor Id of '%s'." % sensorName)
+            raise ValueError("Can not find the sensor Id of '%s'."
+                             % sensorName)
 
         return sensorId
 
@@ -271,7 +271,7 @@ class ZTAAC(object):
         float
             Gain value.
         """
-        
+
         return self.optCtrl.getGain()
 
     def getWfFromFile(self, wfFilePath,
@@ -316,8 +316,8 @@ class ZTAAC(object):
         """
 
         sensorName = "R22_S11"
-        wfErr = self.optStateEsti.getWfAndFieldIdFromShwfsFile(wfFilePath,
-                                                    sensorName=sensorName)[0]
+        wfErr = self.optStateEsti.getWfAndFieldIdFromShwfsFile(
+                                wfFilePath, sensorName=sensorName)[0]
 
         return wfErr, sensorName
 
@@ -330,7 +330,7 @@ class ZTAAC(object):
             Wavefront error.
         sensorNameList : list[str]
             List of abbreviated sensor names.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -350,7 +350,8 @@ class ZTAAC(object):
         effWave = self.optStateEsti.getEffWave(self.filterType)
         senM = self.optStateEsti.senM
         fieldNumInQwgt = self.optCtrl.getNumOfFieldInQwgt()
-        y2c = self.optStateEsti.getY2Corr(np.arange(fieldNumInQwgt),                                          isNby1Array=False)
+        y2c = self.optStateEsti.getY2Corr(
+                                np.arange(fieldNumInQwgt), isNby1Array=False)
 
         self.optCtrl.setMatF(zn3Idx, dofIdx, effWave, senM)
         uk = self.optCtrl.estiUk(zn3Idx, dofIdx, effWave, senM, y2c, optSt)
@@ -378,13 +379,13 @@ class ZTAAC(object):
             DOF group.
         inputDof : numpy.ndarray or list, optional
             Input DOF. (the default is None.)
-        
+
         Returns
         -------
         numpy.ndarray
             DOF.
         """
-        
+
         startIdx, groupLeng = self.optStateEsti.getGroupIdxAndLeng(dofGroup)
         dof = self.optCtrl.getGroupDof(startIdx, groupLeng, inputDof=inputDof)
 
@@ -422,64 +423,117 @@ class ZTAAC(object):
                                               m1m3Bend=m1m3Bend,
                                               m2Bend=m2Bend)
 
-    def rotUk(self):
-        pass
+    def rotUk(self, camRot, uk):
+        """Rotate uk based on the camera rotation angle.
 
-    def _transDofToUk(self):
-        pass
+        Parameters
+        ----------
+        camRot : CamRot
+            Instance of camera rotation class.
+        uk : numpy.ndarray
+            Calculated uk in the basis of degree of freedom (DOF).
 
-    def _transUkToDof(self):
-        pass
+        Returns
+        -------
+        numpy.ndarray
+            Rotated uk.
 
-    def _getTiltXY(self):
-        pass
+        Raises
+        ------
+        ValueError
+            Order of DofGroup and DOF are different.
+        """
+
+        dof = self._transUkToDof(uk)
+        dofOrder = [DofGroup.M2HexPos, DofGroup.CamHexPos, DofGroup.M1M3Bend,
+                    DofGroup.M2Bend]
+
+        rotDof = []
+        for dofGroup, dofItemInOrder in zip(DofGroup, dofOrder):
+            if (dofGroup != dofItemInOrder):
+                raise ValueError("Order of DofGroup and DOF are different.")
+
+            dofOfGroup = self.getGroupDof(dofGroup, inputDof=dof)
+            tiltXYinArcsec = self._getTiltXY(dofGroup)
+            rotDofOfGroup = camRot.rotGroupDof(dofGroup, dofOfGroup,
+                                               tiltXYinArcsec=tiltXYinArcsec)
+            rotDof = np.append(rotDof, rotDofOfGroup)
+
+        rotUk = self._transDofToUk(rotDof)
+
+        return rotUk
+
+    def _transDofToUk(self, dof):
+        """Transform the degree of freedom (DOF) to uk based on the index array
+        of DOF.
+
+        Parameters
+        ----------
+        dof : numpy.ndarray
+            DOF.
+
+        Returns
+        -------
+        numpy.ndarray
+            Calculated uk in the basis of DOF.
+        """
+
+        dofIdx = self.optStateEsti.getDofIdx()
+
+        return dof[dofIdx]
+
+    def _transUkToDof(self, uk):
+        """Transform uk to the degree of freedom (DOF) based on the index array
+        of DOF.
+
+        Parameters
+        ----------
+        uk : numpy.ndarray
+            Calculated uk in the basis of DOF.
+
+        Returns
+        -------
+        numpy.ndarray
+            DOF.
+        """
+
+        dof = np.zeros(self.optCtrl.getNumOfState0())
+        dofIdx = self.optStateEsti.getDofIdx()
+        dof[dofIdx] = uk
+
+        return dof
+
+    def _getTiltXY(self, dofGroup):
+        """Get the relative tilt angle XY in arcsec compared with the camera
+        hexapod.
+
+        Parameters
+        ----------
+        dofGroup : enum 'DofGroup'
+            Degree of freedom (DOF) group.
+
+        Returns
+        -------
+        tuple
+            Tilt angle (x, y) in arcsec.
+        """
+
+        dofIdx = np.arange(self.optCtrl.getNumOfState0())
+        stateInDof = self.optCtrl.getState(dofIdx)
+        m2PosRx = stateInDof[3]
+        m2PosRy = stateInDof[4]
+        camPosRx = stateInDof[8]
+        camPosRy = stateInDof[9]
+
+        if dofGroup in (DofGroup.M2HexPos, DofGroup.M2Bend):
+            tiltXYinArcsec = (m2PosRx-camPosRx, m2PosRy-camPosRy)
+        elif (dofGroup == DofGroup.CamHexPos):
+            tiltXYinArcsec = (0, 0)
+        elif (dofGroup == DofGroup.M1M3Bend):
+            tiltXYinArcsec = (camPosRx, camPosRy)
+
+        return tiltXYinArcsec
 
 
 if __name__ == "__main__":
-    
-    configDir = "/home/ttsai/Documents/github/ts_tcs_ofcPython/configData"
-
-    optStateEsti = OptStateEsti()
-    optStateEsti.config(configDir, instName=InstName.LSST)
-
-    optCtrl = OptCtrl()
-    optCtrl.config(configDir, instName=InstName.LSST,
-                   configFileName="optiPSSN_x00.ctrl")
-
-    ztaac = ZTAAC(optStateEsti, optCtrl)
-    ztaac.config(configDir)
-
-    gain = 0.7
-    ztaac.setGain(gain)
-
-    # ztaac.setState0(np.random.rand(50))
-    # state0 = ztaac.getState0()
-    # ztaac.setStateToState0()
-
-    sensorIdList = [1, 2, 3, 4, 5, -1, -1]
-    sensorNameList, numOfSensor = ztaac.mapSensorIdToName(sensorIdList)
-    sensorIdList = ztaac.mapSensorNameToId(sensorNameList)
-    
-    pssn = np.ones(31)*0.7
-    sensorIdList = [100, 103, 104, 105, 97, 96, 95, 140, 150, 109, 44, 46,
-                    93, 180, 120, 118, 18, 45, 82, 183, 122, 116, 24, 40,
-                    81, 179, 161, 70, 5, 33, 123]
-    sensorNameList, numOfSensor = ztaac.mapSensorIdToName(sensorIdList)
-
-    ztaac.setGainByPSSN(pssn, sensorNameList)
-
-    testDataDir = "/home/ttsai/Documents/github/ts_tcs_ofcPython/tests/testData"
-    testWfsFile = "lsst_wfs_error_iter0.z4c"
-    testWfsFilePath = os.path.join(testDataDir, testWfsFile)
-
-    wfErr = ztaac.getWfFromFile(testWfsFilePath)
-    ztaac.setFilter(FilterType.REF)
-    sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
-
-    uk = ztaac.estiUk(wfErr, sensorNameList)
-    ztaac.aggState(uk)
-
-    dof = ztaac.getGroupDof(DofGroup.M2HexPos)
-    print(dof)
-
- 
+    pass

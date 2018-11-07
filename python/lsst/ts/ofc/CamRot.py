@@ -7,7 +7,7 @@ from lsst.ts.ofc.Utility import DofGroup
 class CamRot(object):
 
     def __init__(self, rotAngInDeg=0):
-        """Initialization of camera Rotation class.
+        """Initialization of camera rotation class.
 
         Parameters
         ----------

@@ -24,13 +24,13 @@ class CamRot(object):
         ----------
         rotAngInDeg : float
             Rotation angle in degree.
-        
+
         Raises
         ------
         ValueError
             Camera rotation angle should be in [-90, 90].
         """
-        
+
         if (np.abs(rotAngInDeg) <= 90):
             self.rotAngInDeg = rotAngInDeg
         else:
@@ -44,19 +44,40 @@ class CamRot(object):
         float
             Rotation angle.
         """
-        
+
         return self.rotAngInDeg
 
     def rotGroupDof(self, dofGroup, stateInDof, tiltXYinArcsec=(0, 0)):
-        
+        """Rotate the degree of freedom of specific group.
+
+        Parameters
+        ----------
+        dofGroup : enum 'DofGroup'
+            DOF group.
+        stateInDof : numpy.ndarray
+            State in degree of freedom (DOF).
+        tiltXYinArcsec : tuple, optional
+            Tilt angle in arcsec. This is the delta value of M2 hexapod
+            compared with camera hexapod (M2-camera).
+
+        Returns
+        -------
+        numpy.ndarray
+            Rotated DOF.
+        """
+
+        # 1 arcsec = 1/3600 deg
+        tiltXYinDeg = tuple(ti/3600.0 for ti in tiltXYinArcsec)
+
         if dofGroup in (DofGroup.M2HexPos, DofGroup.CamHexPos):
-            rotatedStateInDof = self._rotHexPos(dofGroup, stateInDof, tiltXYinArcsec)
+            rotatedStateInDof = self._rotHexPos(dofGroup, stateInDof,
+                                                tiltXYinDeg)
         elif dofGroup in (DofGroup.M1M3Bend, DofGroup.M2Bend):
-            pass
+            rotatedStateInDof = self._rotBendingMode(stateInDof, tiltXYinDeg)
 
         return rotatedStateInDof
 
-    def _rotHexPos(self, dofGroup, hexPos, tiltXYinArcsec):
+    def _rotHexPos(self, dofGroup, hexPos, tiltXYinDeg):
         """Rotate the hexapod position (degree of freedom, DOF) based on the
         rotation angle.
 
@@ -67,9 +88,9 @@ class CamRot(object):
         hexPos : numpy.ndarray
             Hexapod position: (z, x, y, rx, ry). x, y, and z are in um. rx and
             ry are in arcsec.
-        tiltXYinArcsec : tuple
-            Tilt angle in arcsec. This is the delta value of M2 hexapod compared
-            with camera hexapod (M2-camera).
+        tiltXYinDeg : tuple
+            Tilt angle in degree. This is the delta value of M2 hexapod
+            compared with camera hexapod (M2-camera).
 
         Returns
         -------
@@ -78,9 +99,8 @@ class CamRot(object):
         """
 
         if (dofGroup == DofGroup.M2HexPos):
-            # 1 arcsec = 1/3600 deg
-            tiltXYinDeg = tuple(ti/3600.0 for ti in tiltXYinArcsec)
-            rotAngInDeg = self._mapRotAngByTiltXY(self.rotAngInDeg, tiltXYinDeg)
+            rotAngInDeg = self._mapRotAngByTiltXY(self.rotAngInDeg,
+                                                  tiltXYinDeg)
 
         elif (dofGroup == DofGroup.CamHexPos):
             rotAngInDeg = self.rotAngInDeg
@@ -92,19 +112,19 @@ class CamRot(object):
 
     def _mapRotAngByTiltXY(self, rotAngInDeg, tiltXYinDeg):
         """Map the rotation angle by tilt x, y axis.
-        
+
         The input rotation angle (theta') is defined on x', y'-plane, which is
         tilted from x, y-plane. The output rotation angle (theta) is defined
         on x, y-plane. The tilt angles in inputs are defined as tilt x'-x and
         tilt y'-y.
-        
+
         Parameters
         ----------
         rotAngInDeg : float
             Rotation angle in degree.
         tiltXYinDeg : tuple
             Tilt angle (x, y) in degree.
-        
+
         Returns
         -------
         float
@@ -116,7 +136,7 @@ class CamRot(object):
         tiltXinRad = np.deg2rad(tiltXYinDeg[0])
         tiltYinRad = np.deg2rad(tiltXYinDeg[1])
 
-        mappedTheta = np.arctan( np.tan(theta) * (1 - tiltXinRad + tiltYinRad) )
+        mappedTheta = np.arctan(np.tan(theta) * (1 - tiltXinRad + tiltYinRad))
 
         return np.rad2deg(mappedTheta)
 
@@ -127,7 +147,7 @@ class CamRot(object):
         ----------
         rotAngInDeg : float
             Rotation angle in degree.
-        
+
         Returns
         -------
         numpy.ndarray
@@ -135,7 +155,7 @@ class CamRot(object):
         """
 
         rotMat = self._calcMirRotMat(rotAngInDeg)
-        
+
         return block_diag(1, rotMat, rotMat)
 
     def _calcMirRotMat(self, rotAngInDeg):
@@ -145,35 +165,62 @@ class CamRot(object):
         ----------
         rotAngInDeg : float
             Rotation angle in degree.
-        
+
         Returns
         -------
         numpy.ndarray
             Rotation matrix.
         """
-        
+
         theta = np.deg2rad(rotAngInDeg)
         c, s = np.cos(theta), np.sin(theta)
-        R = np.array(((c,-s), (s, c)))
+        R = np.array(((c, -s), (s, c)))
 
         return R
 
-    def _getMirRotMat(self):
-        pass
+    def _rotBendingMode(self, bendingMode, tiltXYinDeg):
+        """Rotate the bending mode (degree of freedom, DOF) based on the rotation
+        angle and tilt angle compared with the camera.
 
-    def _rotBendingMode(self):
-        pass
+        Parameters
+        ----------
+        bendingMode : numpy.ndarray
+            20 mirror bending mode.
+        tiltXYinDeg : tuple
+            Tilt angle in degree. This is the delta value of M2 hexapod
+            compared with camera hexapod (M2-camera).
 
+        Returns
+        -------
+        numpy.ndarray
+            Rotated bending mode.
+        """
+
+        rotAngInDeg = self._mapRotAngByTiltXY(self.rotAngInDeg, tiltXYinDeg)
+        rotMat = self._getMirRotMat(rotAngInDeg)
+        rotatedBendingMode = rotMat.dot(bendingMode.reshape(-1, 1))
+
+        return rotatedBendingMode.ravel()
+
+    def _getMirRotMat(self, rotAngInDeg):
+        """Get the mirror rotation matrix.
+
+        Parameters
+        ----------
+        rotAngInDeg : float
+            Rotation angle in degree.
+
+        Returns
+        -------
+        numpy.ndarray
+            Mirror rotation matrix.
+        """
+
+        rotMat = self._calcMirRotMat(rotAngInDeg)
+
+        return block_diag(rotMat, 1, rotMat, rotMat, rotMat, rotMat,
+                          1, rotMat, rotMat, rotMat, rotMat)
 
 
 if __name__ == "__main__":
-    
-    camRot = CamRot()
-    camRot.setRotAng(45)
-
-    dofGroup = DofGroup.M2HexPos
-    stateInDof = np.array([1, 2, 2, 4, 4])
-    tiltXYinArcsec = (1224, 0)
-
-    rotatedStateInDof = camRot.rotGroupDof(dofGroup, stateInDof, tiltXYinArcsec)
-    print(rotatedStateInDof)
+    pass

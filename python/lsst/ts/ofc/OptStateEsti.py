@@ -1,15 +1,9 @@
-import os
-import re
 import numpy as np
-
-from lsst.ts.ofc.Utility import InstName, FilterType, DofGroup, \
-                                getMatchFilePath, getSetting, \
-                                getDirFiles
 
 
 class OptStateEsti(object):
 
-    def estiOptState(self, filterType, wfErr, fieldIdx):
+    def estiOptState(self, dataShare, filterType, wfErr, fieldIdx):
         """Estimate the optical state in the basis of degree of
         freedom (DOF).
 
@@ -17,6 +11,8 @@ class OptStateEsti(object):
 
         Parameters
         ----------
+        dataShare: DataShare
+            Instance of DataShare class.
         filterType : enum 'FilterType'
             Active filter type.
         wfErr : numpy.ndarray
@@ -30,40 +26,35 @@ class OptStateEsti(object):
             Optical state in the basis of DOF.
         """
 
-        wfErr = wfErr[:, self.zn3Idx].reshape(-1, 1)
-        intrinsicZk = self._getIntrinsicZk(filterType, fieldIdx)
-        y2c = self.getY2Corr(fieldIdx, isNby1Array=True)
-
-        # senA = self._setSenA(fieldIdx)
-        # pinvA = self._setPinvA(rcond)
-
+        zn3Idx = dataShare.getZn3Idx()
+        wfErr = wfErr[:, zn3Idx].reshape(-1, 1)
+        intrinsicZk = dataShare.getIntrinsicZk(filterType, fieldIdx)
+        y2c = dataShare.getY2Corr(fieldIdx, isNby1Array=True)
         y = wfErr - intrinsicZk - y2c
-        x = self.pinvA.dot(y)
+
+        senM = dataShare.getSenM()
+        matA = self._getSenA(senM, fieldIdx)
+        rcond = 1e-4
+        pinvA = self._getPinvA(matA, rcond)
+
+        x = pinvA.dot(y)
 
         return x.ravel()
 
-    def setAandPinvA(self, fieldIdx, rcond=1e-4):
-        """Set the sensitivity matrix A and the related pseudo-inverse
-        A^(-1).
+    def _getSenA(self, senM, fieldIdx):
+        """Get the sensitivity matrix A based on the array of field index.
 
         Parameters
         ----------
+        senM: numpy.ndarray
+            Sensitivity matrix M.
         fieldIdx : numpy.ndarray[int] or list[int]
             Field index array.
-        rcond : float, optional
-            Cutoff for small singular values. (the default is 1e-4.)
-        """
 
-        self._setSenA(fieldIdx)
-        self._setPinvA(rcond)
-
-    def _setSenA(self, fieldIdx):
-        """Set the sensitivity matrix A based on the array of field index.
-
-        Parameters
-        ----------
-        fieldIdx : numpy.ndarray[int] or list[int]
-            Field index array.
+        Returns
+        -------
+        numpy.ndarray
+            Sensitivity matrix A.
 
         Raises
         ------
@@ -72,25 +63,35 @@ class OptStateEsti(object):
         """
 
         # Constuct the sensitivity matrix A
-        self.matA = self.senM[fieldIdx, :, :]
-        self.matA = self.matA.reshape((-1, self.senM.shape[2]))
+        matA = senM[fieldIdx, :, :]
+        matA = matA.reshape((-1, senM.shape[2]))
 
         # Check the dimension of pinv A
-        numOfZkEq, numOfDof = self.matA.shape
+        numOfZkEq, numOfDof = matA.shape
         if (numOfZkEq < numOfDof):
             raise RuntimeError("Equation number < variable number.")
 
-    def _setPinvA(self, rcond=1e-4):
+        return matA
+
+    def _getPinvA(self, matA, rcond):
         """Set the pueudo-inversed matrix A with the truncation.
 
         Parameters
         ----------
+        mat: numpy.ndarray
+            Sensitivity matrix A
         rcond : float
             Cutoff for small singular values.
+
+        Returns
+        -------
+        numpy.ndarray
+            Pueudo-inversed matrix A.
         """
 
-        self.pinvA = np.linalg.pinv(self.matA, rcond=rcond)
+        pinvA = np.linalg.pinv(matA, rcond=rcond)
 
+        return pinvA
 
 
 if __name__ == "__main__":

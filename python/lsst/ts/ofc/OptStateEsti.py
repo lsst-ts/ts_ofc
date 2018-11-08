@@ -3,7 +3,9 @@ import numpy as np
 
 class OptStateEsti(object):
 
-    def estiOptState(self, dataShare, filterType, wfErr, fieldIdx):
+    RCOND = 1e-4
+
+    def estiOptState(self, optStateEstiData, filterType, wfErr, fieldIdx):
         """Estimate the optical state in the basis of degree of
         freedom (DOF).
 
@@ -11,8 +13,8 @@ class OptStateEsti(object):
 
         Parameters
         ----------
-        dataShare: DataShare
-            Instance of DataShare class.
+        optStateEstiData: OptStateEstiData
+            Instance of OptStateEstiData class.
         filterType : enum 'FilterType'
             Active filter type.
         wfErr : numpy.ndarray
@@ -26,16 +28,15 @@ class OptStateEsti(object):
             Optical state in the basis of DOF.
         """
 
-        zn3Idx = dataShare.getZn3Idx()
+        zn3Idx = optStateEstiData.getZn3Idx()
         wfErr = wfErr[:, zn3Idx].reshape(-1, 1)
-        intrinsicZk = dataShare.getIntrinsicZk(filterType, fieldIdx)
-        y2c = dataShare.getY2Corr(fieldIdx, isNby1Array=True)
+        intrinsicZk = optStateEstiData.getIntrinsicZk(filterType, fieldIdx)
+        y2c = optStateEstiData.getY2Corr(fieldIdx, isNby1Array=True)
         y = wfErr - intrinsicZk - y2c
 
-        senM = dataShare.getSenM()
+        senM = optStateEstiData.getSenM()
         matA = self._getSenA(senM, fieldIdx)
-        rcond = 1e-4
-        pinvA = self._getPinvA(matA, rcond)
+        pinvA = self._getPinvA(matA, self.RCOND)
 
         x = pinvA.dot(y)
 

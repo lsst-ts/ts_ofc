@@ -2,9 +2,8 @@ import os
 import re
 import numpy as np
 
-from lsst.ts.ofc.Utility import InstName, FilterType, DofGroup, \
-                                getMatchFilePath, getSetting, \
-                                getDirFiles
+from lsst.ts.ofc.Utility import InstName, DofGroup, getMatchFilePath, \
+                                getSetting, getDirFiles
 
 
 class DataShare(object):
@@ -15,9 +14,6 @@ class DataShare(object):
         self.configDir = None
         self.instName = None
         self.mappingFileName = None
-        self.wavelengthTable = None
-        self.intrincZkFileName = None
-        self.y2CorrectionFileName = None
         self.idxDofFileName = None
 
         self.zn3Max = None
@@ -28,11 +24,8 @@ class DataShare(object):
     def config(self, configDir, instName=InstName.LSST,
                configFileName="pinv.esti",
                mappingFileName="sensorNameToFieldIdx.txt",
-               wavelengthTable="effWaveLength.txt",
-               intrincZkFileName="intrinsic_zn",
-               y2CorrectionFileName="y2.txt",
                idxDofFileName="idxDOF.txt"):
-        """Do the configuration of optical state estimator.
+        """Do the configuration of DataShare class.
 
         Parameters
         ----------
@@ -45,13 +38,6 @@ class DataShare(object):
         mappingFileName : str, optional
             File name of mapping abbreviated sensor name to index of optical
             field.  (the default is "sensorNameToFieldIdx.txt".)
-        wavelengthTable : str, optional
-            File name of effective wavelength for each filter in um. (the
-            default is "effWaveLength.txt".)
-        intrincZkFileName : str, optional
-            Intric zk file name. (the default is "intrinsic_zn".)
-        y2CorrectionFileName : str, optional
-            y2 correction file name. (the default is "y2.txt".)
         idxDofFileName : str, optional
             Index of DOF file name. (the default is "idxDOF.txt".)
         """
@@ -59,9 +45,6 @@ class DataShare(object):
         self.configDir = configDir
         self.instName = instName
         self.mappingFileName = mappingFileName
-        self.wavelengthTable = wavelengthTable
-        self.intrincZkFileName = intrincZkFileName
-        self.y2CorrectionFileName = y2CorrectionFileName
         self.idxDofFileName = idxDofFileName
 
         self._readSetting(configFileName)
@@ -154,12 +137,12 @@ class DataShare(object):
             Sensitivity matrix M file path.
         """
 
-        filePaths = getDirFiles(self._getInstDir())
+        filePaths = getDirFiles(self.getInstDir())
         senMFilePath = getMatchFilePath(reMatchStr, filePaths)
 
         return senMFilePath
 
-    def _getInstDir(self):
+    def getInstDir(self):
         """Get the instrument directory.
 
         Returns
@@ -169,6 +152,17 @@ class DataShare(object):
         """
 
         return os.path.join(self.configDir, self.instName.name.lower())
+
+    def getConfigDir(self):
+        """Get the configuration directory.
+
+        Returns
+        -------
+        str
+            configuration directory.
+        """
+
+        return self.configDir
 
     def _getSenMshape(self, senMFileName):
         """Get the shape of sensitivity matrix M.
@@ -251,7 +245,7 @@ class DataShare(object):
             Field index array.
         """
 
-        filePath = os.path.join(self._getInstDir(), self.mappingFileName)
+        filePath = os.path.join(self.getInstDir(), self.mappingFileName)
 
         fieldIdx = []
         for sensorName in sensorNameList:
@@ -259,57 +253,6 @@ class DataShare(object):
             fieldIdx.append(int(field))
 
         return fieldIdx
-
-    def getEffWave(self, filterType):
-        """Get the effective wavelength in um.
-
-        This is based on the active filter type (U, G, R, I, Z, Y, REF). It
-        is noted that "ref" means the monochromatic reference wavelength.
-
-        Parameters
-        ----------
-        filterType : enum 'FilterType'
-            Active filter type.
-
-        Returns
-        -------
-        float
-            Effective wavelength in um.
-        """
-
-        filePath = os.path.join(self.configDir, self.wavelengthTable)
-        param = filterType.name.lower()
-        effWave = float(getSetting(filePath, param))
-
-        return effWave
-
-    def getY2Corr(self, fieldIdx, isNby1Array=False):
-        """Get the y2 correction array. This is the zk offset between the
-        camera center and corner.
-
-        Parameters
-        ----------
-        fieldIdx : numpy.ndarray[int] or list[int]
-            Field index array.
-
-        isNby1Array : bool, optional
-            In the format of nx1 array or not. (the default is False.)
-
-        Returns
-        -------
-        numpy.ndarray
-            y2 correction array.
-        """
-
-        filePath = os.path.join(self._getInstDir(),
-                                self.y2CorrectionFileName)
-        y2c = np.loadtxt(filePath)
-        y2c = y2c[np.ix_(fieldIdx, self.zn3Idx)]
-
-        if (isNby1Array):
-            y2c = y2c.reshape(-1, 1)
-
-        return y2c
 
     def getGroupIdxAndLeng(self, dofGroup):
         """Get the start index and length of specific group of degree of
@@ -414,44 +357,6 @@ class DataShare(object):
             dofIdx = np.append(dofIdx, idx+startIdx)
 
         self.setZkAndDofIdxArrays(zn3Idx, dofIdx)
-
-    def getIntrinsicZk(self, filterType, fieldIdx):
-        """Get the intrinsic zk of specific filter based on the array of
-        field index.
-
-        Parameters
-        ----------
-        filterType : enum 'FilterType'
-            Active filter type.
-        fieldIdx : numpy.ndarray[int] or list[int]
-            Field index array.
-
-        Returns
-        -------
-        numpy.ndarray
-            Instrinsic zk of specific effective wavelength in um. The shape
-            is nx1.
-        """
-
-        # Get the intrinsicZk file path
-        reMatchStrTail = ""
-        if (filterType != FilterType.REF):
-            reMatchStrTail = "_" + filterType.name
-
-        reMatchStr = "\A" + self.intrincZkFileName + reMatchStrTail + ".\S+"
-        filePaths = getDirFiles(self._getInstDir())
-        zkFilePath = getMatchFilePath(reMatchStr, filePaths)
-
-        # Remap the zk index for z0-z2
-        zkIdx = self.zn3Idx + 3
-
-        # Get the intrinsicZk with the consideration of effective wavelength
-        intrinsicZk = np.loadtxt(zkFilePath)
-        intrinsicZk = intrinsicZk[np.ix_(fieldIdx, zkIdx)]
-        intrinsicZk = intrinsicZk * self.getEffWave(filterType)
-        intrinsicZk = intrinsicZk.reshape(-1, 1)
-
-        return intrinsicZk
 
     def getWfAndFieldIdFromFile(self, wfFilePath, sensorNameList):
         """Get the wavefront error and field Id from the file.

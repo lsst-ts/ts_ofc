@@ -14,8 +14,6 @@ if __name__ == "__main__":
     dataShare.config(configDir, instName=InstName.LSST)
 
     fieldIdx = dataShare.getFieldIdx(["R22_S11", "R22_S12"])
-    effWave = dataShare.getEffWave(FilterType.REF)
-    y2c = dataShare.getY2Corr(fieldIdx, isNby1Array=True)
 
     startIdx, groupLeng = dataShare.getGroupIdxAndLeng(DofGroup.M2Bend)
 
@@ -36,5 +34,3 @@ if __name__ == "__main__":
 
     testShwfsFilePath = os.path.join(testDataDir, "shwfs_wfs_error.txt")
     wfErr, fieldIdx = dataShare.getWfAndFieldIdFromShwfsFile(testShwfsFilePath)
-
-    intrinsicZk = dataShare.getIntrinsicZk(FilterType.REF, fieldIdx)

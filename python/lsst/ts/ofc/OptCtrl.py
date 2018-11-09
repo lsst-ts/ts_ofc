@@ -1,472 +1,235 @@
 import os
 import numpy as np
 
+from lsst.ts.ofc.OptCtrlDefault import OptCtrlDefault
 from lsst.ts.ofc.Utility import InstName, getSetting
 
 
-class OptCtrl(object):
+class OptCtrl(OptCtrlDefault):
 
-    def __init__(self):
-        """Initialization of optimal control class."""
-
-        self.configDir = None
-        self.instName = None
-        self.rigidBodyStrokeFileName = None
-        self.weightingFileName = None
-        self.pssnAlphaFileName = None
-
-        self.strategy = None
-        self.xRef = None
-        self.gain = 0
-        self.penality = {"M1M3Act": 0, "M2Act": 0, "Motion": 0}
-        self.authority = None
-        self.matF = None
-        self.state0InDof = None
-        self.stateInDof = None
-
-    def config(self, configDir, instName=InstName.LSST,
-               configFileName="optiPSSN_x00.ctrl",
-               state0InDofFileName="state0inDof.txt",
-               weightingFileName="imgQualWgt.txt",
-               pssnAlphaFileName="pssn_alpha.txt",
-               rigidBodyStrokeFileName="rbStroke.txt",
-               m1m3ActuatorForceFileName="M1M3_1um_156_force.txt",
-               m2ActuatorForceFileName="M2_1um_force.DAT",
-               numOfBendingMode=20):
-        """Do the configuration of optimal control.
+    def estiUk(self, optCtrlData, filterType, optSt):
+        """Estimate uk by referencing to "0", "x0", or "x00" based on the
+        configuration file.
 
         Parameters
         ----------
-        configDir : str
-            Configuration directory.
-        instName : enum 'InstName', optional
-            Instrument name. (the default is InstName.LSST.)
-        configFileName : str, optional
-            Name of configuration file. (the default is "optiPSSN_x00.ctrl".)
-        state0InDofFileName : str, optional
-            File name to read the telescope state 0, which depends on the
-            instrument. (the default is "state0inDof.txt".)
-        weightingFileName : str, optional
-            Weighting file name for image quality. (the default is
-            "imgQualWgt.txt".)
-        pssnAlphaFileName : str, optional
-            Normalized point source sensitivity (PSSN) alpha file name.
-            (the default is "pssn_alpha.txt".)
-        rigidBodyStrokeFileName : str, optional
-            Rigid body stroke file name. (the default is "rbStroke.txt".)
-        m1m3ActuatorForceFileName : str, optional
-            M1M3 actuator force file name. (the default is
-            "M1M3_1um_156_force.txt".)
-        m2ActuatorForceFileName : str, optional
-            M2 actuator force file name. (the default is "M2_1um_force.DAT".)
-        numOfBendingMode : int, optional
-            Number of mirror bending mode. (the default is 20.)
-        """
-
-        self.configDir = configDir
-        self.instName = instName
-        self.rigidBodyStrokeFileName = rigidBodyStrokeFileName
-        self.weightingFileName = weightingFileName
-        self.pssnAlphaFileName = pssnAlphaFileName
-
-        self._readSetting(configFileName)
-
-        self._setState0ByFile(state0InDofFileName)
-        self.initStateToState0()
-
-        self._setAuthority(m1m3ActuatorForceFileName, m2ActuatorForceFileName,
-                           int(numOfBendingMode))
-
-    def _readSetting(self, configFileName):
-        """Read the configuration setting file of optimal control.
-
-        Parameters
-        ----------
-        configFileName : str
-            Name of configuration file.
-        """
-
-        filePath = os.path.join(self.configDir, configFileName)
-
-        # Assign the strategy to estimate the degree of freedom (DOF)
-        self.strategy = getSetting(filePath, "control_strategy")
-        self.xRef = getSetting(filePath, "xref")
-
-        # Set the penality
-        self.penality["M1M3Act"] = float(getSetting(filePath,
-                                                    "M1M3_actuator_penalty"))
-        self.penality["M2Act"] = float(getSetting(filePath,
-                                                  "M2_actuator_penalty"))
-        self.penality["Motion"] = float(getSetting(filePath, "Motion_penalty"))
-
-    def _setState0ByFile(self, state0InDofFileName):
-        """Set the state 0 in degree of freedom (DOF) based on the file.
-
-        Parameters
-        ----------
-        state0InDofFileName : str
-            File name to read the telescope state 0, which depends on the
-            instrument.
-        """
-
-        filePath = os.path.join(self._getInstDir(), state0InDofFileName)
-        self.state0InDof = np.loadtxt(filePath, usecols=1)
-
-    def _getInstDir(self):
-        """Get the instrument directory.
-
-        Returns
-        -------
-        str
-            Instrument directory.
-        """
-
-        return os.path.join(self.configDir, self.instName.name.lower())
-
-    def initStateToState0(self):
-        """Initialize the state to the state 0 in the basis of degree of
-        freedom (DOF)."""
-
-        self.stateInDof = self.state0InDof.copy()
-
-    def _setAuthority(self, m1m3ActuatorForceFileName, m2ActuatorForceFileName,
-                      numOfBendingMode):
-        """Set the authority of subsystems.
-
-        The penality is considered. The array order is [M2 hexapod,
-        camera hexapod, M1M3 bending mode, M2 bending mode].
-
-        Parameters
-        ----------
-        m1m3ActuatorForceFileName : str
-            M1M3 actuator force file name.
-        m2ActuatorForceFileName : str
-            M2 actuator force file name.
-        numOfBendingMode : int
-            Number of mirror bending mode.
-        """
-
-        rbStrokeAuthority = self._calcRigidBodyAuth()
-
-        # Skip the first three columns (M1M3 only)
-        usecols = np.arange(3, 3+numOfBendingMode)
-        m1m3Authority = self._calcMirrorAuth("M1M3", m1m3ActuatorForceFileName,
-                                             usecols=usecols)
-
-        usecols = np.arange(numOfBendingMode)
-        m2Authority = self._calcMirrorAuth("M2", m2ActuatorForceFileName,
-                                           usecols=usecols)
-
-        self.authority = np.concatenate((rbStrokeAuthority,
-                                        self.penality["M1M3Act"]*m1m3Authority,
-                                        self.penality["M2Act"]*m2Authority))
-
-    def _calcRigidBodyAuth(self):
-        """Calculate the distribution of control authority of rigid body.
-
-        The first five terms are the M2 hexapod positions. And the following
-        five are the camera hexapod positions.
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        filterType : enum 'FilterType'
+            Active filter type.
+        optSt : numpy.ndarray
+            Optical state in the basis of DOF.
 
         Returns
         -------
         numpy.ndarray
-            Authority of riigid body.
+            Calculated uk in the basis of DOF.
         """
 
-        rbStroke = self._getRbStrokeFromFile()
-        rbStroke = np.array(rbStroke)
-        authority = rbStroke[0]/rbStroke
+        ccMat = self._calcCCmat(optCtrlData, filterType)
+        qx = self._calcQx(optCtrlData, ccMat, optSt)
+        matF = self._calcMatF(optCtrlData, filterType)
+        uk = self._calcUk(optCtrlData, matF, qx)
 
-        return authority
+        return uk.ravel()
 
-    def _getRbStrokeFromFile(self):
-        """Get the rigid body stroke from the file.
+    def _calcQx(self, optCtrlData, ccMat, optSt):
+        """Calculate the Qx.
 
-        The order is the M2 hexapod followed by the camera hexapod.
-
-        Returns
-        -------
-        list[float]
-            Rigid body stroke in um.
-        """
-
-        filePath = os.path.join(self.configDir, self.rigidBodyStrokeFileName)
-        rbStroke = getSetting(filePath, "rbStroke")
-        rbStroke = list(map(float, rbStroke))
-
-        return rbStroke
-
-    def _calcMirrorAuth(self, mirrorDirName, actuatorForceFileName,
-                        usecols=None):
-        """Calculate the distribution of control authority of mirror.
-
-        This is based on the standard deviation of actuator forces for each
-        bending mode is used. The unit is 1 N RMS.
+        Qx = sum_{wi * A.T * C.T * C * (A * yk + y2k)}.
 
         Parameters
         ----------
-        mirrorDirName : str
-            Mirror directory name.
-        actuatorForceFileName : str
-            Mirror actuator force file name
-        usecols : int or sequence, optional
-            Which columns to read, with 0 being the first. For example,
-            usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
-            The default, None, results in all columns being read.
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        ccMat : numpy.ndarray
+            C.T * C matrix.
+        optSt : numpy.ndarray
+            Optical state in the basis of degree of freedom (DOF).
 
         Returns
         -------
         numpy.ndarray
-            Authority of mirror.
+            qx array.
         """
 
-        filePath = os.path.join(self.configDir, mirrorDirName,
-                                actuatorForceFileName)
-        bendingMode = np.loadtxt(filePath, usecols=usecols)
-        authority = np.std(bendingMode, axis=0)
+        optSt = optSt.reshape(-1, 1)
 
-        return authority
+        qWgt = optCtrlData.getQwgtFromFile()
+        senM = optCtrlData.getSenM()
 
-    def getAuthority(self):
-        """Get the authority of subsystems.
+        fieldNumInQwgt = optCtrlData.getNumOfFieldInQwgt()
+        y2c = optCtrlData.getY2Corr(np.arange(fieldNumInQwgt), isNby1Array=False)
 
-        The penality is considered. The array order is [M2 hexapod,
-        camera hexapod, M1M3 bending mode, M2 bending mode].
+        qx = 0
+        for aMat, wgt, y2k in zip(senM, qWgt, y2c):
+            y2k = y2k.reshape(-1, 1)
+            qx += wgt * aMat.T.dot(ccMat).dot(aMat.dot(optSt) + y2k)
+
+        return qx
+
+    def _calcUk(self, optCtrlData, matF, qx):
+        """Calculate uk by referencing to "0", "x0", or "x00" based on
+        the configuration file.
+
+        Parameters
+        ----------
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        matF : numpy.ndarray 
+            Matrix F.
+        qx : numpy.ndarray
+            qx array.
 
         Returns
         -------
         numpy.ndarray
-            Authority of subsystem.
-        """
-
-        return self.authority
-
-    def setGain(self, gain):
-        """Set the gain value.
-
-        Parameters
-        ----------
-        gain : float
-            Gain value in the feedback. It should be in the range of 0 and 1.
+            Calculated uk in the basis of degree of freedom (DOF).
 
         Raises
         ------
         ValueError
-            Gain is not in the range of [0, 1].
+            No Xref is assigned.
         """
 
-        if (0 <= gain <= 1):
-            self.gain = gain
+        xRef = optCtrlData.getXref()
+        if (xRef == "x0"):
+            return self._calcUkRefX0(matF, qx)
+        elif (xRef == "0"):
+            return self._calcUkRef0(optCtrlData, matF, qx)
+        elif (xRef == "x00"):
+            return self._calcUkRefX00(optCtrlData, matF, qx)
         else:
-            raise ValueError("Gain is not in the range of [0, 1].")
+            raise ValueError("No Xref is assigned.")
 
-    def getGain(self):
-        """Get the gain value.
+    def _calcUkRefX0(self, matF, qx):
+        """Calculate uk by referencing to "x0".
 
-        Returns
-        -------
-        float
-            Gain value in the feedback.
-        """
-
-        return self.gain
-
-    def setState0(self, state0InDof):
-        """Set the state 0 in degree of freedom (DOF).
+        The offset will only trace the previous one.
+        uk = -gain * F' * QX.
 
         Parameters
         ----------
-        state0InDof : numpy.ndarray or list
-            State 0 in DOF.
-        """
-
-        self.state0InDof = np.array(state0InDof)
-
-    def setState(self, stateInDof):
-        """Set the state in degree of freedom (DOF).
-
-        Parameters
-        ----------
-        stateInDof : numpy.ndarray or list
-            State in DOF.
-        """
-
-        self.stateInDof = np.array(stateInDof)
-
-    def getState0(self, dofIdx):
-        """Get the state 0 in degree of freedom (DOF).
-
-        Parameters
-        ----------
-        dofIdx : numpy.ndarray[int] or list[int]
-            Index array of degree of freedom.
+        matF : numpy.ndarray 
+            Matrix F.
+        qx : numpy.ndarray
+            qx array.
 
         Returns
         -------
         numpy.ndarray
-            State 0 in DOF.
+            Calculated uk in the basis of degree of freedom (DOF).
         """
 
-        return self.state0InDof[dofIdx]
+        uk = -self.gain * matF.dot(qx)
 
-    def getState(self, dofIdx):
-        """Get the state in degree of freedom (DOF).
+        return uk
+
+    def _calcUkRef0(self, optCtrlData, matF, qx):
+        """Calculate uk by referencing to "0".
+
+        The offset will trace the real value and target for 0.
+        uk = -gain * F' * (QX + rho**2 * H * S).
 
         Parameters
         ----------
-        dofIdx : numpy.ndarray[int] or list[int]
-            Index array of degree of freedom.
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        matF : numpy.ndarray 
+            Matrix F.
+        qx : numpy.ndarray
+            qx array.
 
         Returns
         -------
         numpy.ndarray
-            State in DOF.
+            Calculated uk in the basis of degree of freedom (DOF).
         """
 
-        return self.stateInDof[dofIdx]
+        authority = optCtrlData.getAuthority()
+        dofIdx = optCtrlData.getDofIdx()
+        matH = self._getMatH(authority, dofIdx)
 
-    def getNumOfState0(self):
-        """Get the number of element of state 0.
+        stateInDof = self.getState(dofIdx)
+        stateInDof = stateInDof.reshape(-1, 1)
 
-        Returns
-        -------
-        int
-            Number of element of state 0.
-        """
+        penality = optCtrlData.getPenality()
+        rho = penality["Motion"]
+        qx += rho**2 * matH.dot(stateInDof)
 
-        return len(self.state0InDof)
+        return self._calcUkRefX0(matF, qx)
 
-    def aggState(self, calcDof, dofIdx):
-        """Aggregate the calculated degree of freedom (DOF) in the state.
+    def _calcUkRefX00(self, optCtrlData, matF, qx):
+        """Calculate uk by referencing to "x00".
+
+        The offset will only trace the relative changes of offset without
+        regarding the real value.
+        uk = -gain * F' * [QX + rho**2 * H * (S - S0)].
 
         Parameters
         ----------
-        calcDof : numpy.ndarray
-            Calculated DOF.
-        dofIdx : numpy.ndarray[int] or list[int]
-            Index array of degree of freedom.
-        """
-
-        addDof = np.zeros(self.getNumOfState0())
-        addDof[dofIdx] = calcDof
-
-        self.stateInDof += addDof
-
-    def getDofFromFile(self, dofFilePath):
-        """Get the degree of freedom (DOF) from file.
-
-        Parameters
-        ----------
-        dofFilePath : str
-            DOF file path.
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        matF : numpy.ndarray 
+            Matrix F.
+        qx : numpy.ndarray
+            qx array.
 
         Returns
         -------
         numpy.ndarray
-            DOF.
+            Calculated uk in the basis of degree of freedom (DOF).
         """
 
-        return np.loadtxt(dofFilePath, usecols=1)
+        authority = optCtrlData.getAuthority()
+        dofIdx = optCtrlData.getDofIdx()
+        matH = self._getMatH(authority, dofIdx)
 
-    def getGroupDof(self, startIdx, groupLeng, inputDof=None):
-        """Get the degree of freedom (DOF) of specific group based on the
-        start index and length.
+        stateInDof = self.getState(dofIdx)
+        state0InDof = self.getState0(dofIdx)
+        stateDiff = stateInDof - state0InDof
+        stateDiff = stateDiff.reshape(-1, 1)
 
-        If there is no input DOF, the output will be the aggregated DOF
-        (state - state0). Otherwise, the output is based on the input DOF.
+        penality = optCtrlData.getPenality()
+        rho = penality["Motion"]
 
-        The default output units are:
-        1. M2 hexapod position (dz in um, dx in um, dy in um, rx in arcsec,
-        ry in arcsec).
-        2. Cam hexapod position (dz in um, dx in um, dy in um, rx in arcsec,
-        ry in arcsec).
-        3. M1M3 20 bending mode in um.
-        4. M2 20 bending mode in um.
+        qx += rho**2 * matH.dot(stateDiff)
 
-        Parameters
-        ----------
-        startIdx : int
-            Start index of group.
-        groupLeng : int
-            Index length of group.
-        inputDof : numpy.ndarray or list, optional
-            Input DOF. (the default is None.)
+        return self._calcUkRefX0(matF, qx)
 
-        Returns
-        -------
-        numpy.ndarray
-            DOF.
-        """
-
-        if (inputDof is None):
-            dof = self.stateInDof - self.state0InDof
-        else:
-            dof = np.array(inputDof)
-
-        return dof[np.arange(startIdx, startIdx+groupLeng)]
-
-    def setMatF(self, zn3Idx, dofIdx, effWave, senM):
-        """Set the F matrix.
+    def _calcMatF(self, optCtrlData, filterType):
+        """Calculate the F matrix.
 
         F = inv(A.T * C.T * C * A + rho * H).
 
         Parameters
         ----------
-        zn3Idx : numpy.ndarray[int] or list[int]
-            Index array of z3 to zn.
-        dofIdx : numpy.ndarray[int] or list[int]
-            Index array of degree of freedom.
-        effWave : float
-            Effective wavelength in um.
-        senM : numpy.ndarray
-            Sensitivity matrix M.
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        filterType : enum 'FilterType'
+            Active filter type.
         """
 
-        matH = self._getMatH(dofIdx)
+        zn3Idx = optCtrlData.getZn3Idx()
+        dofIdx = optCtrlData.getDofIdx()
+        effWave = optCtrlData.getEffWave(filterType)
 
-        qWgt = self._getQwgtFromFile()
-        pssnAlpha = self._getPssnAlphaFromFile()
-        ccMat = self._calcCCmat(pssnAlpha, effWave, zn3Idx)
+        authority = optCtrlData.getAuthority()
+        matH = self._getMatH(authority, dofIdx)
+
+        pssnAlpha = optCtrlData.getPssnAlphaFromFile()
+        ccMat = self._calcCCmat(optCtrlData, filterType)
+
+        qWgt = optCtrlData.getQwgtFromFile()
+        senM = optCtrlData.getSenM()
         qMat = self._calcQmat(ccMat, senM, qWgt)
 
-        self.matF = self._calcF(qMat, matH)
+        penality = optCtrlData.getPenality()
+        matF = self._calcF(qMat, matH, penality["Motion"])
 
-    def _getQwgtFromFile(self):
-        """Get the weighting ratio of image quality from file.
+        return matF
 
-        This is used in the Q matrix calculation.
-
-        Returns
-        -------
-        numpy.ndarray
-            Weighting ratio for the iamge quality Q matrix calculation.
-        """
-
-        filePath = os.path.join(self._getInstDir(), self.weightingFileName)
-        qWgt = np.loadtxt(filePath, usecols=1)
-
-        # Do the normalization
-        qWgt = qWgt/np.sum(qWgt)
-
-        return qWgt
-
-    def _getPssnAlphaFromFile(self):
-        """Get the PSSN alpha value from file.
-
-        PSSN: Normalized point source sensitivity.
-
-        Returns
-        -------
-        numpy.ndarray
-            PSSN alpha.
-        """
-
-        filePath = os.path.join(self.configDir, self.pssnAlphaFileName)
-        pssnAlpha = np.loadtxt(filePath, usecols=0)
-
-        return pssnAlpha
-
-    def _getMatH(self, dofIdx):
+    def _getMatH(self, authority, dofIdx):
         """Get the matrix H used in the control algorithm.
 
         This matrix has considered the affection of penality on the
@@ -474,6 +237,8 @@ class OptCtrl(object):
 
         Parameters
         ----------
+        authority : numpy.ndarray
+            Authority of subsystem. 
         dofIdx : numpy.ndarray[int] or list[int]
             Index array of degree of freedom.
 
@@ -483,12 +248,11 @@ class OptCtrl(object):
             Matrix H used in the cost function.
         """
 
-        authority = self.authority[dofIdx]
-        matH = np.diag(authority**2)
+        matH = np.diag(authority[dofIdx]**2)
 
         return matH
 
-    def _calcCCmat(self, pssnAlpha, effWave, zn3Idx):
+    def _calcCCmat(self, optCtrlData, filterType):
         """Calculate the CC matrix used in matrix Q.
 
         Cost function: J = x.T * Q * x + rho * u.T * H * u.
@@ -500,18 +264,20 @@ class OptCtrl(object):
 
         Parameters
         ----------
-        pssnAlpha : numpy.ndarray
-            Normalized point source sensitivity (PSSN) alpha.
-        effWave : float
-            Effective wavelength in um.
-        zn3Idx : numpy.ndarray[int] or list[int]
-            Index array of z3 to zn.
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        filterType : enum 'FilterType'
+            Active filter type.
 
         Returns
         -------
         numpy.ndarray
             C.T * C matrix.
         """
+
+        pssnAlpha = optCtrlData.getPssnAlphaFromFile()
+        effWave = optCtrlData.getEffWave(filterType)
+        zn3Idx = optCtrlData.getZn3Idx()
 
         ccMat = (2*np.pi/effWave)**2 * pssnAlpha[zn3Idx]
         ccMat = np.diag(ccMat)
@@ -545,7 +311,7 @@ class OptCtrl(object):
 
         return qMat
 
-    def _calcF(self, qMat, matH):
+    def _calcF(self, qMat, matH, rho):
         """Calculate the F matrix.
 
         u = - A.T * C.T * C * A / (A.T * C.T * C * A + rho * H) * x0
@@ -559,7 +325,8 @@ class OptCtrl(object):
             Q matrix used in cost functin.
         matH : numpy.ndarray
             Matrix H used in the cost function.
-
+        rho: floate
+            Penality of motion.
         Returns
         -------
         numpy.ndarray
@@ -568,253 +335,9 @@ class OptCtrl(object):
 
         # Because the unit is rms^2, the square of rho read from
         # the *.ctrl file is needed.
-        matF = np.linalg.inv(self.penality["Motion"]**2 * matH + qMat)
+        matF = np.linalg.inv(rho**2 * matH + qMat)
 
         return matF
-
-    def getMatF(self):
-        """Get the F matrix.
-
-        F = inv(A.T * C.T * C * A + rho * H).
-
-        Returns
-        -------
-        numpy.ndarray
-            F matrix.
-        """
-
-        return self.matF
-
-    def getNumOfFieldInQwgt(self):
-        """Get the number of field in the image quality weighting ratio.
-
-        Returns
-        -------
-        int
-            Number of field for the image quality weighting ratio.
-        """
-
-        qWgt = self._getQwgtFromFile()
-
-        return len(qWgt)
-
-    def calcEffGQFWHM(self, pssn, fieldIdx, eta=1.086, fwhmAtm=0.6):
-        """Calculate the effective FWHM by Gaussian quadrature.
-
-        FWHM: Full width at half maximum.
-        FWHM = eta * FWHM_{atm} * sqrt(1/PSSN -1).
-        Effective GQFWHM = sum_{i} (w_{i}* FWHM_{i}).
-
-        Parameters
-        ----------
-        pssn : numpy.ndarray or list
-            Normalized point source sensitivity (PSSN).
-        fieldIdx : numpy.ndarray[int] or list[int]
-            Field index array.
-        eta : float, optional
-            Eta in FWHM calculation. (the default is 1.086.)
-        fwhmAtm : float, optional
-            FWHM in atmosphere. (the default is 0.6.)
-
-        Returns
-        -------
-        float
-            Effective FWHM in arcsec by Gaussain quadrature.
-        """
-
-        qWgt = self._getQwgtFromFile()
-        fwhm = eta * fwhmAtm * np.sqrt(1/np.array(pssn) - 1)
-        fwhmGq = np.sum(qWgt[fieldIdx] * fwhm)
-
-        return fwhmGq
-
-    def getMotRng(self):
-        """Get the range of motion of degree of freedom (DOF).
-
-        Returns
-        -------
-        numpy.ndarray
-            Range of DOF, which is normalized to the unit of um.
-        """
-
-        rbStroke = self._getRbStrokeFromFile()
-        motRng = 1 / self.authority * rbStroke[0]
-
-        return motRng
-
-    def estiUk(self, zn3Idx, dofIdx, effWave, senM, y2c, optSt):
-        """Estimate uk by referencing to "0", "x0", or "x00" based on the
-        configuration file.
-
-        Parameters
-        ----------
-        zn3Idx : numpy.ndarray[int] or list[int]
-            Index array of z3 to zn.
-        dofIdx : numpy.ndarray[int] or list[int]
-            Index array of degree of freedom (DOF).
-        effWave : float
-            Effective wavelength in um.
-        senM : numpy.ndarray
-            Sensitivity matrix M.
-        y2c : numpy.ndarray
-            y2 correction array.
-        optSt : numpy.ndarray
-            Optical state in the basis of DOF.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of DOF.
-        """
-
-        qWgt = self._getQwgtFromFile()
-        pssnAlpha = self._getPssnAlphaFromFile()
-        ccMat = self._calcCCmat(pssnAlpha, effWave, zn3Idx)
-        qx = self._calcQx(qWgt, senM, ccMat, optSt, y2c)
-
-        uk = self._calcUk(qx, dofIdx)
-
-        return uk.ravel()
-
-    def _calcQx(self, qWgt, senM, ccMat, optSt, y2c):
-        """Calculate the Qx.
-
-        Qx = sum_{wi * A.T * C.T * C * (A * yk + y2k)}.
-
-        Parameters
-        ----------
-        qWgt : numpy.ndarray
-            Weighting ratio for the image quality Q matrix calculation.
-        senM : numpy.ndarray
-            Sensitivity matrix M.
-        ccMat : numpy.ndarray
-            C.T * C matrix.
-        optSt : numpy.ndarray
-            Optical state in the basis of degree of freedom (DOF).
-        y2c : numpy.ndarray
-            y2 correction array.
-
-        Returns
-        -------
-        numpy.ndarray
-            qx array.
-        """
-
-        optSt = optSt.reshape(-1, 1)
-
-        qx = 0
-        for aMat, wgt, y2k in zip(senM, qWgt, y2c):
-            y2k = y2k.reshape(-1, 1)
-            qx += wgt * aMat.T.dot(ccMat).dot(aMat.dot(optSt) + y2k)
-
-        return qx
-
-    def _calcUk(self, qx, dofIdx):
-        """Calculate uk by referencing to "0", "x0", or "x00" based on
-        the configuration file.
-
-        Parameters
-        ----------
-        qx : numpy.ndarray
-            qx array.
-        dofIdx : numpy.ndarray[int] or list[int]
-            Index array of degree of freedom.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of degree of freedom (DOF).
-
-        Raises
-        ------
-        ValueError
-            No Xref is assigned.
-        """
-
-        if (self.xRef == "x0"):
-            return self._calcUkRefX0(qx)
-        elif (self.xRef == "0"):
-            return self._calcUkRef0(qx, dofIdx)
-        elif (self.xRef == "x00"):
-            return self._calcUkRefX00(qx, dofIdx)
-        else:
-            raise ValueError("No Xref is assigned.")
-
-    def _calcUkRefX0(self, qx):
-        """Calculate uk by referencing to "x0".
-
-        The offset will only trace the previous one.
-        uk = -gain * F' * QX.
-
-        Parameters
-        ----------
-        qx : numpy.ndarray
-            qx array.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of degree of freedom (DOF).
-        """
-
-        uk = -self.gain * self.matF.dot(qx)
-
-        return uk
-
-    def _calcUkRef0(self, qx, dofIdx):
-        """Calculate uk by referencing to "0".
-
-        The offset will trace the real value and target for 0.
-        uk = -gain * F' * (QX + rho**2 * H * S).
-
-        Parameters
-        ----------
-        qx : numpy.ndarray
-            qx array.
-        dofIdx : numpy.ndarray[int] or list[int]
-            Index array of degree of freedom.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of degree of freedom (DOF).
-        """
-
-        matH = self._getMatH(dofIdx)
-        stateInDof = self.stateInDof[dofIdx].reshape(-1, 1)
-
-        qx += self.penality["Motion"]**2 * matH.dot(stateInDof)
-
-        return self._calcUkRefX0(qx)
-
-    def _calcUkRefX00(self, qx, dofIdx):
-        """Calculate uk by referencing to "x00".
-
-        The offset will only trace the relative changes of offset without
-        regarding the real value.
-        uk = -gain * F' * [QX + rho**2 * H * (S - S0)].
-
-        Parameters
-        ----------
-        qx : numpy.ndarray
-            qx array.
-        dofIdx : numpy.ndarray[int] or list[int]
-            Index array of degree of freedom.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of degree of freedom (DOF).
-        """
-
-        matH = self._getMatH(dofIdx)
-
-        stateDiff = self.stateInDof[dofIdx] - self.state0InDof[dofIdx]
-        stateDiff = stateDiff.reshape(-1, 1)
-
-        qx += self.penality["Motion"]**2 * matH.dot(stateDiff)
-
-        return self._calcUkRefX0(qx)
 
 
 if __name__ == "__main__":

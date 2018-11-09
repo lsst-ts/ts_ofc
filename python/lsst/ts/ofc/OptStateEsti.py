@@ -1,7 +1,9 @@
 import numpy as np
 
+from lsst.ts.ofc.OptStateEstiDefault import OptStateEstiDefault
 
-class OptStateEsti(object):
+
+class OptStateEsti(OptStateEstiDefault):
 
     RCOND = 1e-4
 
@@ -14,7 +16,7 @@ class OptStateEsti(object):
         Parameters
         ----------
         optStateEstiData: OptStateEstiData
-            Instance of OptStateEstiData class.
+            Instance of OptStateEstiDataDecorator class that holds the DataShare instance.
         filterType : enum 'FilterType'
             Active filter type.
         wfErr : numpy.ndarray

@@ -7,7 +7,8 @@ class OptStateEstiDefault(object):
         Parameters
         ----------
         optStateEstiData: OptStateEstiDataDecorator
-            Instance of OptStateEstiDataDecorator class that holds the DataShare instance.
+            Instance of OptStateEstiDataDecorator class that holds the
+            DataShare instance.
         filterType : enum 'FilterType'
             Active filter type.
         wfErr : numpy.ndarray
@@ -19,8 +20,14 @@ class OptStateEstiDefault(object):
         -------
         numpy.ndarray
             Optical state in the basis of DOF.
+
+        Raises
+        ------
+        NotImplementedError
+            Child class should implemented this.
         """
-        raise NotImplementedError("Should have the child class implemented this.")
+        raise NotImplementedError("Child class should implemented this.")
+
 
 if __name__ == "__main__":
     pass

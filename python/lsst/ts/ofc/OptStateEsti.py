@@ -16,7 +16,8 @@ class OptStateEsti(OptStateEstiDefault):
         Parameters
         ----------
         optStateEstiData: OptStateEstiData
-            Instance of OptStateEstiDataDecorator class that holds the DataShare instance.
+            Instance of OptStateEstiDataDecorator class that holds the
+            DataShare instance.
         filterType : enum 'FilterType'
             Active filter type.
         wfErr : numpy.ndarray
@@ -30,7 +31,6 @@ class OptStateEsti(OptStateEstiDefault):
             Optical state in the basis of DOF.
         """
 
-        zn3Idx = optStateEstiData.getZn3Idx()
         intrinsicZk = optStateEstiData.getIntrinsicZk(filterType, fieldIdx)
         y2c = optStateEstiData.getY2Corr(fieldIdx)
 

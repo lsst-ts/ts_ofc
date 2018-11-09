@@ -1,8 +1,6 @@
-import os
 import numpy as np
 
 from lsst.ts.ofc.OptCtrlDefault import OptCtrlDefault
-from lsst.ts.ofc.Utility import InstName, getSetting
 
 
 class OptCtrl(OptCtrlDefault):
@@ -14,7 +12,8 @@ class OptCtrl(OptCtrlDefault):
         Parameters
         ----------
         optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
         filterType : enum 'FilterType'
             Active filter type.
         optSt : numpy.ndarray
@@ -46,7 +45,8 @@ class OptCtrl(OptCtrlDefault):
         Parameters
         ----------
         optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
         filterType : enum 'FilterType'
             Active filter type.
 
@@ -73,7 +73,8 @@ class OptCtrl(OptCtrlDefault):
         Parameters
         ----------
         optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
         ccMat : numpy.ndarray
             C.T * C matrix.
         optSt : numpy.ndarray
@@ -108,23 +109,19 @@ class OptCtrl(OptCtrlDefault):
         Parameters
         ----------
         optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
         filterType : enum 'FilterType'
             Active filter type.
         """
 
-        zn3Idx = optCtrlData.getZn3Idx()
-        dofIdx = optCtrlData.getDofIdx()
-        effWave = optCtrlData.getEffWave(filterType)
-
         authority = optCtrlData.getAuthority()
+        dofIdx = optCtrlData.getDofIdx()
         matH = self._getMatH(authority, dofIdx)
 
-        pssnAlpha = optCtrlData.getPssnAlphaFromFile()
         ccMat = self._calcCCmat(optCtrlData, filterType)
-
-        qWgt = optCtrlData.getQwgtFromFile()
         senM = optCtrlData.getSenM()
+        qWgt = optCtrlData.getQwgtFromFile()
         qMat = self._calcQmat(ccMat, senM, qWgt)
 
         penality = optCtrlData.getPenality()
@@ -141,7 +138,7 @@ class OptCtrl(OptCtrlDefault):
         Parameters
         ----------
         authority : numpy.ndarray
-            Authority of subsystem. 
+            Authority of subsystem.
         dofIdx : numpy.ndarray[int] or list[int]
             Index array of degree of freedom.
 
@@ -217,8 +214,9 @@ class OptCtrl(OptCtrlDefault):
         Parameters
         ----------
         optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
-        matF : numpy.ndarray 
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
+        matF : numpy.ndarray
             Matrix F.
         qx : numpy.ndarray
             qx array.
@@ -252,7 +250,7 @@ class OptCtrl(OptCtrlDefault):
 
         Parameters
         ----------
-        matF : numpy.ndarray 
+        matF : numpy.ndarray
             Matrix F.
         qx : numpy.ndarray
             qx array.
@@ -276,8 +274,9 @@ class OptCtrl(OptCtrlDefault):
         Parameters
         ----------
         optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
-        matF : numpy.ndarray 
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
+        matF : numpy.ndarray
             Matrix F.
         qx : numpy.ndarray
             qx array.
@@ -311,8 +310,9 @@ class OptCtrl(OptCtrlDefault):
         Parameters
         ----------
         optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
-        matF : numpy.ndarray 
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
+        matF : numpy.ndarray
             Matrix F.
         qx : numpy.ndarray
             qx array.

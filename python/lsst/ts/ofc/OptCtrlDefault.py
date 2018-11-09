@@ -1,4 +1,3 @@
-import os
 import numpy as np
 
 
@@ -13,7 +12,7 @@ class OptCtrlDefault(object):
     def __init__(self):
         """Initialization of optimal control default class."""
 
-        self.gain = 0        
+        self.gain = 0
         self.state0InDof = None
         self.stateInDof = None
 
@@ -205,7 +204,8 @@ class OptCtrlDefault(object):
         Parameters
         ----------
         optCtrlData: OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
         filterType : enum 'FilterType'
             Active filter type.
         optSt : numpy.ndarray
@@ -217,15 +217,18 @@ class OptCtrlDefault(object):
             Calculated uk in the basis of DOF.
         """
 
-        return self.gain * self.estiUkWithoutGain(optCtrlData, filterType, optSt)
+        return self.gain * self.estiUkWithoutGain(optCtrlData, filterType,
+                                                  optSt)
 
     def estiUkWithoutGain(self, optCtrlData, filterType, optSt):
-        """Estimate uk in the basis of degree of freedom (DOF) without gain compensation.
+        """Estimate uk in the basis of degree of freedom (DOF) without gain
+        compensation.
 
         Parameters
         ----------
         optCtrlData: OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+            Instance of OptCtrlDataDecorator class that holds the DataShare
+            instance.
         filterType : enum 'FilterType'
             Active filter type.
         optSt : numpy.ndarray
@@ -235,9 +238,15 @@ class OptCtrlDefault(object):
         -------
         numpy.ndarray
             Calculated uk in the basis of DOF.
+
+        Raises
+        ------
+        NotImplementedError
+            Child class should implemented this.
         """
 
-        raise NotImplementedError("Should have the child class implemented this.")
+        raise NotImplementedError("Child class should implemented this.")
+
 
 if __name__ == "__main__":
     pass

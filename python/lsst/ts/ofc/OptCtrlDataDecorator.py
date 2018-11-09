@@ -146,7 +146,8 @@ class OptCtrlDataDecorator(Decorator):
             Rigid body stroke in um.
         """
 
-        filePath = os.path.join(self.getConfigDir(), self.rigidBodyStrokeFileName)
+        filePath = os.path.join(self.getConfigDir(),
+                                self.rigidBodyStrokeFileName)
         rbStroke = getSetting(filePath, "rbStroke")
         rbStroke = list(map(float, rbStroke))
 
@@ -316,7 +317,6 @@ class OptCtrlDataDecorator(Decorator):
         """
 
         return self.xRef
-
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
-import os
 import numpy as np
 
-from lsst.ts.ofc.Utility import getSetting, DofGroup
+from lsst.ts.ofc.Utility import DofGroup
 
 
 class ZTAAC(object):
@@ -151,7 +150,8 @@ class ZTAAC(object):
             instrument. (the default is "state0inDof.txt".)
         """
 
-        state0InDof = self.dataShare.getState0FromFile(state0InDofFileName=state0InDofFileName)
+        state0InDof = self.dataShare.getState0FromFile(
+                        state0InDofFileName=state0InDofFileName)
         self.setState0(state0InDof)
 
     def setGain(self, gain):
@@ -272,7 +272,8 @@ class ZTAAC(object):
         fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
         optSt = self.optStateEsti.estiOptState(self.dataShare, self.filterType,
                                                wfErr, fieldIdx)
-        uk = self.optCtrl.estiUkWithGain(self.dataShare, self.filterType, optSt)
+        uk = self.optCtrl.estiUkWithGain(self.dataShare, self.filterType,
+                                         optSt)
 
         return uk
 

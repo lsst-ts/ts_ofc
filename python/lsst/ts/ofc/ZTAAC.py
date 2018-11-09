@@ -6,7 +6,7 @@ from lsst.ts.ofc.OptStateEsti import getSetting, DofGroup
 
 class ZTAAC(object):
 
-    def __init__(self, optStateEsti, optCtrl):
+    def __init__(self, optStateEsti, optCtrl, dataShare):
         """Initialization of Zernike to actuator adjustment calculator
         (ZTAAC) class.
 
@@ -16,20 +16,19 @@ class ZTAAC(object):
             Configurated optical state estimator instance.
         optCtrl : OptCtrl
             Configurated optimal control instance.
+        dataShare : DataShare
+            Instance of DataShare class or related decorated class.
         """
 
         self.optStateEsti = optStateEsti
         self.optCtrl = optCtrl
+        self.dataShare = dataShare
 
-        self.configDir = None
-        self.sensorIdToNameFileName = None
         self.filterType = None
-        self.rcond = None
         self.defaultGain = None
         self.fwhmThresholdInArcsec = None
 
-    def config(self, configDir, sensorIdToNameFileName="sensorIdToName.txt",
-               filterType=None, rcond=1e-4, defaultGain=0.7,
+    def config(self, filterType=None, defaultGain=0.7,
                fwhmThresholdInArcsec=0.2):
         """Do the configuration of Zernike to actuator adjustment calculator
         (ZTAAC).
@@ -39,15 +38,8 @@ class ZTAAC(object):
 
         Parameters
         ----------
-        configDir : str
-            Configuration directory.
-        sensorIdToNameFileName : str, optional
-            Configuration file name to map sensor Id to name. (the default
-            is "sensorIdToName.txt".)
         filterType : enum 'FilterType', optional
             Active filter type. (the default is None.)
-        rcond : float, optional
-            Cutoff for small singular values. (the default is 1e-4.)
         defaultGain : float, optional
             Default gain value in the feedback. It should be in the range of 0
             and 1. (the default is 0.7.)
@@ -56,12 +48,47 @@ class ZTAAC(object):
             default is 0.2.)
         """
 
-        self.configDir = configDir
-        self.sensorIdToNameFileName = sensorIdToNameFileName
         self.filterType = filterType
         self.rcond = rcond
         self.defaultGain = defaultGain
         self.fwhmThresholdInArcsec = fwhmThresholdInArcsec
+
+    def mapSensorIdToName(self, sensorIdList):
+        """Map the list of sensor Id to sensor name.
+
+        If no sensor name is found for a specific Id, there will be no returned
+        value.
+
+        Parameters
+        ----------
+        sensorIdList : list[int]
+            List of sensor Id.
+
+        Returns
+        -------
+        list
+            List of abbreviated sensor names.
+        int
+            Number of sensors.
+        """
+
+        return self.dataShare.mapSensorIdToName(sensorIdList)
+
+    def mapSensorNameToId(self, sensorNameList):
+        """Map the array of sensor name to sensor Id.
+
+        Parameters
+        ----------
+        sensorNameList : list[str]
+            List of abbreviated sensor names.
+
+        Returns
+        -------
+        list[int]
+            List of sensor Id.
+        """
+
+        return self.dataShare.mapSensorNameToId(sensorNameList)
 
     def setFilter(self, filterType):
         """Set the active filter type.
@@ -115,112 +142,6 @@ class ZTAAC(object):
 
         self.optCtrl.initStateToState0()
 
-    def mapSensorIdToName(self, sensorIdList):
-        """Map the list of sensor Id to sensor name.
-
-        If no sensor name is found for a specific Id, there will be no returned
-        value.
-
-        Parameters
-        ----------
-        sensorIdList : list[int]
-            List of sensor Id.
-
-        Returns
-        -------
-        list
-            List of abbreviated sensor names.
-        int
-            Number of sensors.
-        """
-
-        filePath = self._getMapSensorIdAndNameFilePath()
-
-        sensorNameList = []
-        for sensorId in sensorIdList:
-            try:
-                sensorNameList.append(getSetting(filePath, str(sensorId)))
-            except RuntimeError:
-                pass
-
-        return sensorNameList, len(sensorNameList)
-
-    def mapSensorNameToId(self, sensorNameList):
-        """Map the array of sensor name to sensor Id.
-
-        Parameters
-        ----------
-        sensorNameList : list[str]
-            List of abbreviated sensor names.
-
-        Returns
-        -------
-        list[int]
-            List of sensor Id.
-        """
-
-        filePath = self._getMapSensorIdAndNameFilePath()
-
-        sensorIdList = []
-        for sensorName in sensorNameList:
-            sensorIdList.append(self._mapSensorNameToIdFromFile(filePath,
-                                                                sensorName))
-
-        return sensorIdList
-
-    def _getMapSensorIdAndNameFilePath(self):
-        """Get the file path that maps the sensor Id and name.
-
-        Returns
-        -------
-        str
-            File path.
-        """
-
-        return os.path.join(self.configDir, self.sensorIdToNameFileName)
-
-    def _mapSensorNameToIdFromFile(self, filePath, sensorName):
-        """Map the sensor name to Id based on the mapping file.
-
-        Parameters
-        ----------
-        filePath : str
-            File path.
-        sensorName : str
-            Abbreviated sensor name.
-
-        Returns
-        -------
-        int
-            Sensor Id.
-
-        Raises
-        ------
-        ValueError
-            Can not find the sensor Id of input sensor name.
-        """
-
-        sensorId = None
-        with open(filePath) as file:
-            for line in file:
-                line = line.strip()
-
-                # Skip the comment or empty line
-                if line.startswith("#") or (len(line) == 0):
-                    continue
-
-                sensorIdInFile, sensorNameInFile = line.split()
-
-                if (sensorNameInFile == sensorName):
-                    sensorId = int(sensorIdInFile)
-                    break
-
-        if (sensorId is None):
-            raise ValueError("Can not find the sensor Id of '%s'."
-                             % sensorName)
-
-        return sensorId
-
     def setGain(self, gain):
         """Set the gain value.
 
@@ -249,9 +170,8 @@ class ZTAAC(object):
             FWHM in atmosphere. (the default is 0.6.)
         """
 
-        fieldIdx = self.optStateEsti.getFieldIdx(sensorNameList)
-        fwhmGq = self.optCtrl.calcEffGQFWHM(pssn, fieldIdx, eta=eta,
-                                            fwhmAtm=fwhmAtm)
+        fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
+        fwhmGq = self.optCtrl.calcEffGQFWHM(self.dataShare, pssn, fieldIdx)
 
         if (fwhmGq > self.fwhmThresholdInArcsec):
             gainToUse = 1
@@ -293,8 +213,8 @@ class ZTAAC(object):
             Wavefront error.
         """
 
-        wfErr = self.optStateEsti.getWfAndFieldIdFromFile(wfFilePath,
-                                                          sensorNameList)[0]
+        wfErr = self.dataShare.getWfAndFieldIdFromFile(wfFilePath,
+                                                       sensorNameList)[0]
         return wfErr
 
     def getWfFromShwfsFile(self, wfFilePath):
@@ -316,8 +236,8 @@ class ZTAAC(object):
         """
 
         sensorName = "R22_S11"
-        wfErr = self.optStateEsti.getWfAndFieldIdFromShwfsFile(
-                                wfFilePath, sensorName=sensorName)[0]
+        wfErr = self.dataShare.getWfAndFieldIdFromShwfsFile(
+                            wfFilePath, sensorName=sensorName)[0]
 
         return wfErr, sensorName
 
@@ -337,24 +257,10 @@ class ZTAAC(object):
             Calculated uk in the basis of degree of freedom (DOF).
         """
 
-        # Calculate the optical state
-        fieldIdx = self.optStateEsti.getFieldIdx(sensorNameList)
-
-        self.optStateEsti.setAandPinvA(fieldIdx, rcond=self.rcond)
-        optSt = self.optStateEsti.estiOptState(self.filterType, wfErr,
-                                               fieldIdx)
-
-        # Estimate uk
-        zn3Idx = self.optStateEsti.getZn3Idx()
-        dofIdx = self.optStateEsti.getDofIdx()
-        effWave = self.optStateEsti.getEffWave(self.filterType)
-        senM = self.optStateEsti.getSenM()
-        fieldNumInQwgt = self.optCtrl.getNumOfFieldInQwgt()
-        y2c = self.optStateEsti.getY2Corr(
-                                np.arange(fieldNumInQwgt), isNby1Array=False)
-
-        self.optCtrl.setMatF(zn3Idx, dofIdx, effWave, senM)
-        uk = self.optCtrl.estiUk(zn3Idx, dofIdx, effWave, senM, y2c, optSt)
+        fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
+        optSt = self.optStateEsti.estiOptState(self.dataShare, self.filterType,
+                                               wfErr, fieldIdx)
+        uk = self.optCtrl.estiUk(self.dataShare, self.filterType, optSt)
 
         return uk
 
@@ -367,7 +273,7 @@ class ZTAAC(object):
             Calculated DOF.
         """
 
-        dofIdx = self.optStateEsti.dofIdx
+        dofIdx = self.dataShare.getDofIdx()
         self.optCtrl.aggState(calcDof, dofIdx)
 
     def getGroupDof(self, dofGroup, inputDof=None):
@@ -386,7 +292,7 @@ class ZTAAC(object):
             DOF.
         """
 
-        startIdx, groupLeng = self.optStateEsti.getGroupIdxAndLeng(dofGroup)
+        startIdx, groupLeng = self.dataShare.getGroupIdxAndLeng(dofGroup)
         dof = self.optCtrl.getGroupDof(startIdx, groupLeng, inputDof=inputDof)
 
         return dof
@@ -417,11 +323,11 @@ class ZTAAC(object):
             M2 bending mode. (the default is np.ones(20, dtype=int))
         """
 
-        self.optStateEsti.setZkAndDofInGroups(zkToUse=zkToUse,
-                                              m2HexPos=m2HexPos,
-                                              camHexPos=camHexPos,
-                                              m1m3Bend=m1m3Bend,
-                                              m2Bend=m2Bend)
+        self.dataShare.setZkAndDofInGroups(zkToUse=zkToUse,
+                                           m2HexPos=m2HexPos,
+                                           camHexPos=camHexPos,
+                                           m1m3Bend=m1m3Bend,
+                                           m2Bend=m2Bend)
 
     def rotUk(self, camRot, uk):
         """Rotate uk based on the camera rotation angle.
@@ -478,7 +384,7 @@ class ZTAAC(object):
             Calculated uk in the basis of DOF.
         """
 
-        dofIdx = self.optStateEsti.getDofIdx()
+        dofIdx = self.dataShare.getDofIdx()
 
         return dof[dofIdx]
 
@@ -498,7 +404,7 @@ class ZTAAC(object):
         """
 
         dof = np.zeros(self.optCtrl.getNumOfState0())
-        dofIdx = self.optStateEsti.getDofIdx()
+        dofIdx = self.dataShare.getDofIdx()
         dof[dofIdx] = uk
 
         return dof

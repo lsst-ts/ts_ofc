@@ -16,7 +16,7 @@ class Decorator(object):
 
         Parameters
         ----------
-        attributeName : {[str]}
+        attributeName : str
           Name of attribute or function.
 
         Returns

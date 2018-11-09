@@ -54,3 +54,10 @@ if __name__ == "__main__":
     print(ztaac.getGroupDof(DofGroup.CamHexPos))
     print(ztaac.getGroupDof(DofGroup.M2Bend))
     print(ztaac.getGroupDof(DofGroup.M1M3Bend))
+
+    camRot = CamRot()
+    camRot.setRotAng(45)
+
+    rotUk = ztaac.rotUk(camRot, uk)
+    print(rotUk)
+

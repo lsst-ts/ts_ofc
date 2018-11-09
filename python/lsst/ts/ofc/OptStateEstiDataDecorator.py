@@ -66,7 +66,7 @@ class OptStateEstiDataDecorator(Decorator):
 
         return effWave
 
-    def getY2Corr(self, fieldIdx, isNby1Array=False):
+    def getY2Corr(self, fieldIdx):
         """Get the y2 correction array. This is the zk offset between the
         camera center and corner.
 
@@ -74,9 +74,6 @@ class OptStateEstiDataDecorator(Decorator):
         ----------
         fieldIdx : numpy.ndarray[int] or list[int]
             Field index array.
-
-        isNby1Array : bool, optional
-            In the format of nx1 array or not. (the default is False.)
 
         Returns
         -------
@@ -87,9 +84,6 @@ class OptStateEstiDataDecorator(Decorator):
         filePath = os.path.join(self.getInstDir(), self.y2CorrectionFileName)
         y2c = np.loadtxt(filePath)
         y2c = y2c[np.ix_(fieldIdx, self.getZn3Idx())]
-
-        if (isNby1Array):
-            y2c = y2c.reshape(-1, 1)
 
         return y2c
 
@@ -107,8 +101,7 @@ class OptStateEstiDataDecorator(Decorator):
         Returns
         -------
         numpy.ndarray
-            Instrinsic zk of specific effective wavelength in um. The shape
-            is nx1.
+            Instrinsic zk of specific effective wavelength in um.
         """
 
         # Get the intrinsicZk file path
@@ -127,7 +120,6 @@ class OptStateEstiDataDecorator(Decorator):
         intrinsicZk = np.loadtxt(zkFilePath)
         intrinsicZk = intrinsicZk[np.ix_(fieldIdx, zkIdx)]
         intrinsicZk = intrinsicZk * self.getEffWave(filterType)
-        intrinsicZk = intrinsicZk.reshape(-1, 1)
 
         return intrinsicZk
 

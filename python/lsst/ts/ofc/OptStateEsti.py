@@ -31,10 +31,11 @@ class OptStateEsti(OptStateEstiDefault):
         """
 
         zn3Idx = optStateEstiData.getZn3Idx()
-        wfErr = wfErr[:, zn3Idx].reshape(-1, 1)
         intrinsicZk = optStateEstiData.getIntrinsicZk(filterType, fieldIdx)
-        y2c = optStateEstiData.getY2Corr(fieldIdx, isNby1Array=True)
+        y2c = optStateEstiData.getY2Corr(fieldIdx)
+
         y = wfErr - intrinsicZk - y2c
+        y = y.reshape(-1, 1)
 
         senM = optStateEstiData.getSenM()
         matA = self._getSenA(senM, fieldIdx)

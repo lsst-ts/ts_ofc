@@ -91,7 +91,7 @@ class OptCtrl(OptCtrlDefault):
         senM = optCtrlData.getSenM()
 
         fieldNumInQwgt = optCtrlData.getNumOfFieldInQwgt()
-        y2c = optCtrlData.getY2Corr(np.arange(fieldNumInQwgt), isNby1Array=False)
+        y2c = optCtrlData.getY2Corr(np.arange(fieldNumInQwgt))
 
         qx = 0
         for aMat, wgt, y2k in zip(senM, qWgt, y2c):

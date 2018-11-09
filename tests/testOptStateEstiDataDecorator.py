@@ -20,5 +20,5 @@ if __name__ == "__main__":
     effWave = optStateEstiData.getEffWave(FilterType.REF)
 
     fieldIdx = optStateEstiData.getFieldIdx(["R22_S11", "R22_S12"])
-    y2c = optStateEstiData.getY2Corr(fieldIdx, isNby1Array=True)
+    y2c = optStateEstiData.getY2Corr(fieldIdx)
     intrinsicZk = optStateEstiData.getIntrinsicZk(FilterType.REF, fieldIdx)

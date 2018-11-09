@@ -47,6 +47,9 @@ if __name__ == "__main__":
     optCtrl.setGain(1)
 
     # mixedData.xRef = "x00"
-    uk = optCtrl.estiUk(mixedData, FilterType.REF, optState)
-
+    optCtrl.setGain(0.7)
+    uk = optCtrl.estiUkWithGain(mixedData, FilterType.REF, optState)
     print(uk)
+
+    uk0 = optCtrl.estiUkWithoutGain(mixedData, FilterType.REF, optState)
+    print(uk0)

@@ -267,6 +267,11 @@ class OptCtrlDataDecorator(Decorator):
         state0InDofFileName : str, optional
             File name to read the telescope state 0, which depends on the
             instrument. (the default is "state0inDof.txt".)
+
+        Returns
+        -------
+        numpy.ndarray
+            State 0.
         """
 
         filePath = os.path.join(self.getInstDir(), state0InDofFileName)

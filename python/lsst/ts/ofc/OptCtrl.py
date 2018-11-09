@@ -7,9 +7,9 @@ from lsst.ts.ofc.Utility import InstName, getSetting
 
 class OptCtrl(OptCtrlDefault):
 
-    def estiUk(self, optCtrlData, filterType, optSt):
+    def estiUkWithoutGain(self, optCtrlData, filterType, optSt):
         """Estimate uk by referencing to "0", "x0", or "x00" based on the
-        configuration file.
+        configuration file without gain compensation..
 
         Parameters
         ----------
@@ -32,6 +32,38 @@ class OptCtrl(OptCtrlDefault):
         uk = self._calcUk(optCtrlData, matF, qx)
 
         return uk.ravel()
+
+    def _calcCCmat(self, optCtrlData, filterType):
+        """Calculate the CC matrix used in matrix Q.
+
+        Cost function: J = x.T * Q * x + rho * u.T * H * u.
+        Choose x.T * Q * x = p.T * p
+        p = C * y = C * (A * x)
+        p.T * p = (C * A * x).T * C * A * x
+                = x.T * (A.T * C.T * C * A) * x = x.T * Q * x
+        CCmat is C.T *C above.
+
+        Parameters
+        ----------
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        filterType : enum 'FilterType'
+            Active filter type.
+
+        Returns
+        -------
+        numpy.ndarray
+            C.T * C matrix.
+        """
+
+        pssnAlpha = optCtrlData.getPssnAlphaFromFile()
+        effWave = optCtrlData.getEffWave(filterType)
+        zn3Idx = optCtrlData.getZn3Idx()
+
+        ccMat = (2*np.pi/effWave)**2 * pssnAlpha[zn3Idx]
+        ccMat = np.diag(ccMat)
+
+        return ccMat
 
     def _calcQx(self, optCtrlData, ccMat, optSt):
         """Calculate the Qx.
@@ -67,135 +99,6 @@ class OptCtrl(OptCtrlDefault):
             qx += wgt * aMat.T.dot(ccMat).dot(aMat.dot(optSt) + y2k)
 
         return qx
-
-    def _calcUk(self, optCtrlData, matF, qx):
-        """Calculate uk by referencing to "0", "x0", or "x00" based on
-        the configuration file.
-
-        Parameters
-        ----------
-        optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
-        matF : numpy.ndarray 
-            Matrix F.
-        qx : numpy.ndarray
-            qx array.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of degree of freedom (DOF).
-
-        Raises
-        ------
-        ValueError
-            No Xref is assigned.
-        """
-
-        xRef = optCtrlData.getXref()
-        if (xRef == "x0"):
-            return self._calcUkRefX0(matF, qx)
-        elif (xRef == "0"):
-            return self._calcUkRef0(optCtrlData, matF, qx)
-        elif (xRef == "x00"):
-            return self._calcUkRefX00(optCtrlData, matF, qx)
-        else:
-            raise ValueError("No Xref is assigned.")
-
-    def _calcUkRefX0(self, matF, qx):
-        """Calculate uk by referencing to "x0".
-
-        The offset will only trace the previous one.
-        uk = -gain * F' * QX.
-
-        Parameters
-        ----------
-        matF : numpy.ndarray 
-            Matrix F.
-        qx : numpy.ndarray
-            qx array.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of degree of freedom (DOF).
-        """
-
-        uk = -self.gain * matF.dot(qx)
-
-        return uk
-
-    def _calcUkRef0(self, optCtrlData, matF, qx):
-        """Calculate uk by referencing to "0".
-
-        The offset will trace the real value and target for 0.
-        uk = -gain * F' * (QX + rho**2 * H * S).
-
-        Parameters
-        ----------
-        optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
-        matF : numpy.ndarray 
-            Matrix F.
-        qx : numpy.ndarray
-            qx array.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of degree of freedom (DOF).
-        """
-
-        authority = optCtrlData.getAuthority()
-        dofIdx = optCtrlData.getDofIdx()
-        matH = self._getMatH(authority, dofIdx)
-
-        stateInDof = self.getState(dofIdx)
-        stateInDof = stateInDof.reshape(-1, 1)
-
-        penality = optCtrlData.getPenality()
-        rho = penality["Motion"]
-        qx += rho**2 * matH.dot(stateInDof)
-
-        return self._calcUkRefX0(matF, qx)
-
-    def _calcUkRefX00(self, optCtrlData, matF, qx):
-        """Calculate uk by referencing to "x00".
-
-        The offset will only trace the relative changes of offset without
-        regarding the real value.
-        uk = -gain * F' * [QX + rho**2 * H * (S - S0)].
-
-        Parameters
-        ----------
-        optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
-        matF : numpy.ndarray 
-            Matrix F.
-        qx : numpy.ndarray
-            qx array.
-
-        Returns
-        -------
-        numpy.ndarray
-            Calculated uk in the basis of degree of freedom (DOF).
-        """
-
-        authority = optCtrlData.getAuthority()
-        dofIdx = optCtrlData.getDofIdx()
-        matH = self._getMatH(authority, dofIdx)
-
-        stateInDof = self.getState(dofIdx)
-        state0InDof = self.getState0(dofIdx)
-        stateDiff = stateInDof - state0InDof
-        stateDiff = stateDiff.reshape(-1, 1)
-
-        penality = optCtrlData.getPenality()
-        rho = penality["Motion"]
-
-        qx += rho**2 * matH.dot(stateDiff)
-
-        return self._calcUkRefX0(matF, qx)
 
     def _calcMatF(self, optCtrlData, filterType):
         """Calculate the F matrix.
@@ -252,38 +155,6 @@ class OptCtrl(OptCtrlDefault):
 
         return matH
 
-    def _calcCCmat(self, optCtrlData, filterType):
-        """Calculate the CC matrix used in matrix Q.
-
-        Cost function: J = x.T * Q * x + rho * u.T * H * u.
-        Choose x.T * Q * x = p.T * p
-        p = C * y = C * (A * x)
-        p.T * p = (C * A * x).T * C * A * x
-                = x.T * (A.T * C.T * C * A) * x = x.T * Q * x
-        CCmat is C.T *C above.
-
-        Parameters
-        ----------
-        optCtrlData : OptCtrlDataDecorator
-            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
-        filterType : enum 'FilterType'
-            Active filter type.
-
-        Returns
-        -------
-        numpy.ndarray
-            C.T * C matrix.
-        """
-
-        pssnAlpha = optCtrlData.getPssnAlphaFromFile()
-        effWave = optCtrlData.getEffWave(filterType)
-        zn3Idx = optCtrlData.getZn3Idx()
-
-        ccMat = (2*np.pi/effWave)**2 * pssnAlpha[zn3Idx]
-        ccMat = np.diag(ccMat)
-
-        return ccMat
-
     def _calcQmat(self, ccMat, senM, qWgt):
         """Calculate the Q matrix used in the cost function.
 
@@ -338,6 +209,135 @@ class OptCtrl(OptCtrlDefault):
         matF = np.linalg.inv(rho**2 * matH + qMat)
 
         return matF
+
+    def _calcUk(self, optCtrlData, matF, qx):
+        """Calculate uk by referencing to "0", "x0", or "x00" based on
+        the configuration file.
+
+        Parameters
+        ----------
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        matF : numpy.ndarray 
+            Matrix F.
+        qx : numpy.ndarray
+            qx array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Calculated uk in the basis of degree of freedom (DOF).
+
+        Raises
+        ------
+        ValueError
+            No Xref is assigned.
+        """
+
+        xRef = optCtrlData.getXref()
+        if (xRef == "x0"):
+            return self._calcUkRefX0(matF, qx)
+        elif (xRef == "0"):
+            return self._calcUkRef0(optCtrlData, matF, qx)
+        elif (xRef == "x00"):
+            return self._calcUkRefX00(optCtrlData, matF, qx)
+        else:
+            raise ValueError("No Xref is assigned.")
+
+    def _calcUkRefX0(self, matF, qx):
+        """Calculate uk by referencing to "x0".
+
+        The offset will only trace the previous one.
+        uk = -F' * QX.
+
+        Parameters
+        ----------
+        matF : numpy.ndarray 
+            Matrix F.
+        qx : numpy.ndarray
+            qx array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Calculated uk in the basis of degree of freedom (DOF).
+        """
+
+        uk = -matF.dot(qx)
+
+        return uk
+
+    def _calcUkRef0(self, optCtrlData, matF, qx):
+        """Calculate uk by referencing to "0".
+
+        The offset will trace the real value and target for 0.
+        uk = -F' * (QX + rho**2 * H * S).
+
+        Parameters
+        ----------
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        matF : numpy.ndarray 
+            Matrix F.
+        qx : numpy.ndarray
+            qx array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Calculated uk in the basis of degree of freedom (DOF).
+        """
+
+        authority = optCtrlData.getAuthority()
+        dofIdx = optCtrlData.getDofIdx()
+        matH = self._getMatH(authority, dofIdx)
+
+        stateInDof = self.getState(dofIdx)
+        stateInDof = stateInDof.reshape(-1, 1)
+
+        penality = optCtrlData.getPenality()
+        rho = penality["Motion"]
+        qx += rho**2 * matH.dot(stateInDof)
+
+        return self._calcUkRefX0(matF, qx)
+
+    def _calcUkRefX00(self, optCtrlData, matF, qx):
+        """Calculate uk by referencing to "x00".
+
+        The offset will only trace the relative changes of offset without
+        regarding the real value.
+        uk = -F' * [QX + rho**2 * H * (S - S0)].
+
+        Parameters
+        ----------
+        optCtrlData : OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        matF : numpy.ndarray 
+            Matrix F.
+        qx : numpy.ndarray
+            qx array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Calculated uk in the basis of degree of freedom (DOF).
+        """
+
+        authority = optCtrlData.getAuthority()
+        dofIdx = optCtrlData.getDofIdx()
+        matH = self._getMatH(authority, dofIdx)
+
+        stateInDof = self.getState(dofIdx)
+        state0InDof = self.getState0(dofIdx)
+        stateDiff = stateInDof - state0InDof
+        stateDiff = stateDiff.reshape(-1, 1)
+
+        penality = optCtrlData.getPenality()
+        rho = penality["Motion"]
+
+        qx += rho**2 * matH.dot(stateDiff)
+
+        return self._calcUkRefX0(matF, qx)
 
 
 if __name__ == "__main__":

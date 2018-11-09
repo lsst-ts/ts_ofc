@@ -199,8 +199,28 @@ class OptCtrlDefault(object):
 
         return fwhmGq
 
-    def estiUk(self, optCtrlData, filterType, optSt):
-        """Estimate uk in the basis of degree of freedom (DOF).
+    def estiUkWithGain(self, optCtrlData, filterType, optSt):
+        """Estimate uk in the basis of degree of freedom (DOF) with gain compensation.
+
+        Parameters
+        ----------
+        optCtrlData: OptCtrlDataDecorator
+            Instance of OptCtrlDataDecorator class that holds the DataShare instance.
+        filterType : enum 'FilterType'
+            Active filter type.
+        optSt : numpy.ndarray
+            Optical state in the basis of DOF.
+
+        Returns
+        -------
+        numpy.ndarray
+            Calculated uk in the basis of DOF.
+        """
+
+        return self.gain * self.estiUkWithoutGain(optCtrlData, filterType, optSt)
+
+    def estiUkWithoutGain(self, optCtrlData, filterType, optSt):
+        """Estimate uk in the basis of degree of freedom (DOF) without gain compensation.
 
         Parameters
         ----------
@@ -218,7 +238,6 @@ class OptCtrlDefault(object):
         """
 
         raise NotImplementedError("Should have the child class implemented this.")
-
 
 if __name__ == "__main__":
     pass

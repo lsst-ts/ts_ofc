@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from lsst.ts.ofc.OptStateEsti import getSetting, DofGroup
+from lsst.ts.ofc.Utility import getSetting, DofGroup
 
 
 class ZTAAC(object):
@@ -49,7 +49,6 @@ class ZTAAC(object):
         """
 
         self.filterType = filterType
-        self.rcond = rcond
         self.defaultGain = defaultGain
         self.fwhmThresholdInArcsec = fwhmThresholdInArcsec
 
@@ -141,6 +140,19 @@ class ZTAAC(object):
         """Set the state to state 0."""
 
         self.optCtrl.initStateToState0()
+
+    def setState0FromFile(self, state0InDofFileName="state0inDof.txt"):
+        """Set the state 0 in degree of freedom (DOF) from the file.
+
+        Parameters
+        ----------
+        state0InDofFileName : str, optional
+            File name to read the telescope state 0, which depends on the
+            instrument. (the default is "state0inDof.txt".)
+        """
+
+        state0InDof = self.dataShare.getState0FromFile(state0InDofFileName=state0InDofFileName)
+        self.setState0(state0InDof)
 
     def setGain(self, gain):
         """Set the gain value.
@@ -241,8 +253,8 @@ class ZTAAC(object):
 
         return wfErr, sensorName
 
-    def estiUk(self, wfErr, sensorNameList):
-        """Estimate uk.
+    def estiUkWithGain(self, wfErr, sensorNameList):
+        """Estimate uk with gain compensation.
 
         Parameters
         ----------
@@ -260,7 +272,7 @@ class ZTAAC(object):
         fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
         optSt = self.optStateEsti.estiOptState(self.dataShare, self.filterType,
                                                wfErr, fieldIdx)
-        uk = self.optCtrl.estiUk(self.dataShare, self.filterType, optSt)
+        uk = self.optCtrl.estiUkWithGain(self.dataShare, self.filterType, optSt)
 
         return uk
 

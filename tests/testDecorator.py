@@ -32,16 +32,19 @@ class TestDecorator(unittest.TestCase):
     """Test the Decorator class."""
 
     def setUp(self):
+
         obj = TempObj()
         self.decorator = TempDecorator(obj, 3)
 
     def testDecoratoredObj(self):
+
         self.assertEqual(self.decorator.getA(), 0)
 
         self.decorator.addA()
         self.assertEqual(self.decorator.getA(), 1)
 
     def testDecorator(self):
+
         self.assertEqual(self.decorator.getB(), 3)
 
         self.decorator.minusA()

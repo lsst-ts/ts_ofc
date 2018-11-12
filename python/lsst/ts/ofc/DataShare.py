@@ -248,7 +248,16 @@ class DataShare(object):
         -------
         list
             Field index array.
+
+        Raises
+        ------
+        TypeError
+            The input type is not list.
         """
+
+        if (not isinstance(sensorNameList, list)):
+            raise TypeError("The input type is '%s' instead of list."
+                            % type(sensorNameList))
 
         filePath = os.path.join(self.getInstDir(), self.mappingFileName)
 
@@ -274,18 +283,25 @@ class DataShare(object):
             Start index of group.
         int
             Index length of group.
+
+        Raises
+        ------
+        ValueError
+            The input is not found in the idxDof file.
         """
 
         # Assign the parameter name
-        dofVal = dofGroup.value
-        if (dofVal == 1):
+        if (dofGroup == DofGroup.M2HexPos):
             param = "M2_Hex_Pos"
-        elif (dofVal == 2):
+        elif (dofGroup == DofGroup.CamHexPos):
             param = "Cam_Hex_Pos"
-        elif (dofVal == 3):
+        elif (dofGroup == DofGroup.M1M3Bend):
             param = "M1M3_Bend"
-        elif (dofVal == 4):
+        elif (dofGroup == DofGroup.M2Bend):
             param = "M2_Bend"
+        else:
+            raise ValueError("'%s' is not found in the '%s'."
+                             % (dofGroup, self.idxDofFileName))
 
         # Get the values from the file
         filePath = os.path.join(self.configDir, self.idxDofFileName)
@@ -339,11 +355,18 @@ class DataShare(object):
             M1M3 bending mode. (the default is np.ones(20, dtype=int))
         m2Bend : numpy.ndarray[int] or list[int], optional
             M2 bending mode. (the default is np.ones(20, dtype=int))
+
+        Raises
+        ------
+        ValueError
+            The length of 'zkToUse' is incorrect.
+        ValueError
+            "The length of DOF is incorrect."
         """
 
         if (len(zkToUse) != self.zn3Max):
-            raise RuntimeError("The length of 'zkToUse' should be %d."
-                               % self.zn3Max)
+            raise ValueError("The length of 'zkToUse' should be %d."
+                              % self.zn3Max)
 
         # Get the index of zk to use
         zn3Idx = self._getNonZeroIdx(zkToUse)
@@ -356,7 +379,7 @@ class DataShare(object):
             startIdx, groupLeng = self.getGroupIdxAndLeng(dofGroup)
 
             if (len(dofInput) != groupLeng):
-                raise RuntimeError("The length of DOF is incorrect.")
+                raise ValueError("The length of DOF is incorrect.")
 
             idx = self._getNonZeroIdx(dofInput)
             dofIdx = np.append(dofIdx, idx+startIdx)
@@ -378,11 +401,11 @@ class DataShare(object):
         numpy.ndarray
             Wavefront error.
         list
-            Field index array.
+            Field index list.
 
         Raises
         ------
-        RuntimeError
+        ValueError
             Number of sensors does not match the file.
         """
 
@@ -390,7 +413,7 @@ class DataShare(object):
         fieldIdx = self.getFieldIdx(sensorNameList)
 
         if (len(fieldIdx) != wfErr.shape[0]):
-            raise RuntimeError("Number of sensors does not match the file.")
+            raise ValueError("Number of sensors does not match the file.")
 
         return wfErr, fieldIdx
 

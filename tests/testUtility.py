@@ -9,9 +9,11 @@ class TestUtility(unittest.TestCase):
     """Test the Utility functions."""
 
     def setUp(self):
+
         self.configDir = os.path.join(".", "testData")
 
     def testGetSetting(self):
+
         configFileName = "dataShare.txt"
         filePath = os.path.join(self.configDir, configFileName)
 
@@ -31,6 +33,7 @@ class TestUtility(unittest.TestCase):
                           "notThisSetting")
 
     def testGetDirFiles(self):
+
         filePaths = getDirFiles(self.configDir)
         self.assertEqual(len(filePaths), 7)
 

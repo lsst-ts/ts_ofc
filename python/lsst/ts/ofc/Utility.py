@@ -46,7 +46,7 @@ def getSetting(filePath, param, arrayParamList=[]):
 
     Raises
     ------
-    RuntimeError
+    ValueError
         No setting value is found.
     """
 
@@ -83,7 +83,7 @@ def getSetting(filePath, param, arrayParamList=[]):
                 break
 
     if (val is None):
-        raise RuntimeError("Can not find the setting of %s." % param)
+        raise ValueError("Can not find the setting of %s." % param)
 
     return val
 
@@ -126,7 +126,7 @@ def getMatchFilePath(reMatchStr, filePaths):
 
     Raises
     ------
-    RuntimeError
+    FileNotFoundError
         Cannot find the matched file.
     """
 
@@ -141,8 +141,8 @@ def getMatchFilePath(reMatchStr, filePaths):
             matchFilePath = filePath
             break
 
-    if matchFilePath is None:
-        raise RuntimeError("Cannot find the matched file.")
+    if (matchFilePath is None):
+        raise FileNotFoundError("Cannot find the matched file.")
 
     return matchFilePath
 

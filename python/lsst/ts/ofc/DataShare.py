@@ -23,7 +23,7 @@ class DataShare(object):
         self.senM = None
 
     def config(self, configDir, instName=InstName.LSST,
-               configFileName="pinv.esti",
+               configFileName="dataShare.txt",
                mappingFileName="sensorNameToFieldIdx.txt",
                idxDofFileName="idxDOF.txt",
                sensorIdToNameFileName="sensorIdToName.txt"):
@@ -36,7 +36,7 @@ class DataShare(object):
         instName : enum 'InstName', optional
             Instrument name. (the default is InstName.LSST.)
         configFileName : str, optional
-            Name of configuration file. (the default is "pinv.esti".)
+            Name of configuration file. (the default is "dataShare.txt".)
         mappingFileName : str, optional
             File name of mapping abbreviated sensor name to index of optical
             field.  (the default is "sensorNameToFieldIdx.txt".)

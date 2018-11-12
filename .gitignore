@@ -1,4 +1,9 @@
+# Python built file
 *.pyc
 *.so
 *.c
 *.o
+
+# Coverage test files
+tests/.coverage
+tests/htmlcov

@@ -280,22 +280,6 @@ class OptCtrlDataDecorator(Decorator):
 
         return state0InDof
 
-    def getDofFromFile(self, dofFilePath):
-        """Get the degree of freedom (DOF) from file.
-
-        Parameters
-        ----------
-        dofFilePath : str
-            DOF file path.
-
-        Returns
-        -------
-        numpy.ndarray
-            DOF.
-        """
-
-        return np.loadtxt(dofFilePath, usecols=1)
-
     def getPenality(self):
         """Get the penality of subsystems.
 

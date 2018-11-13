@@ -34,18 +34,19 @@ class OptStateEsti(OptStateEstiDefault):
         intrinsicZk = optStateEstiData.getIntrinsicZk(filterType, fieldIdx)
         y2c = optStateEstiData.getY2Corr(fieldIdx)
 
-        y = wfErr - intrinsicZk - y2c
+        zn3Idx = optStateEstiData.getZn3Idx()
+        y = wfErr[:, zn3Idx] - intrinsicZk - y2c
         y = y.reshape(-1, 1)
 
         senM = optStateEstiData.getSenM()
-        matA = self._getSenA(senM, fieldIdx)
+        matA = self._getMatA(senM, fieldIdx)
         pinvA = self._getPinvA(matA, self.RCOND)
 
         x = pinvA.dot(y)
 
         return x.ravel()
 
-    def _getSenA(self, senM, fieldIdx):
+    def _getMatA(self, senM, fieldIdx):
         """Get the sensitivity matrix A based on the array of field index.
 
         Parameters

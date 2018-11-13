@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from lsst.ts.ofc.DataShare import DataShare
-from lsst.ts.ofc.Utility import InstName, FilterType, DofGroup
+from lsst.ts.ofc.Utility import InstName, DofGroup
 
 
 class TestDataShare(unittest.TestCase):
@@ -46,6 +46,16 @@ class TestDataShare(unittest.TestCase):
         instDirPath = os.path.join(self.configDir, "comcam")
         self.assertEqual(dataShare.getInstDir(), instDirPath)
         self.assertEqual(dataShare.getSenM().shape, (9, 19, 50))
+
+    def testSenMShape(self):
+
+        dataShare = DataShare()
+        configDir = os.path.join(".", "testData")
+
+        self.assertRaises(ValueError, dataShare.config, configDir,
+                          InstName.LSST)
+        self.assertRaises(ValueError, dataShare.config, configDir,
+                          InstName.COMCAM)
 
     def testGetFieldIdx(self):
 
@@ -139,37 +149,59 @@ class TestDataShare(unittest.TestCase):
         incorrectSensorNameList = ["R44_S00", "R04_S20", "R00_S22"]
         self.assertRaises(ValueError, self.dataShare.getWfAndFieldIdFromFile,
                           wfFilePath, incorrectSensorNameList)
-        
+
+    def testGetWfAndFieldIdFromShwfsFile(self):
+
+        wfFilePath = os.path.join(".", "testData", "shwfs_wfs_error.txt")
+        sensorName = "R22_S11"
+        wfErr, fieldIdx = self.dataShare.getWfAndFieldIdFromShwfsFile(
+                                        wfFilePath, sensorName=sensorName)
+
+        self.assertEqual(len(wfErr), 19)
+        self.assertEqual(fieldIdx, [0])
+        self.assertEqual(wfErr[0], 1000)
+
+    def testMapSensorIdToName(self):
+
+        sensorIdList = [1, 2, 3, 4]
+        sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
+                                                            sensorIdList)
+        self.assertEqual(sensorNameList,
+                         ["R00_S21", "R00_S22", "R01_S00", "R01_S01"])
+        self.assertEqual(numOfsensor, 4)
+
+        sensorIdList = [1, -1]
+        sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
+                                                            sensorIdList)
+        self.assertEqual(sensorNameList, ["R00_S21"])
+        self.assertEqual(numOfsensor, 1)
+
+        sensorIdList = []
+        sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
+                                                            sensorIdList)
+        self.assertEqual(sensorNameList, [])
+        self.assertEqual(numOfsensor, 0)
+
+    def testMapSensorNameToId(self):
+
+        sensorNameList = ["R00_S21", "R00_S22", "R01_S00", "R01_S01"]
+        sensorIdList = self.dataShare.mapSensorNameToId(sensorNameList)
+        self.assertEqual(sensorIdList, [1, 2, 3, 4])
+
+        sensorNameList = []
+        sensorIdList = self.dataShare.mapSensorNameToId(sensorNameList)
+        self.assertEqual(sensorIdList, [])
+
+        incorrectSensorNameList = ["R00_S21", "R000_S1111"]
+        self.assertRaises(ValueError, self.dataShare.mapSensorNameToId,
+                          incorrectSensorNameList)
+
+        incorrectSensorNameList = "R00_S21"
+        self.assertRaises(TypeError, self.dataShare.mapSensorNameToId,
+                          incorrectSensorNameList)
 
 
 if __name__ == "__main__":
 
     # Run the unit test
     unittest.main()
-
-    # configDir = "/home/ttsai/Documents/github/ts_tcs_ofcPython/configData"
-
-    # dataShare = DataShare()
-    # dataShare.config(configDir, instName=InstName.LSST)
-
-    # fieldIdx = dataShare.getFieldIdx(["R22_S11", "R22_S12"])
-
-    # startIdx, groupLeng = dataShare.getGroupIdxAndLeng(DofGroup.M2Bend)
-
-    # zn3Idx = [1, 2, 3]
-    # dofIdx = [3, 4, 5, 6,7]
-    # dataShare.setZkAndDofIdxArrays(zn3Idx, dofIdx)
-
-    # zkToUse = [0,0,1,1,1,1,0,0,0,1,1,1,1,1,0,0,0,0,0]
-    # camHexPos = [0,0,0,0,0]
-    # dataShare.setZkAndDofInGroups(zkToUse=zkToUse, camHexPos=camHexPos)
-
-    # testDataDir = "/home/ttsai/Documents/github/ts_tcs_ofcPython/tests/testData"
-    # testWfsFile = "lsst_wfs_error_iter0.z4c"
-    # testWfsFilePath = os.path.join(testDataDir, testWfsFile)
-
-    # sensorNameArray = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
-    # wfErr, fieldIdx = dataShare.getWfAndFieldIdFromFile(testWfsFilePath, sensorNameArray)
-
-    # testShwfsFilePath = os.path.join(testDataDir, "shwfs_wfs_error.txt")
-    # wfErr, fieldIdx = dataShare.getWfAndFieldIdFromShwfsFile(testShwfsFilePath)

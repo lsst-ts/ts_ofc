@@ -51,6 +51,7 @@ class DataShare(object):
         self.instName = instName
         self.mappingFileName = mappingFileName
         self.idxDofFileName = idxDofFileName
+        self.sensorIdToNameFileName = sensorIdToNameFileName
 
         self._readSetting(configFileName)
         self._setSenM()
@@ -184,7 +185,7 @@ class DataShare(object):
 
         Raises
         ------
-        RuntimeError
+        ValueError
             Cannot match the shape of M.
         """
 
@@ -196,7 +197,7 @@ class DataShare(object):
             shape = tuple(map(int, shape))
 
         if shape is None:
-            raise RuntimeError("Cannot match the shape of M.")
+            raise ValueError("Cannot match the shape of M.")
 
         return shape
 
@@ -255,18 +256,43 @@ class DataShare(object):
             The input type is not list.
         """
 
-        if (not isinstance(sensorNameList, list)):
-            raise TypeError("The input type is '%s' instead of list."
-                            % type(sensorNameList))
-
-        filePath = os.path.join(self.getInstDir(), self.mappingFileName)
-
         fieldIdx = []
-        for sensorName in sensorNameList:
-            field = getSetting(filePath, sensorName)
-            fieldIdx.append(int(field))
+        if (self._inputIsList(sensorNameList)):
+
+            filePath = os.path.join(self.getInstDir(), self.mappingFileName)
+
+            for sensorName in sensorNameList:
+                field = getSetting(filePath, sensorName)
+                fieldIdx.append(int(field))
 
         return fieldIdx
+
+    def _inputIsList(self, input):
+        """Check the type of input is list or not.
+
+        Parameters
+        ----------
+        input : obj
+            Input.
+
+        Returns
+        -------
+        bool
+            True if the input's type is list.
+
+        Raises
+        ------
+        TypeError
+            The input type is not list.
+        """
+
+        inputIsList = True
+        if (not isinstance(input, list)):
+            inputIsList = False
+            raise TypeError("The input type is '%s' instead of list."
+                            % type(input))
+
+        return inputIsList
 
     def getGroupIdxAndLeng(self, dofGroup):
         """Get the start index and length of specific group of degree of
@@ -366,7 +392,7 @@ class DataShare(object):
 
         if (len(zkToUse) != self.zn3Max):
             raise ValueError("The length of 'zkToUse' should be %d."
-                              % self.zn3Max)
+                             % self.zn3Max)
 
         # Get the index of zk to use
         zn3Idx = self._getNonZeroIdx(zkToUse)
@@ -393,7 +419,7 @@ class DataShare(object):
         ----------
         wfFilePath : str
             Wavefront error file path.
-        sensorNameList : list
+        sensorNameList : list[str]
             List of abbreviated sensor name.
 
         Returns
@@ -469,7 +495,7 @@ class DataShare(object):
         for sensorId in sensorIdList:
             try:
                 sensorNameList.append(getSetting(filePath, str(sensorId)))
-            except RuntimeError:
+            except ValueError:
                 pass
 
         return sensorNameList, len(sensorNameList)
@@ -488,12 +514,14 @@ class DataShare(object):
             List of sensor Id.
         """
 
-        filePath = self._getMapSensorIdAndNameFilePath()
-
         sensorIdList = []
-        for sensorName in sensorNameList:
-            sensorIdList.append(self._mapSensorNameToIdFromFile(filePath,
-                                                                sensorName))
+        if self._inputIsList(sensorNameList):
+
+            filePath = self._getMapSensorIdAndNameFilePath()
+
+            for sensorName in sensorNameList:
+                sensorIdList.append(self._mapSensorNameToIdFromFile(
+                                                filePath, sensorName))
 
         return sensorIdList
 

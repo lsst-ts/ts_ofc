@@ -31,7 +31,7 @@ class OptCtrlDefault(object):
             State 0 in DOF.
         """
 
-        self.state0InDof = np.array(state0InDof)
+        self.state0InDof = np.array(state0InDof, dtype=float)
 
     def setState(self, stateInDof):
         """Set the state in degree of freedom (DOF).
@@ -42,7 +42,7 @@ class OptCtrlDefault(object):
             State in DOF.
         """
 
-        self.stateInDof = np.array(stateInDof)
+        self.stateInDof = np.array(stateInDof, dtype=float)
 
     def getState0(self, dofIdx):
         """Get the state 0 in degree of freedom (DOF).
@@ -92,14 +92,14 @@ class OptCtrlDefault(object):
 
         Parameters
         ----------
-        calcDof : numpy.ndarray
+        calcDof : numpy.ndarray or list
             Calculated DOF.
         dofIdx : numpy.ndarray[int] or list[int]
             Index array of degree of freedom.
         """
 
-        addDof = np.zeros(self.getNumOfState0())
-        addDof[dofIdx] = calcDof
+        addDof = np.zeros(self.getNumOfState0(), dtype=float)
+        addDof[dofIdx] = np.array(calcDof, dtype=float)
 
         self.stateInDof += addDof
 
@@ -190,11 +190,19 @@ class OptCtrlDefault(object):
         -------
         float
             Effective FWHM in arcsec by Gaussain quadrature.
+
+        Raises
+        ------
+        ValueError
+            Input values are unphysical.
         """
 
         qWgt = optCtrlDataDecorator.getQwgtFromFile()
         fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1/np.array(pssn) - 1)
         fwhmGq = np.sum(qWgt[fieldIdx] * fwhm)
+
+        if np.isnan(fwhmGq) or np.isinf(fwhmGq):
+            raise ValueError("Input values are unphysical.")
 
         return fwhmGq
 

@@ -3,53 +3,86 @@ import numpy as np
 import unittest
 
 from lsst.ts.ofc.Utility import InstName, FilterType
-
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
 from lsst.ts.ofc.OptCtrlDataDecorator import OptCtrlDataDecorator
-
 from lsst.ts.ofc.OptStateEsti import OptStateEsti
 from lsst.ts.ofc.OptCtrl import OptCtrl
 
+
+class TestOptCtrl(unittest.TestCase):
+    """Test the OptCtrl class."""
+
+    def setUp(self):
+
+        dataShare = DataShare()
+        configDir = os.path.join("..", "configData")
+        dataShare.config(configDir, instName=InstName.LSST)
+
+        optStateEstiData = OptStateEstiDataDecorator(dataShare)
+        optStateEstiData.configOptStateEstiData()
+        self.optCtrlData = OptCtrlDataDecorator(optStateEstiData)
+        self.optCtrlData.configOptCtrlData(configFileName="optiPSSN_x00.ctrl")
+
+        optStateEsti = OptStateEsti()
+        wfsFilePath = os.path.join(".", "testData", "lsst_wfs_error_iter0.z4c")
+        sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
+        wfErr, fieldIdx = optStateEstiData.getWfAndFieldIdFromFile(
+                                            wfsFilePath, sensorNameList)
+
+        self.filterType = FilterType.REF
+        self.optSt = optStateEsti.estiOptState(optStateEstiData,
+                                               self.filterType, wfErr,
+                                               fieldIdx)
+
+        self.optCtrl = OptCtrl()
+
+        state0InDof = self.optCtrlData.getState0FromFile()
+        testState0InDof = np.ones(len(state0InDof))
+        self.optCtrl.setState0(testState0InDof)
+        self.optCtrl.initStateToState0()
+
+    def testEstiUkWithoutGainWithX0(self):
+
+        self.optCtrlData.xRef = "x0"
+        uk = self.optCtrl.estiUkWithoutGain(self.optCtrlData, self.filterType,
+                                            self.optSt)
+
+        self.assertEqual(len(uk), len(self.optCtrlData.getDofIdx()))
+        self.assertAlmostEqual(uk[0], -16.036665624673333)
+        self.assertAlmostEqual(uk[1], -1.349544022857101)
+        self.assertAlmostEqual(uk[2], 2.6511005518054187)
+
+    def testEstiUkWithoutGainWith0(self):
+
+        self.optCtrlData.xRef = "0"
+        uk = self.optCtrl.estiUkWithoutGain(self.optCtrlData, self.filterType,
+                                            self.optSt)
+
+        self.assertEqual(len(uk), len(self.optCtrlData.getDofIdx()))
+        self.assertAlmostEqual(uk[0], 69.00565727180765)
+        self.assertAlmostEqual(uk[1], -6.579374120758578)
+        self.assertAlmostEqual(uk[2], -39.21488331771004)
+
+    def testEstiUkWithoutGainWithX00(self):
+
+        self.optCtrlData.xRef = "x00"
+        uk = self.optCtrl.estiUkWithoutGain(self.optCtrlData, self.filterType,
+                                            self.optSt)
+
+        self.assertEqual(len(uk), len(self.optCtrlData.getDofIdx()))
+        self.assertAlmostEqual(uk[0], -16.036665624673333)
+        self.assertAlmostEqual(uk[1], -1.349544022857101)
+        self.assertAlmostEqual(uk[2], 2.6511005518054187)
+
+    def testEstiUkWithoutGainAndXref(self):
+
+        self.optCtrlData.xRef = None
+        self.assertRaises(ValueError, self.optCtrl.estiUkWithoutGain,
+                          self.optCtrlData, self.filterType, self.optSt)
+
+
 if __name__ == "__main__":
-    
+
     # Run the unit test
-    # unittest.main()
-
-    configDir = "/home/ttsai/Documents/github/ts_tcs_ofcPython/configData"
-
-    dataShare = DataShare()
-    dataShare.config(configDir, instName=InstName.LSST)
-
-    optCtrlDataDecorator = OptCtrlDataDecorator(dataShare)
-    optCtrlDataDecorator.configOptCtrlData()
-
-    optStateEstiDataDecorator = OptStateEstiDataDecorator(dataShare)
-    optStateEstiDataDecorator.configOptStateEstiData()
-
-    mixedData = OptCtrlDataDecorator(optStateEstiDataDecorator)
-    mixedData.configOptCtrlData()
-
-    testDataDir = "/home/ttsai/Documents/github/ts_tcs_ofcPython/tests/testData"
-    testWfsFile = "lsst_wfs_error_iter0.z4c"
-    testWfsFilePath = os.path.join(testDataDir, testWfsFile)
-
-    sensorNameArray = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
-    wfErr, fieldIdx = mixedData.getWfAndFieldIdFromFile(testWfsFilePath, sensorNameArray)
-
-    optStateEsti = OptStateEsti()
-    optState = optStateEsti.estiOptState(mixedData, FilterType.REF, wfErr, fieldIdx)
-
-    optCtrl = OptCtrl()
-    state0InDof = mixedData.getState0FromFile()
-    optCtrl.setState0(state0InDof)
-    optCtrl.initStateToState0()
-    optCtrl.setGain(1)
-
-    # mixedData.xRef = "x00"
-    optCtrl.setGain(0.7)
-    uk = optCtrl.estiUkWithGain(mixedData, FilterType.REF, optState)
-    print(uk)
-
-    uk0 = optCtrl.estiUkWithoutGain(mixedData, FilterType.REF, optState)
-    print(uk0)
+    unittest.main()

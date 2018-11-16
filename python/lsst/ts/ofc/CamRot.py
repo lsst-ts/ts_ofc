@@ -54,7 +54,7 @@ class CamRot(object):
         ----------
         dofGroup : enum 'DofGroup'
             DOF group.
-        stateInDof : numpy.ndarray
+        stateInDof : numpy.ndarray or list
             State in degree of freedom (DOF).
         tiltXYinArcsec : tuple, optional
             Tilt angle in arcsec. This is the delta value of M2 hexapod
@@ -69,6 +69,7 @@ class CamRot(object):
         # 1 arcsec = 1/3600 deg
         tiltXYinDeg = tuple(ti/3600.0 for ti in tiltXYinArcsec)
 
+        stateInDof = np.array(stateInDof, dtype=float)
         if dofGroup in (DofGroup.M2HexPos, DofGroup.CamHexPos):
             rotatedStateInDof = self._rotHexPos(dofGroup, stateInDof,
                                                 tiltXYinDeg)

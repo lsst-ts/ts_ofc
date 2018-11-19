@@ -49,7 +49,7 @@
 - **Utility**: Some functions used in this module.
 - **IterDataReader**: Iteration data reader class used in the unit test only. This is just to read the test iteration data.
 
-* Class diagram: ![click here](/doc/ofcPythonClassDiag.png)
+* Class diagram: ![click here](/doc/ofcPythonClassDiag.png =350x)
 
 ## 6. Extension of Algorithm
 

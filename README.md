@@ -1,9 +1,9 @@
 # Optical Feedback Control (OFC) in Python
 
-*This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors. The process contains: (1) estimate the optical state in the basis of DOF, (2) estimate the offset of DOF used in the next iteration/ visit. The baseline algorithm now is to minimize the cost function, and (3) rotate the DOF based on the camera rotation angle.*
+*This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors. The process contains: (1) estimate the optical state in the basis of DOF, (2) estimate the offset of DOF used in the next iteration/ visit, and (3) rotate the DOF based on the camera rotation angle.*
 <br/>
 <br/>
-*This repository is to fulfill the requirement that the scientist wants to change the OFC algorithm in Python script. This module will provide the interface python script to OFC in LabVIEW in a latter time.*
+*This repository is to fulfill the requirement that the scientist wants to change the OFC algorithm in Python script. This module will provide the interface python script to OFC with component template in LabVIEW in a latter time.*
 
 ## 1. Version History
 
@@ -12,6 +12,7 @@
 *Finish the OFC with the support of algorithm study in Python.*
 
 *Author: Te-Wei Tsai*
+<br/>
 *Date: 11-19-2018*
 
 ## 2. Platform
@@ -34,14 +35,16 @@
 
 ## 5. Content
 
+*The strategy pattern is used for the algorithm study. The decorator pattern is used for the data/ parameters needed in the new algorithm if necessary.*
+
 *This module contains the following classes and functions ([class diagram](./doc/ofcPythonClassDiag.png)):*
 
-- **DataShare**: Data share class for the information change used in the algorithms. This class includes the information of indexes of zk and DOF to use.
+- **DataShare**: Data share class for the information change used in the algorithms. This class includes the information of indexes of annular Zernike polynomials (zk) and DOF to use.
 - **Decorator**: Decorator interface class to add the new functions or attributes to the DataShare class. This helps the user to get the parameters needed in the new algorithms. 
 - **OptStateEstiDataDecorator**: Optical state estimator data decorator class. This adds the functions/ attributes to DataShare class for the parameters needed in the OptStateEsti class (baseline algorithm).
 - **OptCtrlDataDecorator**: Optimal control data decorator class. This adds the functions/ attributes to DataShare class for the parameters needed in the OptCtrl class (baseline algorithm).
 - **OptStateEstiDefault**: Optical state estimator default class. The abstract function interface is declared in this class. The child class should realize the abstract funtion to estimate the optical state in the basis of DOF.
-- **OptStateEsti**: Optical state estimator class in the baseline algorithm. The optica state is estimated by the pseudo-inverse method.
+- **OptStateEsti**: Optical state estimator class in the baseline algorithm. The optical state is estimated by the pseudo-inverse method.
 - **OptCtrlDefault**: Optimal control default class. The abstract function interface is declared in this class. The child class should realize the abstract funtion to calculate the offset of DOF.
 - **OptCtrl**: Optimal control class in the baseline algorithm. The offset is calculated by minimizing the cost function.
 - **ZTAAC**: Zernike to actuator adjustment calculator class. The high-level class to integrate the DataShare, OptStateEstiDefault, and OptCtrlDefault classes.

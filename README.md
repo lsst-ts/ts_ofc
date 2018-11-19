@@ -34,7 +34,7 @@
 
 ## 5. Content
 
-*This module contains the following classes and functions:*
+*This module contains the following classes and functions ([class diagram](./doc/ofcPythonClassDiag.png)):*
 
 - **DataShare**: Data share class for the information change used in the algorithms. This class includes the information of indexes of zk and DOF to use.
 - **Decorator**: Decorator interface class to add the new functions or attributes to the DataShare class. This helps the user to get the parameters needed in the new algorithms. 
@@ -48,8 +48,6 @@
 - **CamRot**: Camera rotation class to rotate the calculated DOF offset.
 - **Utility**: Some functions used in this module.
 - **IterDataReader**: Iteration data reader class used in the unit test only. This is just to read the test iteration data.
-
-* Class diagram: [click here](./doc/ofcPythonClassDiag.png)
 
 ## 6. Extension of Algorithm
 

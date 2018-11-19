@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from lsst.ts.ofc.DataShare import DataShare
-from lsst.ts.ofc.Utility import InstName, DofGroup
+from lsst.ts.ofc.Utility import InstName, DofGroup, getModulePath
 
 
 class TestDataShare(unittest.TestCase):
@@ -12,7 +12,7 @@ class TestDataShare(unittest.TestCase):
     def setUp(self):
 
         self.dataShare = DataShare()
-        self.configDir = os.path.join("..", "configData")
+        self.configDir = os.path.join(getModulePath(), "configData")
         self.dataShare.config(self.configDir, instName=InstName.LSST)
 
     def testLsstSetting(self):
@@ -50,7 +50,7 @@ class TestDataShare(unittest.TestCase):
     def testSenMShape(self):
 
         dataShare = DataShare()
-        configDir = os.path.join(".", "testData")
+        configDir = os.path.join(getModulePath(), "tests", "testData")
 
         self.assertRaises(ValueError, dataShare.config, configDir,
                           InstName.LSST)
@@ -139,7 +139,8 @@ class TestDataShare(unittest.TestCase):
 
     def testGetWfAndFieldIdFromFile(self):
 
-        wfFilePath = os.path.join(".", "testData", "lsst_wfs_error_iter0.z4c")
+        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
+                                  "lsst_wfs_error_iter0.z4c")
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
         wfErr, fieldIdx = self.dataShare.getWfAndFieldIdFromFile(
                                         wfFilePath, sensorNameList)
@@ -152,7 +153,8 @@ class TestDataShare(unittest.TestCase):
 
     def testGetWfAndFieldIdFromShwfsFile(self):
 
-        wfFilePath = os.path.join(".", "testData", "shwfs_wfs_error.txt")
+        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
+                                  "shwfs_wfs_error.txt")
         sensorName = "R22_S11"
         wfErr, fieldIdx = self.dataShare.getWfAndFieldIdFromShwfsFile(
                                         wfFilePath, sensorName=sensorName)

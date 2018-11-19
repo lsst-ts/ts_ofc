@@ -2,7 +2,8 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.ofc.Utility import getSetting, getDirFiles, getMatchFilePath
+from lsst.ts.ofc.Utility import getSetting, getDirFiles, getMatchFilePath, \
+                                getModulePath
 
 
 class TestUtility(unittest.TestCase):
@@ -10,7 +11,7 @@ class TestUtility(unittest.TestCase):
 
     def setUp(self):
 
-        self.configDir = os.path.join(".", "testData")
+        self.configDir = os.path.join(getModulePath(), "tests", "testData")
 
     def testGetSetting(self):
 

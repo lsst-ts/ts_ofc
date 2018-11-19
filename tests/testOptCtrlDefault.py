@@ -4,7 +4,7 @@ import unittest
 
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptCtrlDataDecorator import OptCtrlDataDecorator
-from lsst.ts.ofc.Utility import InstName
+from lsst.ts.ofc.Utility import InstName, getModulePath
 from lsst.ts.ofc.OptCtrlDefault import OptCtrlDefault
 
 
@@ -14,7 +14,7 @@ class TestOptCtrlDefault(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join("..", "configData")
+        configDir = os.path.join(getModulePath(), "configData")
         dataShare.config(configDir, instName=InstName.LSST)
         self.optCtrlData = OptCtrlDataDecorator(dataShare)
         self.optCtrlData.configOptCtrlData()

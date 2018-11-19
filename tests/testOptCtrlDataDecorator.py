@@ -4,7 +4,7 @@ import unittest
 
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptCtrlDataDecorator import OptCtrlDataDecorator
-from lsst.ts.ofc.Utility import InstName
+from lsst.ts.ofc.Utility import InstName, getModulePath
 
 
 class TestOptCtrlDataDecorator(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestOptCtrlDataDecorator(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join("..", "configData")
+        configDir = os.path.join(getModulePath(), "configData")
         dataShare.config(configDir, instName=InstName.LSST)
         self.optCtrlData = OptCtrlDataDecorator(dataShare)
         self.optCtrlData.configOptCtrlData()
@@ -39,7 +39,7 @@ class TestOptCtrlDataDecorator(unittest.TestCase):
     def testGetQwgtFromFileOfComcam(self):
 
         dataShare = DataShare()
-        configDir = os.path.join("..", "configData")
+        configDir = os.path.join(getModulePath(), "configData")
         dataShare.config(configDir, instName=InstName.COMCAM)
         optCtrlData = OptCtrlDataDecorator(dataShare)
         optCtrlData.configOptCtrlData()

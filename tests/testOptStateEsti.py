@@ -2,7 +2,7 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.ofc.Utility import InstName, FilterType
+from lsst.ts.ofc.Utility import InstName, FilterType, getModulePath
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
 from lsst.ts.ofc.OptStateEsti import OptStateEsti
@@ -14,7 +14,7 @@ class TestOptStateEsti(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join("..", "configData")
+        configDir = os.path.join(getModulePath(), "configData")
         dataShare.config(configDir, instName=InstName.LSST)
 
         self.optStateEstiData = OptStateEstiDataDecorator(dataShare)
@@ -22,7 +22,8 @@ class TestOptStateEsti(unittest.TestCase):
 
         self.optStateEsti = OptStateEsti()
 
-        wfsFilePath = os.path.join(".", "testData", "lsst_wfs_error_iter0.z4c")
+        wfsFilePath = os.path.join(getModulePath(), "tests", "testData",
+                                   "lsst_wfs_error_iter0.z4c")
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
         wfErr, fieldIdx = self.optStateEstiData.getWfAndFieldIdFromFile(
                                                 wfsFilePath, sensorNameList)

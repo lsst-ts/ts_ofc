@@ -4,7 +4,7 @@ import numpy as np
 
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
-from lsst.ts.ofc.Utility import InstName, FilterType
+from lsst.ts.ofc.Utility import InstName, FilterType, getModulePath
 
 
 class TestOptStateEstiDataDecorator(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestOptStateEstiDataDecorator(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join("..", "configData")
+        configDir = os.path.join(getModulePath(), "configData")
         dataShare.config(configDir, instName=InstName.LSST)
 
         self.optStateEstiData = OptStateEstiDataDecorator(dataShare)

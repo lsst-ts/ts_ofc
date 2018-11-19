@@ -2,7 +2,7 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.ofc.Utility import InstName, FilterType, DofGroup
+from lsst.ts.ofc.Utility import InstName, FilterType, DofGroup, getModulePath
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
 from lsst.ts.ofc.OptCtrlDataDecorator import OptCtrlDataDecorator
@@ -18,7 +18,7 @@ class TestIteration(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join("..", "configData")
+        configDir = os.path.join(getModulePath(), "configData")
         dataShare.config(configDir, instName=InstName.LSST)
 
         optStateEstiData = OptStateEstiDataDecorator(dataShare)
@@ -36,7 +36,8 @@ class TestIteration(unittest.TestCase):
         self.ztaac.setState0FromFile(state0InDofFileName="state0inDof.txt")
         self.ztaac.setStateToState0()
 
-        iterDataDir = os.path.join(".", "testData", "iteration")
+        iterDataDir = os.path.join(getModulePath(), "tests", "testData",
+                                   "iteration")
         self.iterDataReader = IterDataReader(iterDataDir)
 
     def testIteration(self):

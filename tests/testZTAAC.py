@@ -2,7 +2,7 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.ofc.Utility import InstName, FilterType, DofGroup
+from lsst.ts.ofc.Utility import InstName, FilterType, DofGroup, getModulePath
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
 from lsst.ts.ofc.OptCtrlDataDecorator import OptCtrlDataDecorator
@@ -18,7 +18,7 @@ class TestZTAAC(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join("..", "configData")
+        configDir = os.path.join(getModulePath(), "configData")
         dataShare.config(configDir, instName=InstName.LSST)
 
         optStateEstiData = OptStateEstiDataDecorator(dataShare)
@@ -125,36 +125,75 @@ class TestZTAAC(unittest.TestCase):
 
     def testGetWfFromFile(self):
 
-        wfErr = self._getWfErrAndSensorNameListFromFile()[0]
+        wfErr = self._getWfErrAndSensorNameListFromLsstFile()[0]
 
         self.assertEqual(wfErr.shape, (4, 19))
 
-    def _getWfErrAndSensorNameListFromFile(self):
+    def _getWfErrAndSensorNameListFromLsstFile(self):
 
-        wfFilePath = os.path.join(".", "testData", "lsst_wfs_error_iter0.z4c")
+        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
+                                  "lsst_wfs_error_iter0.z4c")
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
+        wfErr = self.ztaac.getWfFromFile(wfFilePath, sensorNameList)
+
+        return wfErr, sensorNameList
+
+    def _getWfErrAndSensorNameListFromComCamFile(self):
+
+        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
+                                  "comcam_wfs_error_iter0.z4c")
+        sensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10",
+                          "R22_S11", "R22_S12", "R22_S20", "R22_S21",
+                          "R22_S22"]
         wfErr = self.ztaac.getWfFromFile(wfFilePath, sensorNameList)
 
         return wfErr, sensorNameList
 
     def testGetWfFromShwfsFile(self):
 
-        wfFilePath = os.path.join(".", "testData", "shwfs_wfs_error.txt")
+        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
+                                  "shwfs_wfs_error.txt")
         wfErr, sensorName = self.ztaac.getWfFromShwfsFile(wfFilePath)
 
         self.assertEqual(len(wfErr), 19)
         self.assertEqual(sensorName, "R22_S11")
 
-    def testEstiUkWithGain(self):
+    def testEstiUkWithGainOfLsst(self):
+
+        gainToUse = 0.9
 
         self._setStateAndState0FromFile()
-        self.ztaac.setGain(0.9)
+        self.ztaac.setGain(gainToUse)
 
-        wfErr, sensorNameList = self._getWfErrAndSensorNameListFromFile()
+        wfErr, sensorNameList = self._getWfErrAndSensorNameListFromLsstFile()
         uk = self.ztaac.estiUkWithGain(wfErr, sensorNameList)
-        self.assertAlmostEqual(uk[0], -14.432999062206)
-        self.assertAlmostEqual(uk[1], -1.2145896205713909)
-        self.assertAlmostEqual(uk[2], 2.385990496624877)
+
+        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
+                                   "lsst_pert_iter1.txt")
+        ukAns = gainToUse * np.loadtxt(ansFilePath, usecols=1)
+
+        delta = np.sum(np.abs(uk - ukAns))
+        self.assertLess(delta, 0.0012)
+
+    def testEstiUkWithGainOfComCam(self):
+
+        gainToUse = 1
+
+        configDir = self.ztaac.dataShare.getConfigDir()
+        self.ztaac.dataShare.config(configDir, instName=InstName.COMCAM)
+
+        self._setStateAndState0FromFile()
+        self.ztaac.setGain(gainToUse)
+
+        wfErr, sensorNameList = self._getWfErrAndSensorNameListFromComCamFile()
+        uk = self.ztaac.estiUkWithGain(wfErr, sensorNameList)
+
+        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
+                                   "comcam_pert_iter1.txt")
+        ukAns = gainToUse * np.loadtxt(ansFilePath, usecols=1)
+
+        delta = np.sum(np.abs(uk - ukAns))
+        self.assertLess(delta, 0.0012)
 
     def _setStateAndState0FromFile(self):
 
@@ -169,6 +208,47 @@ class TestZTAAC(unittest.TestCase):
 
         delta = np.sum(np.abs(self.ztaac.optCtrl.getState(dofIdx) - calcDof))
         self.assertEqual(delta, 0)
+
+    def testAggStateWithUserDefinedIdx(self):
+
+        self._setStateAndState0FromFile()
+
+        m2HexPos = np.zeros(5, dtype=int)
+        m2HexPos[[0, 2]] = 1
+
+        camHexPos = np.zeros(5, dtype=int)
+        camHexPos[[0, 3]] = 1
+
+        m1m3Bend = np.zeros(20, dtype=int)
+        m1m3Bend[[0, 2]] = 1
+
+        m2Bend = np.zeros(20, dtype=int)
+        m2Bend[[0, 3]] = 1
+
+        self.ztaac.setZkAndDofInGroups(m2HexPos=m2HexPos, camHexPos=camHexPos,
+                                       m1m3Bend=m1m3Bend, m2Bend=m2Bend)
+
+        calcDof = np.arange(1, 9)
+        self.ztaac.aggState(calcDof)
+
+        m2HexPosInZTAAC = self.ztaac.getGroupDof(DofGroup.M2HexPos)
+        camHexPosInZTAAC = self.ztaac.getGroupDof(DofGroup.CamHexPos)
+        m1m3BendInZTAAC = self.ztaac.getGroupDof(DofGroup.M1M3Bend)
+        m2BendInZTAAC = self.ztaac.getGroupDof(DofGroup.M2Bend)
+
+        m2HexPosAns = np.zeros(m2HexPos.shape)
+        m2HexPosAns[[0, 2]] = [1, 2]
+        camHexPosAns = np.zeros(camHexPos.shape)
+        camHexPosAns[[0, 3]] = [3, 4]
+        m1m3BendAns = np.zeros(m1m3Bend.shape)
+        m1m3BendAns[[0, 2]] = [5, 6]
+        m2BendAns = np.zeros(m2Bend.shape)
+        m2BendAns[[0, 3]] = [7, 8]
+
+        self.assertEqual(np.sum(np.abs(m2HexPosAns - m2HexPosInZTAAC)), 0)
+        self.assertEqual(np.sum(np.abs(camHexPosAns - camHexPosInZTAAC)), 0)
+        self.assertEqual(np.sum(np.abs(m1m3BendAns - m1m3BendInZTAAC)), 0)
+        self.assertEqual(np.sum(np.abs(m2BendAns - m2BendInZTAAC)), 0)
 
     def testGetGroupDofWithoutInputDof(self):
 

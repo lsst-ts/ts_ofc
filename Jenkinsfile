@@ -9,13 +9,12 @@ pipeline {
                     virtualenv venv
                     . ./venv/bin/activate
                 """
-                echo 'Set the Python environment.'
+                sh 'python --version'
             }
         }
         stage ('Install_Requirements') {
             steps {
                 sh """
-                    pip install --upgrade pip
                     pip install numpy scipy pytest
                 """
             }

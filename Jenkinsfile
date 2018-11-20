@@ -4,12 +4,6 @@ pipeline {
     agent {
         docker { image 'python:3.6.2' }
     }
-    environment {
-        PACKAGE_DIR=$WORKSPACE
-        echo $WORKSPACE
-        echo $PACKAGE_DIR
-        PYTHONPATH=$PYTHONPATH:${PACKAGE_DIR}/python
-    }
     stages {
         stage ('Install_Requirements') {
             steps {
@@ -20,7 +14,8 @@ pipeline {
             }
         }
         stage('Unit Tests') {            
-            steps {                
+            steps {
+                export PYTHONPATH=$PYTHONPATH:${WORKSPACE}/python
                 sh 'pytest ${WORKSPACE}/tests/*.py'   
             }        
         }

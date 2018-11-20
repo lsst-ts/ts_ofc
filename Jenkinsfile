@@ -8,10 +8,9 @@ pipeline {
                 sh """
                     virtualenv venv
                     . ./venv/bin/activate
-                    sudo yum -y install python36-pip
-                    sudo yum list python36-devel
-                    sudo yum list python36-setuptools
                 """
+                sh 'python --version'
+                sh 'pip --version'
             }
         }
         stage ('Install_Requirements') {

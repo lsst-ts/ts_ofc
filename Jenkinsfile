@@ -1,16 +1,24 @@
+#!/usr/bin/env groovy
+
 pipeline {
     agent {
         docker { image 'python:3.6.2' }
     }
+    environment {
+        PYTHONPATH=$PYTHONPATH:${WORKSPACE}/python
+    }
     stages {
-        stage('Build') {            
+        stage ('Install_Requirements') {
+            steps {
+                sh """
+                    pip install --upgrade pip
+                    pip install numpy scipy pytest
+                """
+            }
+        }
+        stage('Unit Tests') {            
             steps {                
-                echo 'Building'            
-            }        
-        }        
-        stage('Test') {            
-            steps {                
-                sh 'python --version'   
+                sh 'pytest ${WORKSPACE}/tests/*.py'   
             }        
         }
     }

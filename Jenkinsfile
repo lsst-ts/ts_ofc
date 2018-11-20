@@ -7,16 +7,15 @@ pipeline {
     stages {
         stage ('Install_Requirements') {
             steps {
-                sh """
-                    pip install --upgrade pip
-                    pip install numpy scipy pytest
-                """
+                sh 'pip install --upgrade pip'
+                sh 'pip install numpy scipy pytest'
             }
         }
         stage('Unit Tests') {            
             steps {
-                export PYTHONPATH=$PYTHONPATH:${WORKSPACE}/python
-                sh 'pytest ${WORKSPACE}/tests/*.py'   
+                sh 'echo $WORKSPACE'
+                sh 'export PYTHONPATH=$PYTHONPATH:${WORKSPACE}/python'
+                sh 'pytest ${WORKSPACE}/tests/*.py'
             }        
         }
     }

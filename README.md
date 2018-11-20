@@ -17,6 +17,7 @@
 
 ## 2. Platform
 
+- *CentOS 7*
 - *python: 3.6.2*
 
 ## 3. Needed Package

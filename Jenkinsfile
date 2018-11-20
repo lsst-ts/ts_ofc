@@ -8,10 +8,10 @@ pipeline {
                 sh """
                     virtualenv venv
                     . ./venv/bin/activate
+                    python --version
+                    python3 --version
+                    pip --version
                 """
-                sh 'python --version'
-                sh 'python3 --version'
-                sh 'pip --version'
             }
         }
         stage ('Install_Requirements') {

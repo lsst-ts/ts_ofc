@@ -1,10 +1,17 @@
 #!/usr/bin/env groovy
 
 pipeline {
-    agent {
-        docker { image 'python:3.6.2' }
-    }
+    agent any
     stages {
+        stage ('Build') {
+            steps {
+                sh """
+                    virtualenv venv
+                    . .env/bin/activate
+                """
+                echo 'Set the Python environment.'
+            }
+        }
         stage ('Install_Requirements') {
             steps {
                 sh """

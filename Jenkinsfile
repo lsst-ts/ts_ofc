@@ -4,9 +4,6 @@ pipeline {
     agent {
         docker { image 'python:3.6.2' }
     }
-    environment {
-        echo 'Environment sets.'
-    }
     stages {
         stage ('Install_Requirements') {
             steps {

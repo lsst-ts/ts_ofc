@@ -109,7 +109,7 @@ class OptStateEstiDataDecorator(Decorator):
         if (filterType != FilterType.REF):
             reMatchStrTail = "_" + filterType.name
 
-        reMatchStr = "\A" + self.intrincZkFileName + reMatchStrTail + ".\S+"
+        reMatchStr = "\A" + self.intrincZkFileName + reMatchStrTail + "[.]\S+"
         filePaths = getDirFiles(self.getInstDir())
         zkFilePath = getMatchFilePath(reMatchStr, filePaths)
 

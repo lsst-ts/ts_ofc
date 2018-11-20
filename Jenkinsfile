@@ -5,7 +5,8 @@ pipeline {
         docker { image 'python:3.6.2' }
     }
     environment {
-        PYTHONPATH=$PYTHONPATH:${WORKSPACE}/python
+        PACKAGE_DIR=$WORKSPACE
+        PYTHONPATH=$PYTHONPATH:${PACKAGE_DIR}/python
     }
     stages {
         stage ('Install_Requirements') {

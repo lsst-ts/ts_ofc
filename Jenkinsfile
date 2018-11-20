@@ -10,6 +10,7 @@ pipeline {
                     . ./venv/bin/activate
                 """
                 sh 'python --version'
+                sh 'python3 --version'
                 sh 'pip --version'
             }
         }

@@ -7,7 +7,7 @@ pipeline {
             steps {
                 sh """
                     virtualenv venv
-                    . .env/bin/activate
+                    . ./venv/bin/activate
                 """
                 echo 'Set the Python environment.'
             }

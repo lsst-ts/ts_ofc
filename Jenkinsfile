@@ -6,6 +6,8 @@ pipeline {
     }
     environment {
         PACKAGE_DIR=$WORKSPACE
+        echo $WORKSPACE
+        echo $PACKAGE_DIR
         PYTHONPATH=$PYTHONPATH:${PACKAGE_DIR}/python
     }
     stages {

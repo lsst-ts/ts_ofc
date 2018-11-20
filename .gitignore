@@ -5,5 +5,5 @@
 *.o
 
 # Coverage test files
-tests/.coverage
-tests/htmlcov
+.coverage
+htmlcov/

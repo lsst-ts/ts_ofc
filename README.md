@@ -25,6 +25,7 @@
 - *numpy*
 - *scipy*
 - *pytest (optional, test only.)*
+- *coverage (optional, test only.)*
 
 ## 4. Use of Module
 
@@ -58,7 +59,12 @@
 - **Estimate the optical state**: Inherit from the OptStateEstiDefault class, and realize the estiOptState function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
 - **Calculate the DOF offset**: Inherit from the OptCtrlDefault class, and realize the estiUkWithoutGain function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
 
-## 7. Reference of Baseline Algorithm
+## 7. Unit Test and Coverage Analysis
+
+- **Unit Tests**: Under the repository directory, do `pytest tests/test*.py`.
+- **Coverage Analysis**: Under the repository directory, do `sh coverageAnalysis.sh "tests/test*.py"`.
+
+## 8. Reference of Baseline Algorithm
 
 1. Angeli, George Z. et al., Real time wavefront control system for the Large Synoptic Survey Telescope (LSST), Proc. SPIE 9150, Modeling, Systems Engineering, and Project Management for Astronomy VI, 91500H (2014). [https://doi.org/10.1117/12.2055390]
 2. Angeli, George Z. et al., An integrated modeling framework for the Large Synoptic Survey Telescope (LSST), Proc. SPIE 9911, Modeling, Systems Engineering, and Project Management for Astronomy VI, 991118 (2016). [https://doi.org/10.1117/12.2234078]

@@ -32,7 +32,7 @@ pipeline {
                 // to install the packages.
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
-                        pip install --user numpy scipy pytest
+                        pip install --user numpy scipy pytest coverage
                     """
                 }
             }

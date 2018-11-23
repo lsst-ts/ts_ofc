@@ -37,6 +37,7 @@ pipeline {
                 }
             }
         }
+
         stage('Unit Tests') { 
             steps {
                 // Direct the HOME to WORKSPACE for pip to get the
@@ -52,6 +53,18 @@ pipeline {
                 }
             }
         }
+
+        stage('Coverage Analysis') { 
+            steps {
+                // Do the coverage analysis for multiple files.
+                withEnv(["HOME=${env.WORKSPACE}"]) {
+                    sh """
+                        export PATH=$PATH:${env.WORKSPACE}/.local/bin
+                        ./coverageAnalysis.sh "${env.WORKSPACE}/tests/test*.py"
+                    """
+                }
+            }
+        }
     }
 
     post {        
@@ -59,8 +72,21 @@ pipeline {
             // The path of xml needed by JUnit is relative to
             // the workspace.
             junit 'jenkinsReport/*.xml'
+
+            // Publish the HTML report
+            publishHTML (target: [
+                allowMissing: false,
+                alwaysLinkToLastBuild: false,
+                keepAll: true,
+                reportDir: 'htmlcov',
+                reportFiles: 'index.html',
+                reportName: "Coverage Report"
+              ])
+        }
+
+        cleanup {
             // clean up the workspace
             deleteDir()
-        }
+        }  
     }
 }

@@ -10,8 +10,8 @@ do
 done
 
 coverage combine
-coverage report
+coverage report --omit=".local/*"
 
 # Generate the html report
 # Ignore the coverage of test scripts
-coverage html --omit="test*.py"
+coverage html --omit=".local/*","test*.py"

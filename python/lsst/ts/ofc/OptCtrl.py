@@ -56,7 +56,7 @@ class OptCtrl(OptCtrlDefault):
             C.T * C matrix.
         """
 
-        pssnAlpha = optCtrlData.getPssnAlphaFromFile()
+        pssnAlpha = optCtrlData.getPssnAlpha()
         effWave = optCtrlData.getEffWave(filterType)
         zn3Idx = optCtrlData.getZn3Idx()
 
@@ -88,7 +88,7 @@ class OptCtrl(OptCtrlDefault):
 
         optSt = optSt.reshape(-1, 1)
 
-        qWgt = optCtrlData.getQwgtFromFile()
+        qWgt = optCtrlData.getQwgt()
         senM = optCtrlData.getSenM()
 
         fieldNumInQwgt = optCtrlData.getNumOfFieldInQwgt()
@@ -121,7 +121,7 @@ class OptCtrl(OptCtrlDefault):
 
         ccMat = self._calcCCmat(optCtrlData, filterType)
         senM = optCtrlData.getSenM()
-        qWgt = optCtrlData.getQwgtFromFile()
+        qWgt = optCtrlData.getQwgt()
         qMat = self._calcQmat(ccMat, senM, qWgt)
 
         penality = optCtrlData.getPenality()

@@ -197,7 +197,7 @@ class OptCtrlDefault(object):
             Input values are unphysical.
         """
 
-        qWgt = optCtrlDataDecorator.getQwgtFromFile()
+        qWgt = optCtrlDataDecorator.getQwgt()
         fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1/np.array(pssn) - 1)
         fwhmGq = np.sum(qWgt[fieldIdx] * fwhm)
 

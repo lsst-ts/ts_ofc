@@ -74,7 +74,8 @@ class TestIteration(unittest.TestCase):
         # name in the SAL communication in the contrl mode.
         sensorIdList = self.iterDataReader.getWfsSensorIdList()
 
-        # Map the sensor Id (e.g. 0, 1, etc.) to sensor name (such as "R22_S11").
+        # Map the sensor Id (e.g. 0, 1, etc.) to sensor name (such as
+        # "R22_S11").
         sensorNameList = self.ztaac.mapSensorIdToName(sensorIdList)[0]
 
         # Map the sensor Id to sensor name for the PSSN data.
@@ -95,7 +96,7 @@ class TestIteration(unittest.TestCase):
             # Decide the gain value based on the PSSN data.
             self.ztaac.setGainByPSSN(pssn, pssnSensorNameList)
 
-            # Read the wavefront error data in the specific iteration. 
+            # Read the wavefront error data in the specific iteration.
             wfErr = self.iterDataReader.getWfsErr(iterNum)
 
             # Calculate the uk based on the control algorithm.

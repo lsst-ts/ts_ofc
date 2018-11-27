@@ -29,14 +29,14 @@ class TestOptCtrlDataDecorator(unittest.TestCase):
         self.assertAlmostEqual(authority[31], 45.96449329039931)
         self.assertAlmostEqual(authority[32], 103.4589756080062)
 
-    def testGetQwgtFromFile(self):
+    def testGetQwgt(self):
 
-        qWgt = self.optCtrlData.getQwgtFromFile()
+        qWgt = self.optCtrlData.getQwgt()
         self.assertEqual(len(qWgt), 31)
         self.assertAlmostEqual(np.sum(qWgt), 1)
         self.assertAlmostEqual(qWgt[1], 0.01974265)
 
-    def testGetQwgtFromFileOfComcam(self):
+    def testGetQwgtOfComcam(self):
 
         dataShare = DataShare()
         configDir = os.path.join(getModulePath(), "configData")
@@ -44,13 +44,13 @@ class TestOptCtrlDataDecorator(unittest.TestCase):
         optCtrlData = OptCtrlDataDecorator(dataShare)
         optCtrlData.configOptCtrlData()
 
-        qWgt = optCtrlData.getQwgtFromFile()
+        qWgt = optCtrlData.getQwgt()
         self.assertEqual(len(qWgt), 9)
         self.assertAlmostEqual(np.sum(qWgt), 1)
 
-    def testGetPssnAlphaFromFile(self):
+    def testGetPssnAlpha(self):
 
-        pssnAlpha = self.optCtrlData.getPssnAlphaFromFile()
+        pssnAlpha = self.optCtrlData.getPssnAlpha()
         self.assertEqual(len(pssnAlpha), 19)
         self.assertEqual(pssnAlpha[0], 6.6906168e-03)
 

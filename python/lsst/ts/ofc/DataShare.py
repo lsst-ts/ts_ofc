@@ -3,7 +3,8 @@ import re
 import numpy as np
 
 from lsst.ts.ofc.Utility import InstName, DofGroup, getMatchFilePath, \
-                                getSetting, getDirFiles
+                                getDirFiles
+from lsst.ts.ofc.ParamReader import ParamReader
 
 
 class DataShare(object):
@@ -13,21 +14,27 @@ class DataShare(object):
 
         self.configDir = None
         self.instName = None
-        self.mappingFileName = None
-        self.idxDofFileName = None
-        self.sensorIdToNameFileName = None
 
         self.zn3Max = None
         self.zn3Idx = None
         self.dofIdx = None
         self.senM = None
 
+        self._zkAndDofIdxArraySetFile = None
+        self._senMfile = None
+        self._mappingFile = None
+        self._idxDofFile = None
+        self._sensorIdToNameFile = None
+
     def config(self, configDir, instName=InstName.LSST,
-               configFileName="dataShare.txt",
+               zkAndDofIdxArraySetFileName="zkAndDofIdxArraySet.txt",
                mappingFileName="sensorNameToFieldIdx.txt",
                idxDofFileName="idxDOF.txt",
                sensorIdToNameFileName="sensorIdToName.txt"):
         """Do the configuration of DataShare class.
+
+        zk: Annular Zernike polynomial.
+        DOF: Degree of Freedom.
 
         Parameters
         ----------
@@ -35,8 +42,9 @@ class DataShare(object):
             Configuration directory.
         instName : enum 'InstName', optional
             Instrument name. (the default is InstName.LSST.)
-        configFileName : str, optional
-            Name of configuration file. (the default is "dataShare.txt".)
+        zkAndDofIdxArraySetFileName : str, optional
+            File name of zk and DOF index array set. (the default is
+            "zkAndDofIdxArraySet.txt".)
         mappingFileName : str, optional
             File name of mapping abbreviated sensor name to index of optical
             field.  (the default is "sensorNameToFieldIdx.txt".)
@@ -49,33 +57,45 @@ class DataShare(object):
 
         self.configDir = configDir
         self.instName = instName
-        self.mappingFileName = mappingFileName
-        self.idxDofFileName = idxDofFileName
-        self.sensorIdToNameFileName = sensorIdToNameFileName
 
-        self._readSetting(configFileName)
+        zkAndDofIdxArraySetFilePath = os.path.join(configDir,
+                                                   zkAndDofIdxArraySetFileName)
+        self._zkAndDofIdxArraySetFile = ParamReader(
+                                            zkAndDofIdxArraySetFilePath)
+
+        mappingFilePath = os.path.join(self.getInstDir(), mappingFileName)
+        self._mappingFile = ParamReader(mappingFilePath)
+
+        idxDofFilePath = os.path.join(configDir, idxDofFileName)
+        self._idxDofFile = ParamReader(idxDofFilePath)
+
+        sensorIdToNameFilePath = os.path.join(configDir,
+                                              sensorIdToNameFileName)
+        self._sensorIdToNameFile = ParamReader(sensorIdToNameFilePath)
+
+        self._readSetting()
+
+        # Get the sensitivity matrix M file path
+        senMfilePath = self._getSenMfilePath(reMatchStr=r"\AsenM\S+")
+        self._senMfile = ParamReader(senMfilePath)
         self._setSenM()
 
-    def _readSetting(self, configFileName):
-        """Read the configuration setting file of optical state estimator.
+    def _readSetting(self):
+        """Read the configuration setting file of optical state estimator."""
 
-        Parameters
-        ----------
-        configFileName : str
-            Name of configuration file.
-        """
-
-        filePath = os.path.join(self.configDir, configFileName)
         arrayParamList = ["izn3", "icomp"]
 
         # Get the number of z3 - zn
-        self.zn3Max = getSetting(filePath, "znmax", arrayParamList)
+        self.zn3Max = self._zkAndDofIdxArraySetFile.getSetting("znmax",
+                                                               arrayParamList)
         self.zn3Max = int(self.zn3Max)-3
 
-        self.zn3Idx = getSetting(filePath, "izn3", arrayParamList)
+        self.zn3Idx = self._zkAndDofIdxArraySetFile.getSetting("izn3",
+                                                               arrayParamList)
         self.zn3Idx = self._getNonZeroIdxFronStrArray(self.zn3Idx)
 
-        self.dofIdx = getSetting(filePath, "icomp", arrayParamList)
+        self.dofIdx = self._zkAndDofIdxArraySetFile.getSetting("icomp",
+                                                               arrayParamList)
         self.dofIdx = self._getNonZeroIdxFronStrArray(self.dofIdx)
 
     def _getNonZeroIdxFronStrArray(self, strArray):
@@ -113,21 +133,18 @@ class DataShare(object):
         return np.where(np.array(array) != 0)[0]
 
     def _setSenM(self):
-        """Set the sensitivity matrix M from file with the assigned index
-        arrays of zk and degree of freedom (DOF)."""
-
-        # Get the sensitivity matrix M file path
-        filePath = self._getSenMfilePath(reMatchStr="\AsenM\S+")
+        """Set the sensitivity matrix M with the assigned index arrays of zk
+        and degree of freedom (DOF)."""
 
         # Get the shape of sensitivity matrix M
+        filePath = self._senMfile.getFilePath()
         fileName = os.path.basename(filePath)
         shape = self._getSenMshape(fileName)
 
         # Set the sensitivity matrix M
-        self.senM = np.loadtxt(filePath)
-        self.senM = self.senM.reshape(shape)
-        self.senM = self.senM[np.ix_(np.arange(shape[0]),
-                                     self.zn3Idx, self.dofIdx)]
+        senM = self._senMfile.getMatContent()
+        senM = senM.reshape(shape)
+        self.senM = senM[np.ix_(np.arange(shape[0]), self.zn3Idx, self.dofIdx)]
 
     def _getSenMfilePath(self, reMatchStr):
         """Get the sensitivity matrix M file path.
@@ -258,11 +275,8 @@ class DataShare(object):
 
         fieldIdx = []
         if (self._inputIsList(sensorNameList)):
-
-            filePath = os.path.join(self.getInstDir(), self.mappingFileName)
-
             for sensorName in sensorNameList:
-                field = getSetting(filePath, sensorName)
+                field = self._mappingFile.getSetting(sensorName)
                 fieldIdx.append(int(field))
 
         return fieldIdx
@@ -327,11 +341,10 @@ class DataShare(object):
             param = "M2_Bend"
         else:
             raise ValueError("'%s' is not found in the '%s'."
-                             % (dofGroup, self.idxDofFileName))
+                             % (dofGroup, self._idxDofFile.getFilePath()))
 
         # Get the values from the file
-        filePath = os.path.join(self.configDir, self.idxDofFileName)
-        startIdx, groupLeng = getSetting(filePath, param)
+        startIdx, groupLeng = self._idxDofFile.getSetting(param)
 
         # Change the data type
         startIdx = int(startIdx)
@@ -489,12 +502,11 @@ class DataShare(object):
             Number of sensors.
         """
 
-        filePath = self._getMapSensorIdAndNameFilePath()
-
         sensorNameList = []
         for sensorId in sensorIdList:
             try:
-                sensorNameList.append(getSetting(filePath, str(sensorId)))
+                sensorName = self._sensorIdToNameFile.getSetting(str(sensorId))
+                sensorNameList.append(sensorName)
             except ValueError:
                 pass
 
@@ -517,32 +529,21 @@ class DataShare(object):
         sensorIdList = []
         if self._inputIsList(sensorNameList):
 
-            filePath = self._getMapSensorIdAndNameFilePath()
+            content = self._sensorIdToNameFile.getTxtContent()
 
             for sensorName in sensorNameList:
-                sensorIdList.append(self._mapSensorNameToIdFromFile(
-                                                filePath, sensorName))
+                sensorIdList.append(self._mapSensorNameToIdFromContent(
+                                                     content, sensorName))
 
         return sensorIdList
 
-    def _getMapSensorIdAndNameFilePath(self):
-        """Get the file path that maps the sensor Id and name.
-
-        Returns
-        -------
-        str
-            File path.
-        """
-
-        return os.path.join(self.configDir, self.sensorIdToNameFileName)
-
-    def _mapSensorNameToIdFromFile(self, filePath, sensorName):
-        """Map the sensor name to Id based on the mapping file.
+    def _mapSensorNameToIdFromContent(self, content, sensorName):
+        """Map the sensor name to Id based on the mapping content.
 
         Parameters
         ----------
-        filePath : str
-            File path.
+        content : str
+            File content.
         sensorName : str
             Abbreviated sensor name.
 
@@ -558,19 +559,18 @@ class DataShare(object):
         """
 
         sensorId = None
-        with open(filePath) as file:
-            for line in file:
-                line = line.strip()
+        for line in content.splitlines():
+            line = line.strip()
 
-                # Skip the comment or empty line
-                if line.startswith("#") or (len(line) == 0):
-                    continue
+            # Skip the comment or empty line
+            if line.startswith("#") or (len(line) == 0):
+                continue
 
-                sensorIdInFile, sensorNameInFile = line.split()
+            sensorIdInFile, sensorNameInFile = line.split()
 
-                if (sensorNameInFile == sensorName):
-                    sensorId = int(sensorIdInFile)
-                    break
+            if (sensorNameInFile == sensorName):
+                sensorId = int(sensorIdInFile)
+                break
 
         if (sensorId is None):
             raise ValueError("Can not find the sensor Id of '%s'."

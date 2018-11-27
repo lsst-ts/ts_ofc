@@ -1,5 +1,5 @@
 ###
-#This file contains the parameters for the data share class.
+#This file defines the index group of Zk and degree of freedom (DOF) to use.
 ###
 
 #max number of zernikes used (to be filtered with zn3Idx)

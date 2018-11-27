@@ -108,7 +108,7 @@ class IterDataReader(object):
         for filePath in filePaths:
 
             fileName = os.path.basename(filePath)
-            m = re.match(r"%s" % reMatchStr, fileName)
+            m = re.match(reMatchStr, fileName)
 
             if (m is not None):
                 matchFilePath = filePath
@@ -141,7 +141,7 @@ class IterDataReader(object):
 
         return matchFilePath
 
-    def getAbsFilePathOfWfsErr(self, iterNum, reMatchStr="\w*E000.z4c"):
+    def getAbsFilePathOfWfsErr(self, iterNum, reMatchStr=r"\w*E000.z4c"):
         """Get the absolute file path of wavefront error.
 
         Parameters
@@ -199,7 +199,7 @@ class IterDataReader(object):
             PSSN data.
         """
 
-        reMatchStr = "\w*PSSN.txt"
+        reMatchStr = r"\w*PSSN.txt"
         matchFilePath = self._getMatchFilePathInIter(reMatchStr, iterNum)
 
         data = np.loadtxt(matchFilePath)
@@ -221,7 +221,7 @@ class IterDataReader(object):
             DOF data.
         """
 
-        reMatchStr = "\w*pert.txt"
+        reMatchStr = r"\w*pert.txt"
         matchFilePath = self._getMatchFilePathInIter(reMatchStr, iterNum)
 
         dof = np.loadtxt(matchFilePath, usecols=(2))

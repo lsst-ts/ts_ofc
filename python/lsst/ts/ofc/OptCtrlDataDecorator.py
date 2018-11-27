@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from lsst.ts.ofc.Decorator import Decorator
-from lsst.ts.ofc.Utility import getSetting
+from lsst.ts.ofc.ParamReader import ParamReader
 
 
 class OptCtrlDataDecorator(Decorator):
@@ -18,13 +18,14 @@ class OptCtrlDataDecorator(Decorator):
 
         super(OptCtrlDataDecorator, self).__init__(decoratedObj)
 
-        self.rigidBodyStrokeFileName = None
-        self.weightingFileName = None
-        self.pssnAlphaFileName = None
-
         self.xRef = None
         self.authority = None
         self.penality = {"M1M3Act": 0, "M2Act": 0, "Motion": 0}
+
+        self._rigidBodyStrokeFile = None
+        self._weightingFile = None
+        self._pssnAlphaFile = None
+        self._configOptCtrlFile = None
 
     def configOptCtrlData(self, configFileName="optiPSSN_x00.ctrl",
                           weightingFileName="imgQualWgt.txt",
@@ -56,34 +57,38 @@ class OptCtrlDataDecorator(Decorator):
             Number of mirror bending mode. (the default is 20.)
         """
 
-        self.rigidBodyStrokeFileName = rigidBodyStrokeFileName
-        self.weightingFileName = weightingFileName
-        self.pssnAlphaFileName = pssnAlphaFileName
+        rigidBodyStrokeFilePath = os.path.join(self.getConfigDir(),
+                                               rigidBodyStrokeFileName)
+        self._rigidBodyStrokeFile = ParamReader(rigidBodyStrokeFilePath)
 
-        self._readOptCtrlSetting(configFileName)
+        weightingFilePath = os.path.join(self.getInstDir(), weightingFileName)
+        self._weightingFile = ParamReader(weightingFilePath)
+
+        pssnAlphaFilePath = os.path.join(self.getConfigDir(),
+                                         pssnAlphaFileName)
+        self._pssnAlphaFile = ParamReader(pssnAlphaFilePath)
+
+        configOptCtrlFilePath = os.path.join(self.getConfigDir(),
+                                             configFileName)
+        self._configOptCtrlFile = ParamReader(configOptCtrlFilePath)
+
+        self._readOptCtrlSetting()
         self._setAuthority(m1m3ActuatorForceFileName, m2ActuatorForceFileName,
                            int(numOfBendingMode))
 
-    def _readOptCtrlSetting(self, configFileName):
-        """Read the configuration setting file of optimal control.
-
-        Parameters
-        ----------
-        configFileName : str
-            Name of configuration file.
-        """
-
-        filePath = os.path.join(self.getConfigDir(), configFileName)
+    def _readOptCtrlSetting(self):
+        """Read the configuration setting file of optimal control."""
 
         # Assign the reference to estimate the degree of freedom (DOF)
-        self.xRef = getSetting(filePath, "xref")
+        self.xRef = self._configOptCtrlFile.getSetting("xref")
 
         # Set the penality
-        self.penality["M1M3Act"] = float(getSetting(filePath,
-                                                    "M1M3_actuator_penalty"))
-        self.penality["M2Act"] = float(getSetting(filePath,
-                                                  "M2_actuator_penalty"))
-        self.penality["Motion"] = float(getSetting(filePath, "Motion_penalty"))
+        self.penality["M1M3Act"] = float(self._configOptCtrlFile.getSetting(
+                                                     "M1M3_actuator_penalty"))
+        self.penality["M2Act"] = float(self._configOptCtrlFile.getSetting(
+                                                        "M2_actuator_penalty"))
+        self.penality["Motion"] = float(self._configOptCtrlFile.getSetting(
+                                                            "Motion_penalty"))
 
     def _setAuthority(self, m1m3ActuatorForceFileName, m2ActuatorForceFileName,
                       numOfBendingMode):
@@ -129,14 +134,14 @@ class OptCtrlDataDecorator(Decorator):
             Authority of riigid body.
         """
 
-        rbStroke = self._getRbStrokeFromFile()
+        rbStroke = self._getRbStroke()
         rbStroke = np.array(rbStroke)
         authority = rbStroke[0]/rbStroke
 
         return authority
 
-    def _getRbStrokeFromFile(self):
-        """Get the rigid body stroke from the file.
+    def _getRbStroke(self):
+        """Get the rigid body stroke.
 
         The order is the M2 hexapod followed by the camera hexapod.
 
@@ -146,9 +151,7 @@ class OptCtrlDataDecorator(Decorator):
             Rigid body stroke in um.
         """
 
-        filePath = os.path.join(self.getConfigDir(),
-                                self.rigidBodyStrokeFileName)
-        rbStroke = getSetting(filePath, "rbStroke")
+        rbStroke = self._rigidBodyStrokeFile.getSetting("rbStroke")
         rbStroke = list(map(float, rbStroke))
 
         return rbStroke
@@ -198,8 +201,8 @@ class OptCtrlDataDecorator(Decorator):
 
         return self.authority
 
-    def getQwgtFromFile(self):
-        """Get the weighting ratio of image quality from file.
+    def getQwgt(self):
+        """Get the weighting ratio of image quality.
 
         This is used in the Q matrix calculation.
 
@@ -209,16 +212,15 @@ class OptCtrlDataDecorator(Decorator):
             Weighting ratio for the iamge quality Q matrix calculation.
         """
 
-        filePath = os.path.join(self.getInstDir(), self.weightingFileName)
-        qWgt = np.loadtxt(filePath, usecols=1)
+        qWgt = self._weightingFile.getMatContent(usecols=1)
 
         # Do the normalization
         qWgt = qWgt/np.sum(qWgt)
 
         return qWgt
 
-    def getPssnAlphaFromFile(self):
-        """Get the PSSN alpha value from file.
+    def getPssnAlpha(self):
+        """Get the PSSN alpha value.
 
         PSSN: Normalized point source sensitivity.
 
@@ -228,8 +230,7 @@ class OptCtrlDataDecorator(Decorator):
             PSSN alpha.
         """
 
-        filePath = os.path.join(self.getConfigDir(), self.pssnAlphaFileName)
-        pssnAlpha = np.loadtxt(filePath, usecols=0)
+        pssnAlpha = self._pssnAlphaFile.getMatContent(usecols=0)
 
         return pssnAlpha
 
@@ -242,7 +243,7 @@ class OptCtrlDataDecorator(Decorator):
             Number of field for the image quality weighting ratio.
         """
 
-        qWgt = self.getQwgtFromFile()
+        qWgt = self.getQwgt()
 
         return len(qWgt)
 
@@ -255,7 +256,7 @@ class OptCtrlDataDecorator(Decorator):
             Range of DOF, which is normalized to the unit of um.
         """
 
-        rbStroke = self._getRbStrokeFromFile()
+        rbStroke = self._getRbStroke()
         motRng = 1 / self.authority * rbStroke[0]
 
         return motRng

@@ -41,6 +41,7 @@
 
 *This module contains the following classes and functions ([class diagram](./doc/ofcPythonClassDiag.png)):*
 
+- **ParamReader**: Parameter reader class to read the parameter files used in the calculation. This is to abstract the parameter file.
 - **DataShare**: Data share class for the information change used in the algorithms. This class includes the information of indexes of annular Zernike polynomials (zk) and DOF to use.
 - **Decorator**: Decorator interface class to add the new functions or attributes to the DataShare class. This helps the user to get the parameters needed in the new algorithms. 
 - **OptStateEstiDataDecorator**: Optical state estimator data decorator class. This adds the functions/ attributes to DataShare class for the parameters needed in the OptStateEsti class (baseline algorithm).

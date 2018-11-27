@@ -177,12 +177,26 @@ class TestZTAAC(unittest.TestCase):
 
     def testEstiUkWithGainOfComCam(self):
 
-        gainToUse = 1
+        dataShare = DataShare()
+        configDir = os.path.join(getModulePath(), "configData")
+        dataShare.config(configDir, instName=InstName.COMCAM)
 
-        configDir = self.ztaac.dataShare.getConfigDir()
-        self.ztaac.dataShare.config(configDir, instName=InstName.COMCAM)
+        optStateEstiData = OptStateEstiDataDecorator(dataShare)
+        optStateEstiData.configOptStateEstiData()
+
+        mixedData = OptCtrlDataDecorator(optStateEstiData)
+        mixedData.configOptCtrlData(configFileName="optiPSSN_x00.ctrl")
+
+        optStateEsti = OptStateEsti()
+        optCtrl = OptCtrl()
+
+        self.ztaac = ZTAAC(optStateEsti, optCtrl, mixedData)
+        self.ztaac.config(filterType=FilterType.REF, defaultGain=0.7,
+                          fwhmThresholdInArcsec=0.2)
 
         self._setStateAndState0FromFile()
+
+        gainToUse = 1
         self.ztaac.setGain(gainToUse)
 
         wfErr, sensorNameList = self._getWfErrAndSensorNameListFromComCamFile()

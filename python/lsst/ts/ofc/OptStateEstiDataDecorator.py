@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from io import StringIO
 
 from lsst.ts.ofc.Decorator import Decorator
 from lsst.ts.ofc.Utility import FilterType, getMatchFilePath, getDirFiles
@@ -88,8 +87,7 @@ class OptStateEstiDataDecorator(Decorator):
             y2 correction array.
         """
 
-        content = self._y2CorrectionFile.getTxtContent()
-        y2c = np.genfromtxt(StringIO(content), delimiter=" ")
+        y2c = self._y2CorrectionFile.getMatContent()
         y2c = y2c[np.ix_(fieldIdx, self.getZn3Idx())]
 
         return y2c

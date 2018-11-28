@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from io import StringIO
 
 
 class ParamReader(object):
@@ -75,7 +74,7 @@ class ParamReader(object):
             Matrix content.
         """
 
-        mat = np.genfromtxt(StringIO(self._content), usecols=usecols)
+        mat = np.loadtxt(self.filePath, usecols=usecols)
 
         return mat
 

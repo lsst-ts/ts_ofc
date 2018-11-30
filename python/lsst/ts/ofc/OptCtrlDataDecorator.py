@@ -19,9 +19,8 @@ class OptCtrlDataDecorator(Decorator):
         super(OptCtrlDataDecorator, self).__init__(decoratedObj)
 
         self.xRef = None
-        self.authority = None
-        self.penality = {"M1M3Act": 0, "M2Act": 0, "Motion": 0}
 
+        self._authority = None
         self._rigidBodyStrokeFile = None
         self._weightingFile = None
         self._pssnAlphaFile = None
@@ -72,23 +71,10 @@ class OptCtrlDataDecorator(Decorator):
                                              configFileName)
         self._configOptCtrlFile = ParamReader(configOptCtrlFilePath)
 
-        self._readOptCtrlSetting()
-        self._setAuthority(m1m3ActuatorForceFileName, m2ActuatorForceFileName,
-                           int(numOfBendingMode))
-
-    def _readOptCtrlSetting(self):
-        """Read the configuration setting file of optimal control."""
-
-        # Assign the reference to estimate the degree of freedom (DOF)
         self.xRef = self._configOptCtrlFile.getSetting("xref")
 
-        # Set the penality
-        self.penality["M1M3Act"] = float(self._configOptCtrlFile.getSetting(
-                                                     "M1M3_actuator_penalty"))
-        self.penality["M2Act"] = float(self._configOptCtrlFile.getSetting(
-                                                        "M2_actuator_penalty"))
-        self.penality["Motion"] = float(self._configOptCtrlFile.getSetting(
-                                                            "Motion_penalty"))
+        self._setAuthority(m1m3ActuatorForceFileName, m2ActuatorForceFileName,
+                           int(numOfBendingMode))
 
     def _setAuthority(self, m1m3ActuatorForceFileName, m2ActuatorForceFileName,
                       numOfBendingMode):
@@ -118,9 +104,10 @@ class OptCtrlDataDecorator(Decorator):
         m2Authority = self._calcMirrorAuth("M2", m2ActuatorForceFileName,
                                            usecols=usecols)
 
-        self.authority = np.concatenate((rbStrokeAuthority,
-                                        self.penality["M1M3Act"]*m1m3Authority,
-                                        self.penality["M2Act"]*m2Authority))
+        penality = self.getPenality()
+        self._authority = np.concatenate((rbStrokeAuthority,
+                                         penality["M1M3Act"]*m1m3Authority,
+                                         penality["M2Act"]*m2Authority))
 
     def _calcRigidBodyAuth(self):
         """Calculate the distribution of control authority of rigid body.
@@ -199,7 +186,7 @@ class OptCtrlDataDecorator(Decorator):
             Authority of subsystem.
         """
 
-        return self.authority
+        return self._authority
 
     def getQwgt(self):
         """Get the weighting ratio of image quality.
@@ -257,7 +244,7 @@ class OptCtrlDataDecorator(Decorator):
         """
 
         rbStroke = self._getRbStroke()
-        motRng = 1 / self.authority * rbStroke[0]
+        motRng = 1 / self.getAuthority() * rbStroke[0]
 
         return motRng
 
@@ -290,7 +277,14 @@ class OptCtrlDataDecorator(Decorator):
             Penality of subsystems.
         """
 
-        return self.penality
+        penality = {}
+        penality["M1M3Act"] = float(self._configOptCtrlFile.getSetting(
+                                                "M1M3_actuator_penalty"))
+        penality["M2Act"] = float(self._configOptCtrlFile.getSetting(
+                                                "M2_actuator_penalty"))
+        penality["Motion"] = float(self._configOptCtrlFile.getSetting(
+                                                "Motion_penalty"))
+        return penality
 
     def getXref(self):
         """Get the X reference.

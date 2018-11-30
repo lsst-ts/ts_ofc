@@ -36,7 +36,7 @@ class TestDataShare(unittest.TestCase):
         self.assertEqual(senM.shape, (35, 19, 50))
         self.assertEqual(senM[4, 3, 5], -1.1726e-11)
 
-        self.assertEqual(self.dataShare.zn3Max, 19)
+        self.assertEqual(self.dataShare._getZn3Max(), 19)
 
     def testComCamSetting(self):
 
@@ -51,11 +51,11 @@ class TestDataShare(unittest.TestCase):
 
         dataShare = DataShare()
         configDir = os.path.join(getModulePath(), "tests", "testData")
+        dataShare.config(configDir, instName=InstName.LSST)
+        self.assertRaises(ValueError, dataShare.getSenM)
 
-        self.assertRaises(ValueError, dataShare.config, configDir,
-                          InstName.LSST)
-        self.assertRaises(ValueError, dataShare.config, configDir,
-                          InstName.COMCAM)
+        dataShare.config(configDir, instName=InstName.COMCAM)
+        self.assertRaises(ValueError, dataShare.getSenM)
 
     def testGetFieldIdx(self):
 

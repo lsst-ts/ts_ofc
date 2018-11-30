@@ -15,10 +15,8 @@ class DataShare(object):
         self.configDir = None
         self.instName = None
 
-        self.zn3Max = None
         self.zn3Idx = None
         self.dofIdx = None
-        self.senM = None
 
         self._zkAndDofIdxArraySetFile = None
         self._senMfile = None
@@ -73,22 +71,18 @@ class DataShare(object):
                                               sensorIdToNameFileName)
         self._sensorIdToNameFile = ParamReader(sensorIdToNameFilePath)
 
-        self._readSetting()
-
-        # Get the sensitivity matrix M file path
         senMfilePath = self._getSenMfilePath(reMatchStr=r"\AsenM\S+")
         self._senMfile = ParamReader(senMfilePath)
-        self._setSenM()
 
-    def _readSetting(self):
-        """Read the configuration setting file of optical state estimator."""
+        self._readZn3AndDofIdxArray()
+
+    def _readZn3AndDofIdxArray(self):
+        """Read the Z3-Zn and DOF index arrays.
+
+        DOF: degree of freedom.
+        """
 
         arrayParamList = ["izn3", "icomp"]
-
-        # Get the number of z3 - zn
-        self.zn3Max = self._zkAndDofIdxArraySetFile.getSetting("znmax",
-                                                               arrayParamList)
-        self.zn3Max = int(self.zn3Max)-3
 
         self.zn3Idx = self._zkAndDofIdxArraySetFile.getSetting("izn3",
                                                                arrayParamList)
@@ -132,20 +126,6 @@ class DataShare(object):
 
         return np.where(np.array(array) != 0)[0]
 
-    def _setSenM(self):
-        """Set the sensitivity matrix M with the assigned index arrays of zk
-        and degree of freedom (DOF)."""
-
-        # Get the shape of sensitivity matrix M
-        filePath = self._senMfile.getFilePath()
-        fileName = os.path.basename(filePath)
-        shape = self._getSenMshape(fileName)
-
-        # Set the sensitivity matrix M
-        senM = self._senMfile.getMatContent()
-        senM = senM.reshape(shape)
-        self.senM = senM[np.ix_(np.arange(shape[0]), self.zn3Idx, self.dofIdx)]
-
     def _getSenMfilePath(self, reMatchStr):
         """Get the sensitivity matrix M file path.
 
@@ -186,6 +166,29 @@ class DataShare(object):
         """
 
         return self.configDir
+
+    def getSenM(self):
+        """Get the sensitivity matrix M.
+
+        The arrangement of M is (field #, zn #, dof #).
+
+        Returns
+        -------
+        numpy.ndarray
+            Sensitivity matrix M.
+        """
+
+        # Get the shape of sensitivity matrix M
+        filePath = self._senMfile.getFilePath()
+        fileName = os.path.basename(filePath)
+        shape = self._getSenMshape(fileName)
+
+        # Set the sensitivity matrix M
+        senM = self._senMfile.getMatContent()
+        senM = senM.reshape(shape)
+        senM = senM[np.ix_(np.arange(shape[0]), self.zn3Idx, self.dofIdx)]
+
+        return senM
 
     def _getSenMshape(self, senMFileName):
         """Get the shape of sensitivity matrix M.
@@ -239,19 +242,6 @@ class DataShare(object):
         """
 
         return self.zn3Idx
-
-    def getSenM(self):
-        """Get the sensitivity matrix M.
-
-        The arrangement of M is (field #, zn #, dof #).
-
-        Returns
-        -------
-        numpy.ndarray
-            Sensitivity matrix M.
-        """
-
-        return self.senM
 
     def getFieldIdx(self, sensorNameList):
         """Get the list of field index based on the abbreviated sensor
@@ -363,12 +353,8 @@ class DataShare(object):
             Index array of DOF.
         """
 
-        # Assign the index arrays
         self.zn3Idx = np.array(zn3Idx, dtype=int)
         self.dofIdx = np.array(dofIdx, dtype=int)
-
-        # Reset the sensitivity matrix M
-        self._setSenM()
 
     def setZkAndDofInGroups(self, zkToUse=np.ones(19, dtype=int),
                             m2HexPos=np.ones(5, dtype=int),
@@ -403,9 +389,10 @@ class DataShare(object):
             "The length of DOF is incorrect."
         """
 
-        if (len(zkToUse) != self.zn3Max):
+        zn3Max = self._getZn3Max()
+        if (len(zkToUse) != zn3Max):
             raise ValueError("The length of 'zkToUse' should be %d."
-                             % self.zn3Max)
+                             % zn3Max)
 
         # Get the index of zk to use
         zn3Idx = self._getNonZeroIdx(zkToUse)
@@ -424,6 +411,22 @@ class DataShare(object):
             dofIdx = np.append(dofIdx, idx+startIdx)
 
         self.setZkAndDofIdxArrays(zn3Idx, dofIdx)
+
+    def _getZn3Max(self):
+        """Get the number of terms of Z3 to Zn.
+
+        Zn: Annular Zernike polynomial.
+
+        Returns
+        -------
+        int
+            Number of terms of Z3 to Zn.
+        """
+
+        zn3Max = self._zkAndDofIdxArraySetFile.getSetting("znmax")
+        zn3Max = int(zn3Max)-3
+
+        return zn3Max
 
     def getWfAndFieldIdFromFile(self, wfFilePath, sensorNameList):
         """Get the wavefront error and field Id from the file.

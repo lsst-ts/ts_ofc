@@ -12,17 +12,17 @@ class DataShare(object):
     def __init__(self):
         """Initialization of data share class."""
 
-        self.configDir = None
-        self.instName = None
+        self.configDir = ""
+        self.instName = InstName.LSST
 
-        self.zn3Idx = None
-        self.dofIdx = None
+        self.zn3Idx = np.array([], dtype=int)
+        self.dofIdx = np.array([], dtype=int)
 
-        self._zkAndDofIdxArraySetFile = None
-        self._senMfile = None
-        self._mappingFile = None
-        self._idxDofFile = None
-        self._sensorIdToNameFile = None
+        self._zkAndDofIdxArraySetFile = ParamReader()
+        self._senMfile = ParamReader()
+        self._mappingFile = ParamReader()
+        self._idxDofFile = ParamReader()
+        self._sensorIdToNameFile = ParamReader()
 
     def config(self, configDir, instName=InstName.LSST,
                zkAndDofIdxArraySetFileName="zkAndDofIdxArraySet.txt",
@@ -59,20 +59,21 @@ class DataShare(object):
         zkAndDofIdxArraySetFilePath = os.path.join(configDir,
                                                    zkAndDofIdxArraySetFileName)
         self._zkAndDofIdxArraySetFile = ParamReader(
-                                            zkAndDofIdxArraySetFilePath)
+                                        filePath=zkAndDofIdxArraySetFilePath)
 
         mappingFilePath = os.path.join(self.getInstDir(), mappingFileName)
-        self._mappingFile = ParamReader(mappingFilePath)
+        self._mappingFile = ParamReader(filePath=mappingFilePath)
 
         idxDofFilePath = os.path.join(configDir, idxDofFileName)
-        self._idxDofFile = ParamReader(idxDofFilePath)
+        self._idxDofFile = ParamReader(filePath=idxDofFilePath)
 
         sensorIdToNameFilePath = os.path.join(configDir,
                                               sensorIdToNameFileName)
-        self._sensorIdToNameFile = ParamReader(sensorIdToNameFilePath)
+        self._sensorIdToNameFile = ParamReader(
+                                        filePath=sensorIdToNameFilePath)
 
         senMfilePath = self._getSenMfilePath(reMatchStr=r"\AsenM\S+")
-        self._senMfile = ParamReader(senMfilePath)
+        self._senMfile = ParamReader(filePath=senMfilePath)
 
         self._readZn3AndDofIdxArray()
 

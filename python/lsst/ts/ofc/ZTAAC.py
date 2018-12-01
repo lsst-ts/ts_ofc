@@ -1,6 +1,6 @@
 import numpy as np
 
-from lsst.ts.ofc.Utility import DofGroup
+from lsst.ts.ofc.Utility import DofGroup, FilterType
 
 
 class ZTAAC(object):
@@ -23,9 +23,9 @@ class ZTAAC(object):
         self.optCtrl = optCtrl
         self.dataShare = dataShare
 
-        self.filterType = None
-        self.defaultGain = None
-        self.fwhmThresholdInArcsec = None
+        self.filterType = FilterType.REF
+        self.defaultGain = 0
+        self.fwhmThresholdInArcsec = 0
 
     def config(self, filterType=None, defaultGain=0.7,
                fwhmThresholdInArcsec=0.2):

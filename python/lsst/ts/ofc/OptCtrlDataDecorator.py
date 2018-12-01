@@ -18,13 +18,13 @@ class OptCtrlDataDecorator(Decorator):
 
         super(OptCtrlDataDecorator, self).__init__(decoratedObj)
 
-        self.xRef = None
+        self.xRef = ""
 
-        self._authority = None
-        self._rigidBodyStrokeFile = None
-        self._weightingFile = None
-        self._pssnAlphaFile = None
-        self._configOptCtrlFile = None
+        self._authority = np.array([])
+        self._rigidBodyStrokeFile = ParamReader()
+        self._weightingFile = ParamReader()
+        self._pssnAlphaFile = ParamReader()
+        self._configOptCtrlFile = ParamReader()
 
     def configOptCtrlData(self, configFileName="optiPSSN_x00.ctrl",
                           weightingFileName="imgQualWgt.txt",
@@ -58,18 +58,19 @@ class OptCtrlDataDecorator(Decorator):
 
         rigidBodyStrokeFilePath = os.path.join(self.getConfigDir(),
                                                rigidBodyStrokeFileName)
-        self._rigidBodyStrokeFile = ParamReader(rigidBodyStrokeFilePath)
+        self._rigidBodyStrokeFile = ParamReader(
+                                        filePath=rigidBodyStrokeFilePath)
 
         weightingFilePath = os.path.join(self.getInstDir(), weightingFileName)
-        self._weightingFile = ParamReader(weightingFilePath)
+        self._weightingFile = ParamReader(filePath=weightingFilePath)
 
         pssnAlphaFilePath = os.path.join(self.getConfigDir(),
                                          pssnAlphaFileName)
-        self._pssnAlphaFile = ParamReader(pssnAlphaFilePath)
+        self._pssnAlphaFile = ParamReader(filePath=pssnAlphaFilePath)
 
         configOptCtrlFilePath = os.path.join(self.getConfigDir(),
                                              configFileName)
-        self._configOptCtrlFile = ParamReader(configOptCtrlFilePath)
+        self._configOptCtrlFile = ParamReader(filePath=configOptCtrlFilePath)
 
         self.xRef = self._configOptCtrlFile.getSetting("xref")
 

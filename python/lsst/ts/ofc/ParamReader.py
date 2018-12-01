@@ -4,17 +4,21 @@ import numpy as np
 
 class ParamReader(object):
 
-    def __init__(self, filePath):
+    def __init__(self, filePath=None):
         """Initialization of parameter reader class.
 
         Parameters
         ----------
-        filePath : str
-            File path.
+        filePath : str, optional
+            File path. (the default is None.)
         """
 
-        self.filePath = filePath
-        self._content = self._readTxtContent(filePath)
+        if (filePath is None):
+            self.filePath = ""
+        else:
+            self.filePath = filePath
+
+        self._content = self._readTxtContent(self.filePath)
 
     def _readTxtContent(self, filePath):
         """Read the content of text file.
@@ -30,10 +34,11 @@ class ParamReader(object):
             Content of file.
         """
 
-        content = None
         if (os.path.exists(filePath)):
             with open(filePath, "r") as file:
                 content = file.read()
+        else:
+            content = ""
 
         return content
 
@@ -74,7 +79,10 @@ class ParamReader(object):
             Matrix content.
         """
 
-        mat = np.loadtxt(self.filePath, usecols=usecols)
+        if (os.path.exists(self.filePath)):
+            mat = np.loadtxt(self.filePath, usecols=usecols)
+        else:
+            mat = np.array([])
 
         return mat
 

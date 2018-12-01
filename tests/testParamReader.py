@@ -15,7 +15,7 @@ class TestParamReader(unittest.TestCase):
         self.fileName = "zkAndDofIdxArraySet.txt"
 
         filePath = os.path.join(self.configDir, self.fileName)
-        self.paramReader = ParamReader(filePath)
+        self.paramReader = ParamReader(filePath=filePath)
 
     def testGetSetting(self):
 
@@ -47,6 +47,16 @@ class TestParamReader(unittest.TestCase):
 
         ansFilePath = os.path.join(self.configDir, self.fileName)
         self.assertEqual(self.paramReader.getFilePath(), ansFilePath)
+
+    def testConstructor(self):
+
+        paramReader = ParamReader()
+        self.assertEqual(paramReader.getFilePath(), "")
+        self.assertEqual(paramReader.getTxtContent(), "")
+
+        matContent = paramReader.getMatContent()
+        self.assertEqual(len(matContent), 0)
+        self.assertTrue(isinstance(matContent, np.ndarray))
 
 
 if __name__ == "__main__":

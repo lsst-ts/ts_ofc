@@ -19,10 +19,10 @@ class OptStateEstiDataDecorator(Decorator):
 
         super(OptStateEstiDataDecorator, self).__init__(decoratedObj)
 
-        self._intrincZkFileName = None
-        self._intrincZkFile = None
-        self._wavelengthTable = None
-        self._y2CorrectionFile = None
+        self._intrincZkFileName = ""
+        self._intrincZkFile = ParamReader()
+        self._wavelengthTable = ParamReader()
+        self._y2CorrectionFile = ParamReader()
 
     def configOptStateEstiData(self, wavelengthTable="effWaveLength.txt",
                                intrincZkFileName="intrinsic_zn",
@@ -42,11 +42,11 @@ class OptStateEstiDataDecorator(Decorator):
 
         wavelengthTablePath = os.path.join(self.getConfigDir(),
                                            wavelengthTable)
-        self._wavelengthTable = ParamReader(wavelengthTablePath)
+        self._wavelengthTable = ParamReader(filePath=wavelengthTablePath)
 
         y2CorrectionFilePath = os.path.join(self.getInstDir(),
                                             y2CorrectionFileName)
-        self._y2CorrectionFile = ParamReader(y2CorrectionFilePath)
+        self._y2CorrectionFile = ParamReader(filePath=y2CorrectionFilePath)
 
         self._intrincZkFileName = intrincZkFileName
 
@@ -123,7 +123,7 @@ class OptStateEstiDataDecorator(Decorator):
         zkIdx = self.getZn3Idx() + 3
 
         # Get the intrinsicZk with the consideration of effective wavelength
-        self._intrincZkFile = ParamReader(zkFilePath)
+        self._intrincZkFile = ParamReader(filePath=zkFilePath)
         intrinsicZk = self._intrincZkFile.getMatContent()
         intrinsicZk = intrinsicZk[np.ix_(fieldIdx, zkIdx)]
         intrinsicZk = intrinsicZk * self.getEffWave(filterType)

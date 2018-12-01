@@ -13,8 +13,8 @@ class OptCtrlDefault(object):
         """Initialization of optimal control default class."""
 
         self.gain = 0
-        self.state0InDof = None
-        self.stateInDof = None
+        self.state0InDof = np.array([])
+        self.stateInDof = np.array([])
 
     def initStateToState0(self):
         """Initialize the state to the state 0 in the basis of degree of

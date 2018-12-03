@@ -31,7 +31,7 @@
 
 *Setup the OFC environment:*
 <br/>
-`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_ofcPython_python`
+`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_ofcPython/python`
 <br/>
 (e.g. `export PYTHONPATH=$PYTHONPATH:/home/ttsai/Documents/github/ts_tcs_ofcPython/python`)
 
@@ -57,8 +57,8 @@
 
 ## 6. Extension of Algorithm
 
-- **Estimate the optical state**: Inherit from the OptStateEstiDefault class, and realize the estiOptState function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
-- **Calculate the DOF offset**: Inherit from the OptCtrlDefault class, and realize the estiUkWithoutGain function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
+- **Estimate the optical state**: Inherit from the OptStateEstiDefault class, and realize the estiOptState() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
+- **Calculate the DOF offset**: Inherit from the OptCtrlDefault class, and realize the estiUkWithoutGain() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
 
 ## 7. Unit Test and Coverage Analysis
 

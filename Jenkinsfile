@@ -6,9 +6,10 @@ pipeline {
         // Use the docker to assign the Python version.
         // Use the label to assign the node to run the test.
         // The nodes in T&S teams is 'jenkins-el7-1'.
+        // It is recommended by SQUARE team do not add the label.
         docker {
             image 'python:3.6.2'
-            label 'jenkins-el7-1'
+            args '-u root'
         }
     }
 

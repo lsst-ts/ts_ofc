@@ -18,14 +18,14 @@
 ## 2. Platform
 
 - *CentOS 7*
-- *python: 3.6.2*
+- *Python: 3.6.2*
+- *Tested under the scientific pipeline (lsst_distrib -t w_2018_47) already (Python: 3.6.6)*
 
 ## 3. Needed Package
 
 - *numpy*
 - *scipy*
 - *pytest (optional, test only.)*
-- *coverage (optional, test only.)*
 
 ## 4. Use of Module
 
@@ -60,10 +60,9 @@
 - **Estimate the optical state**: Inherit from the OptStateEstiDefault class, and realize the estiOptState() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
 - **Calculate the DOF offset**: Inherit from the OptCtrlDefault class, and realize the estiUkWithoutGain() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
 
-## 7. Unit Test and Coverage Analysis
+## 7. Unit Test
 
 - **Unit Tests**: Under the repository directory, do `pytest tests/test*.py`.
-- **Coverage Analysis**: Under the repository directory, do `sh coverageAnalysis.sh "tests/test*.py"`.
 
 ## 8. Reference of Baseline Algorithm
 

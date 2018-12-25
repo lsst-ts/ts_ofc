@@ -33,13 +33,13 @@ pipeline {
                 // to install the packages.
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
-                        pip install --user numpy scipy pytest coverage
+                        pip install --user numpy scipy pytest pytest-cov 
                     """
                 }
             }
         }
 
-        stage('Unit Tests') { 
+        stage('Unit Tests and Coverage Analysis') { 
             steps {
                 // Direct the HOME to WORKSPACE for pip to get the
                 // installed library.
@@ -49,19 +49,7 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         export PATH=$PATH:${env.WORKSPACE}/.local/bin
-                        pytest --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
-                    """
-                }
-            }
-        }
-
-        stage('Coverage Analysis') { 
-            steps {
-                // Do the coverage analysis for multiple files.
-                withEnv(["HOME=${env.WORKSPACE}"]) {
-                    sh """
-                        export PATH=$PATH:${env.WORKSPACE}/.local/bin
-                        ./coverageAnalysis.sh "${env.WORKSPACE}/tests/test*.py"
+                        pytest --cov-report html --cov=lsst.ts.ofc --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
                     """
                 }
             }

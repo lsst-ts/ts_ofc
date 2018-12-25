@@ -23,6 +23,8 @@ pipeline {
         PYTHONPATH="${env.WORKSPACE}/python"
         // XML report path
         XML_REPORT="jenkinsReport/report.xml"
+        // Module name used in the pytest coverage analysis
+        MODULE_NAME="lsst.ts.ofc"
     }
 
     stages {
@@ -49,7 +51,7 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         export PATH=$PATH:${env.WORKSPACE}/.local/bin
-                        pytest --cov-report html --cov=lsst.ts.ofc --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
+                        pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
                     """
                 }
             }

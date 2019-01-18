@@ -18,8 +18,8 @@
 ## 2. Platform
 
 - *CentOS 7*
-- *Python: 3.6.2*
-- *Tested under the scientific pipeline (lsst_distrib -t w_2018_47) already (Python: 3.6.6)*
+- *Python: 3.6.6*
+- *Tested under the scientific pipeline (lsst_distrib -t w_2019_02) already.*
 
 ## 3. Needed Package
 

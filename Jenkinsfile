@@ -8,7 +8,7 @@ pipeline {
         // The nodes in T&S teams is 'jenkins-el7-1'.
         // It is recommended by SQUARE team do not add the label.
         docker {
-            image 'python:3.6.2'
+            image 'python:3.6.6'
             args '-u root'
         }
     }

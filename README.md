@@ -10,26 +10,36 @@
 *Version 1.0*
 <br/>
 *Finish the OFC with the support of algorithm study in Python.*
+<br/>
+<br/>
+*Version 1.0.1*
+<br/>
+*Reuse the FilterType Enum from ts_tcs_wep.*
+<br/>
 
 *Author: Te-Wei Tsai*
 <br/>
-*Date: 11-19-2018*
+*Date: 1-24-2019*
 
 ## 2. Platform
 
 - *CentOS 7*
 - *Python: 3.6.6*
-- *Tested under the scientific pipeline (lsst_distrib -t w_2019_02) already.*
+- *Scientific pipeline (newinstall.sh from master branch)*
 
 ## 3. Needed Package
 
-- *numpy*
-- *scipy*
-- *pytest (optional, test only.)*
+- *ts_tcs_wep - develop branch (commit: d59002a)*
 
 ## 4. Use of Module
 
-*Setup the OFC environment:*
+*1. Setup the WEP environment:*
+<br/>
+`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep/python`
+<br/>
+(e.g. `export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep/python`)
+
+*2. Setup the OFC environment:*
 <br/>
 `export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_ofcPython/python`
 <br/>

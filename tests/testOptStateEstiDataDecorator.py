@@ -2,9 +2,11 @@ import os
 import unittest
 import numpy as np
 
+from lsst.ts.wep.Utility import FilterType
+
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
-from lsst.ts.ofc.Utility import InstName, FilterType, getModulePath
+from lsst.ts.ofc.Utility import InstName, getModulePath
 
 
 class TestOptStateEstiDataDecorator(unittest.TestCase):

@@ -1,8 +1,10 @@
 import os
 import numpy as np
 
+from lsst.ts.wep.Utility import FilterType
+
 from lsst.ts.ofc.Decorator import Decorator
-from lsst.ts.ofc.Utility import FilterType, getMatchFilePath, getDirFiles
+from lsst.ts.ofc.Utility import getMatchFilePath, getDirFiles
 from lsst.ts.ofc.ParamReader import ParamReader
 
 

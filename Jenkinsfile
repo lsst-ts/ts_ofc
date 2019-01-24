@@ -8,7 +8,7 @@ pipeline {
         // The nodes in T&S teams is 'jenkins-el7-1'.
         // It is recommended by SQUARE team do not add the label.
         docker {
-            image 'python:3.6.6'
+            image 'lsstts/aos:w_2019_02'
             args '-u root'
         }
     }
@@ -20,7 +20,7 @@ pipeline {
     environment {
         // Use the double quote instead of single quote
         // Add the PYTHONPATH
-        PYTHONPATH="${env.WORKSPACE}/python"
+        PYTHONPATH="${env.WORKSPACE}/python:${env.WORKSPACE}/ts_tcs_wep/python"
         // XML report path
         XML_REPORT="jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
@@ -35,7 +35,13 @@ pipeline {
                 // to install the packages.
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
-                        pip install --user numpy scipy pytest pytest-cov 
+                        source /opt/rh/devtoolset-6/enable
+                        source /opt/lsst/loadLSST.bash
+                        conda install scikit-image
+                        git clone --branch develop https://github.com/lsst-ts/ts_tcs_wep.git
+                        cd ts_tcs_wep/
+                        git checkout d59002a
+                        python builder/setup.py build_ext --build-lib python/lsst/ts/wep/cwfs/lib
                     """
                 }
             }
@@ -50,7 +56,9 @@ pipeline {
                 // Pytest needs to export the junit report. 
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
-                        export PATH=$PATH:${env.WORKSPACE}/.local/bin
+                        source /opt/rh/devtoolset-6/enable
+                        source /opt/lsst/loadLSST.bash
+                        setup sims_catUtils -t sims_w_2019_02
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
                     """
                 }

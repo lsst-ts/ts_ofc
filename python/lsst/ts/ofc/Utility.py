@@ -9,16 +9,6 @@ class InstName(Enum):
     COMCAM = 2
 
 
-class FilterType(Enum):
-    U = 1
-    G = 2
-    R = 3
-    I = 4
-    Z = 5
-    Y = 6
-    REF = 7
-
-
 class DofGroup(Enum):
     M2HexPos = 1
     CamHexPos = 2

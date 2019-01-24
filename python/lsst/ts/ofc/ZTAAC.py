@@ -1,6 +1,8 @@
 import numpy as np
 
-from lsst.ts.ofc.Utility import DofGroup, FilterType
+from lsst.ts.wep.Utility import FilterType
+
+from lsst.ts.ofc.Utility import DofGroup
 
 
 class ZTAAC(object):

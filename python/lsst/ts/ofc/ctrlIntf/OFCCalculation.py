@@ -31,8 +31,8 @@ class OFCCalculation(object):
         self.fwhmToPssn = fwhmToPssn
         self.currentFilter = FilterType.REF
 
-        self.pssnArray = None
-        self.rotAngInDeg = 0
+        self.pssnArray = np.array([])
+        self.rotAngInDeg = 0.0
 
         self.gainByUser = -1
 

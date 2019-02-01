@@ -5,7 +5,7 @@ from lsst.ts.ofc.ctrlIntf.FWHMToPSSN import FWHMToPSSN
 class OFCCalculationOfLsst(OFCCalculation):
     """The concrete child class of OFCCalculation of the LSST."""
 
-    def __init__(self, fwhmToPssn):
+    def __init__(self):
         super(OFCCalculationOfLsst, self).__init__(FWHMToPSSN())
 
 

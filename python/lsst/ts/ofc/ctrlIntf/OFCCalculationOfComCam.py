@@ -5,7 +5,7 @@ from lsst.ts.ofc.ctrlIntf.FWHMToPSSN import FWHMToPSSN
 class OFCCalculationOfComCam(OFCCalculation):
     """The concrete child class of OFCCalculation of the ComCam"""
 
-    def __init__(self, fwhmToPssn):
+    def __init__(self):
         super(OFCCalculationOfComCam, self).__init__(FWHMToPSSN())
 
 

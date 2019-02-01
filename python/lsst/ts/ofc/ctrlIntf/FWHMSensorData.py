@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class FWHMSensorData(object):
     """Contains the FWHM data for a sensor."""
 
@@ -12,8 +15,8 @@ class FWHMSensorData(object):
             The FWHM values for this sensor.
         """
 
-        self.sensorId = None
-        self.fwhmValues = None
+        self.sensorId = 0
+        self.fwhmValues = np.array([])
 
         self.setSensorId(sensorId)
         self.setFwhmValues(fwhmValues)

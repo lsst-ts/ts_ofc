@@ -6,6 +6,7 @@ from lsst.ts.ofc.Utility import DofGroup
 
 
 class TestCamRot(unittest.TestCase):
+    """Test the CamRot class."""
 
     def setUp(self):
 

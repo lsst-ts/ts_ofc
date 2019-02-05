@@ -59,7 +59,7 @@ pipeline {
                         source /opt/rh/devtoolset-6/enable
                         source /opt/lsst/loadLSST.bash
                         setup sims_catUtils -t sims_w_2019_02
-                        pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
+                        pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py ${env.WORKSPACE}/tests/ctrlIntf/*.py
                     """
                 }
             }

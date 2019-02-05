@@ -16,10 +16,15 @@
 <br/>
 *Reuse the FilterType Enum from ts_tcs_wep.*
 <br/>
+<br/>
+*Version 1.1.1*
+<br/>
+*Add the interface to MTAOS in ctrlIntf module.*
+<br/>
 
 *Author: Te-Wei Tsai*
 <br/>
-*Date: 1-24-2019*
+*Date: 2-5-2019*
 
 ## 2. Platform
 
@@ -64,6 +69,21 @@
 - **CamRot**: Camera rotation class to rotate the calculated DOF offset.
 - **Utility**: Some functions used in this module.
 - **IterDataReader**: Iteration data reader class used in the unit test only. This is just to read the test iteration data.
+
+*There is one module in OFC:*
+
+- **Control Interface (ctrlIntf)**: This module provides the interface classes to the main telescope active optics system (MTAOS). The factory pattern is applied to support the multiple instruments ([class diagram](./doc/ctrlIntfClassDiag.png)).
+    - **OFCCalculationFactory**: OFC calculation factory class to create the concrete OFC calculation object for each instrument.
+    - **OFCCalculation**: OFC calculation default class as the parent class of concrete child classes for different instrument. The user shall get the concrete object by the creation method of OFCCalculationFactory class.
+    - **OFCCalculationOfLsst**: OFC calculation of LSST class. This is the concrete child class of OFCCalculation class.
+    - **OFCCalculationOfComCam**: OFC calculation of ComCam class. This is the concrete child class of OFCCalculation class.
+    - **SensorWavefrontError**: Sensor wavefront error class. This class contains the information of sensor Id and related wavefront error. The details will be populated by the MTAOS and pass to the child class of OFCCalculation to do the calculation.
+    - **HexapodCorrection**: Camera hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.
+    - **M2HexapodCorrection**: M2 hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.
+    - **M1M3Correction**: M1M3 correction class. This class contains the actuator force correction to let the MTAOS to apply to subsystem.
+    - **M2Correction**: M2 correction class. This class contains the actuator force correction to let the MTAOS to apply to subsystem.
+    - **FWHMToPSSN**: Full width at half maximum (FWHM) to normalized point source sensitivity (PSSN) class. This class will convert the FWHM value to the PSSN. The details of this class is not clear yet. FWHM value will be provided by the data management (DM) team.
+    - **FWHMSensorData**: Full width at half maximum (FWHM) sensor data class. This class has the information of sensor ID and related FWHM value. The details will be populated by the MTAOS and pass to the child class of OFCCalculation to do the calculation.
 
 ## 6. Extension of Algorithm
 

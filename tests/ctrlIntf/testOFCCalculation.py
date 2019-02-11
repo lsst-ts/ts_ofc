@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.ofc.ctrlIntf.OFCCalculation import OFCCalculation
 from lsst.ts.ofc.ctrlIntf.FWHMToPSSN import FWHMToPSSN
-from lsst.ts.ofc.ctrlIntf.HexapodCorrection import HexapodCorrection
+from lsst.ts.ofc.ctrlIntf.CameraHexapodCorrection import CameraHexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M2HexapodCorrection import M2HexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M1M3Correction import M1M3Correction
 from lsst.ts.ofc.ctrlIntf.M2Correction import M2Correction
@@ -60,7 +60,7 @@ class TestOFCCalculation(unittest.TestCase):
         hexapodCorrection, m2HexapodCorrection, m1m3Correction, m2Correction = \
             self.ofcCalculation.resetOfcState()
 
-        self.assertTrue(isinstance(hexapodCorrection, HexapodCorrection))
+        self.assertTrue(isinstance(hexapodCorrection, CameraHexapodCorrection))
         self.assertTrue(isinstance(m2HexapodCorrection, M2HexapodCorrection))
         self.assertTrue(isinstance(m1m3Correction, M1M3Correction))
         self.assertTrue(isinstance(m2Correction, M2Correction))
@@ -102,7 +102,7 @@ class TestOFCCalculation(unittest.TestCase):
         hexapodCorrection, m2HexapodCorrection, m1m3Correction, m2Correction = \
             self.ofcCalculation.calculateCorrections(listOfWfErr)
 
-        self.assertTrue(isinstance(hexapodCorrection, HexapodCorrection))
+        self.assertTrue(isinstance(hexapodCorrection, CameraHexapodCorrection))
         self.assertTrue(isinstance(m2HexapodCorrection, M2HexapodCorrection))
         self.assertTrue(isinstance(m1m3Correction, M1M3Correction))
         self.assertTrue(isinstance(m2Correction, M2Correction))

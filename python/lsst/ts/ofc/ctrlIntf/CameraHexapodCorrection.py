@@ -1,6 +1,5 @@
-class HexapodCorrection(object):
-    """Contains the correction for MT Hexapod.
-    """
+class CameraHexapodCorrection(object):
+    """Contains the correction for MT Hexapod."""
 
     def __init__(self, x, y, z, u, v, w=0.0):
         """Construct a Hexapod correction.

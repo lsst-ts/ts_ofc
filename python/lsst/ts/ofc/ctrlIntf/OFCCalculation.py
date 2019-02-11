@@ -2,7 +2,7 @@ import numpy as np
 
 from lsst.ts.wep.Utility import FilterType
 
-from lsst.ts.ofc.ctrlIntf.HexapodCorrection import HexapodCorrection
+from lsst.ts.ofc.ctrlIntf.CameraHexapodCorrection import CameraHexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M2HexapodCorrection import M2HexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M1M3Correction import M1M3Correction
 from lsst.ts.ofc.ctrlIntf.M2Correction import M2Correction
@@ -109,7 +109,7 @@ class OFCCalculation(object):
 
         Returns
         -------
-        HexapodCorrection
+        CameraHexapodCorrection
             The position offset for the MT Hexapod.
         M2HexapodCorrection
             The position offset for the MT M2 Hexapod.
@@ -120,12 +120,14 @@ class OFCCalculation(object):
         """
 
         # I also need to clean OFC internal state data.
-        hexapodCorrection = HexapodCorrection(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        m2HexapodCorrection = M2HexapodCorrection(0.0, 0.0, 0.0)
+        camHexapodCorrection = CameraHexapodCorrection(0.0, 0.0, 0.0, 0.0, 0.0,
+                                                    0.0)
+        m2HexapodCorrection = M2HexapodCorrection(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         m1m3Correction = M1M3Correction([0.0] * 156)
         m2Correction = M2Correction([0.0] * 72)
 
-        return hexapodCorrection, m2HexapodCorrection, m1m3Correction, m2Correction
+        return camHexapodCorrection, m2HexapodCorrection, m1m3Correction, \
+               m2Correction
 
     def setGainByUser(self, gainByUser=-1):
         """Set the gain value by the user.
@@ -157,7 +159,7 @@ class OFCCalculation(object):
 
         Returns
         -------
-        HexapodCorrection
+        CameraHexapodCorrection
             The position offset for the MT Hexapod.
         M2HexapodCorrection
             The position offset for the MT M2 Hexapod.
@@ -167,12 +169,14 @@ class OFCCalculation(object):
             The figure offset for the MT M2.
         """
 
-        hexapodCorrection = HexapodCorrection(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        m2HexapodCorrection = M2HexapodCorrection(0.0, 0.0, 0.0)
+        camHexapodCorrection = CameraHexapodCorrection(0.0, 0.0, 0.0, 0.0, 0.0,
+                                                       0.0)
+        m2HexapodCorrection = M2HexapodCorrection(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         m1m3Correction = M1M3Correction([0.0] * 156)
         m2Correction = M2Correction([0.0] * 72)
 
-        return hexapodCorrection, m2HexapodCorrection, m1m3Correction, m2Correction
+        return camHexapodCorrection, m2HexapodCorrection, m1m3Correction, \
+               m2Correction
 
 
 if __name__ == "__main__":

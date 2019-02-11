@@ -1,10 +1,10 @@
 import unittest
 
-from lsst.ts.ofc.ctrlIntf.HexapodCorrection import HexapodCorrection
+from lsst.ts.ofc.ctrlIntf.CameraHexapodCorrection import CameraHexapodCorrection
 
 
-class TestHexapodCorrection(unittest.TestCase):
-    """Test the HexapodCorrection class."""
+class TestCameraHexapodCorrection(unittest.TestCase):
+    """Test the CameraHexapodCorrection class."""
 
     def setUp(self):
 
@@ -14,8 +14,8 @@ class TestHexapodCorrection(unittest.TestCase):
         self.u = 0.4
         self.v = 0.5
         self.w = 0.6
-        self.hexapodCorrection = HexapodCorrection(self.x, self.y, self.z,
-                                                   self.u, self.v, w=self.w)
+        self.hexapodCorrection = CameraHexapodCorrection(
+                            self.x, self.y, self.z, self.u, self.v, w=self.w)
 
     def testGetCorrection(self):
 

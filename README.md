@@ -21,10 +21,15 @@
 <br/>
 *Add the interface to MTAOS in ctrlIntf module.*
 <br/>
+<br/>
+*Version 1.1.2*
+<br/>
+*Fix the interface class of M2HexapodCorrection. Rename the HexapodCorrection class to CameraHexapodCorrection.*
+<br/>
 
 *Author: Te-Wei Tsai*
 <br/>
-*Date: 2-5-2019*
+*Date: 2-11-2019*
 
 ## 2. Platform
 
@@ -78,7 +83,7 @@
     - **OFCCalculationOfLsst**: OFC calculation of LSST class. This is the concrete child class of OFCCalculation class.
     - **OFCCalculationOfComCam**: OFC calculation of ComCam class. This is the concrete child class of OFCCalculation class.
     - **SensorWavefrontError**: Sensor wavefront error class. This class contains the information of sensor Id and related wavefront error. The details will be populated by the MTAOS and pass to the child class of OFCCalculation to do the calculation.
-    - **HexapodCorrection**: Camera hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.
+    - **CameraHexapodCorrection**: Camera hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.
     - **M2HexapodCorrection**: M2 hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.
     - **M1M3Correction**: M1M3 correction class. This class contains the actuator force correction to let the MTAOS to apply to subsystem.
     - **M2Correction**: M2 correction class. This class contains the actuator force correction to let the MTAOS to apply to subsystem.

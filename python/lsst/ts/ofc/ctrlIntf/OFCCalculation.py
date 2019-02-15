@@ -36,6 +36,9 @@ class OFCCalculation(object):
 
         self.gainByUser = -1
 
+        self.dofFromLastVisit = np.zeros(50)
+        self.dofAgg = np.zeros(50)
+
     def setFWHMSensorDataOfCam(self, listOfFWHMSensorData):
         """Set the list of FWHMSensorData of each CCD of camera. 
 
@@ -177,6 +180,29 @@ class OFCCalculation(object):
 
         return camHexapodCorrection, m2HexapodCorrection, m1m3Correction, \
                m2Correction
+
+    def getStateCorrectionFromLastVisit(self):
+        """Get the state (or degree of freedom, DOF) correction from the last
+        visit.
+
+        Returns
+        -------
+        numpy.ndarray
+            State (or DOF) correction from the last visit.
+        """
+
+        return self.dofFromLastVisit
+
+    def getStateAggregated(self):
+        """Get the aggregated state (or degree of freedom, DOF).
+
+        Returns
+        -------
+        numpy.ndarray
+            Aggregated state (or DOF).
+        """
+
+        return self.dofAgg
 
 
 if __name__ == "__main__":

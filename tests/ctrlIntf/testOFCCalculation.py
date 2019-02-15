@@ -107,6 +107,18 @@ class TestOFCCalculation(unittest.TestCase):
         self.assertTrue(isinstance(m1m3Correction, M1M3Correction))
         self.assertTrue(isinstance(m2Correction, M2Correction))
 
+    def testGetStateCorrectionFromLastVisit(self):
+
+        stateCorrection = self.ofcCalculation.getStateCorrectionFromLastVisit()
+        self.assertTrue(isinstance(stateCorrection, np.ndarray))
+        self.assertEqual(len(stateCorrection), 50)
+
+    def testGetStateAggregated(self):
+
+        stateAgg = self.ofcCalculation.getStateAggregated()
+        self.assertTrue(isinstance(stateAgg, np.ndarray))
+        self.assertEqual(len(stateAgg), 50)
+
 
 if __name__ == "__main__":
 

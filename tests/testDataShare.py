@@ -84,7 +84,7 @@ class TestDataShare(unittest.TestCase):
         for startIdx, groupLeng, dofGroup in zip(startIdxList,
                                                  groupLengList, dofGroupList):
             dofStartIdx, dofGroupLeng = self.dataShare.getGroupIdxAndLeng(
-                                                                    dofGroup)
+                dofGroup)
             self.assertEqual((dofStartIdx, dofGroupLeng),
                              (startIdx, groupLeng))
 
@@ -143,7 +143,7 @@ class TestDataShare(unittest.TestCase):
                                   "lsst_wfs_error_iter0.z4c")
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
         wfErr, fieldIdx = self.dataShare.getWfAndFieldIdFromFile(
-                                        wfFilePath, sensorNameList)
+            wfFilePath, sensorNameList)
         self.assertEqual(wfErr.shape, (4, 19))
         self.assertEqual(fieldIdx, [31, 32, 33, 34])
 
@@ -157,7 +157,7 @@ class TestDataShare(unittest.TestCase):
                                   "shwfs_wfs_error.txt")
         sensorName = "R22_S11"
         wfErr, fieldIdx = self.dataShare.getWfAndFieldIdFromShwfsFile(
-                                        wfFilePath, sensorName=sensorName)
+            wfFilePath, sensorName=sensorName)
 
         self.assertEqual(len(wfErr), 19)
         self.assertEqual(fieldIdx, [0])
@@ -167,20 +167,20 @@ class TestDataShare(unittest.TestCase):
 
         sensorIdList = [1, 2, 3, 4]
         sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
-                                                            sensorIdList)
+            sensorIdList)
         self.assertEqual(sensorNameList,
                          ["R00_S21", "R00_S22", "R01_S00", "R01_S01"])
         self.assertEqual(numOfsensor, 4)
 
         sensorIdList = [1, -1]
         sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
-                                                            sensorIdList)
+            sensorIdList)
         self.assertEqual(sensorNameList, ["R00_S21"])
         self.assertEqual(numOfsensor, 1)
 
         sensorIdList = []
         sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
-                                                            sensorIdList)
+            sensorIdList)
         self.assertEqual(sensorNameList, [])
         self.assertEqual(numOfsensor, 0)
 

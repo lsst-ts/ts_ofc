@@ -153,7 +153,7 @@ class ZTAAC(object):
         """
 
         state0InDof = self.dataShare.getState0FromFile(
-                        state0InDofFileName=state0InDofFileName)
+            state0InDofFileName=state0InDofFileName)
         self.setState0(state0InDof)
 
     def setGain(self, gain):
@@ -251,7 +251,7 @@ class ZTAAC(object):
 
         sensorName = "R22_S11"
         wfErr = self.dataShare.getWfAndFieldIdFromShwfsFile(
-                            wfFilePath, sensorName=sensorName)[0]
+            wfFilePath, sensorName=sensorName)[0]
 
         return wfErr, sensorName
 

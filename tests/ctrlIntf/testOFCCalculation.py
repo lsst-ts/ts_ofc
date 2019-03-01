@@ -74,7 +74,7 @@ class TestOFCCalculation(unittest.TestCase):
 
         self.assertEqual(self.ofcCalculation.gainByUser, -1)
 
-        gainByUser = self._setGainByUser()        
+        gainByUser = self._setGainByUser()
         self.assertEqual(self.ofcCalculation.gainByUser, gainByUser)
 
     def _setGainByUser(self):

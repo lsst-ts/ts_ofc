@@ -59,7 +59,7 @@ class OptCtrlDataDecorator(Decorator):
         rigidBodyStrokeFilePath = os.path.join(self.getConfigDir(),
                                                rigidBodyStrokeFileName)
         self._rigidBodyStrokeFile = ParamReader(
-                                        filePath=rigidBodyStrokeFilePath)
+            filePath=rigidBodyStrokeFilePath)
 
         weightingFilePath = os.path.join(self.getInstDir(), weightingFileName)
         self._weightingFile = ParamReader(filePath=weightingFilePath)
@@ -280,11 +280,11 @@ class OptCtrlDataDecorator(Decorator):
 
         penality = {}
         penality["M1M3Act"] = float(self._configOptCtrlFile.getSetting(
-                                                "M1M3_actuator_penalty"))
+            "M1M3_actuator_penalty"))
         penality["M2Act"] = float(self._configOptCtrlFile.getSetting(
-                                                "M2_actuator_penalty"))
+            "M2_actuator_penalty"))
         penality["Motion"] = float(self._configOptCtrlFile.getSetting(
-                                                "Motion_penalty"))
+            "Motion_penalty"))
         return penality
 
     def getXref(self):

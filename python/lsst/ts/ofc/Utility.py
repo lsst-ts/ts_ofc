@@ -95,7 +95,7 @@ def getModulePath(module=lsst.ts.ofc, startIdx=1, endIdx=-4):
 
     # Get the path of module
     modulePathList = os.path.dirname(module.__file__).split(
-                                os.sep)[int(startIdx):int(endIdx)]
+        os.sep)[int(startIdx):int(endIdx)]
     modulePath = os.path.join(os.sep, *modulePathList)
 
     return modulePath

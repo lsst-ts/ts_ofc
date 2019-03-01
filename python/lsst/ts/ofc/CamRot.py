@@ -180,8 +180,8 @@ class CamRot(object):
         return R
 
     def _rotBendingMode(self, bendingMode, tiltXYinDeg):
-        """Rotate the bending mode (degree of freedom, DOF) based on the rotation
-        angle and tilt angle compared with the camera.
+        """Rotate the bending mode (degree of freedom, DOF) based on the
+        rotation angle and tilt angle compared with the camera.
 
         Parameters
         ----------

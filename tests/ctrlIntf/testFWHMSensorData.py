@@ -19,7 +19,7 @@ class TestFWHMSensorData(unittest.TestCase):
         self.assertEqual(sensorId, self.sensorId)
 
     def testSetSensorId(self):
-        
+
         sensorId = 3
         self.fwhmSensorData.setSensorId(sensorId)
 

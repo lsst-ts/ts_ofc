@@ -46,7 +46,7 @@ class TestZTAAC(unittest.TestCase):
 
         sensorIdList = [1, 2, 3, 4]
         sensorNameList, numOfsensor = self.ztaac.mapSensorIdToName(
-                                                        sensorIdList)
+            sensorIdList)
         self.assertEqual(sensorNameList,
                          ["R00_S21", "R00_S22", "R01_S00", "R01_S01"])
         self.assertEqual(numOfsensor, 4)
@@ -121,7 +121,7 @@ class TestZTAAC(unittest.TestCase):
                         122, 116, 24, 40, 81, 179, 161, 70, 5, 33,
                         123]
         sensorNameList = self.ztaac.dataShare.mapSensorIdToName(
-                                                        sensorIdList)[0]
+            sensorIdList)[0]
 
         self.ztaac.setGainByPSSN(pssn, sensorNameList)
 

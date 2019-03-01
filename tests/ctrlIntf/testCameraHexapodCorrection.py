@@ -15,7 +15,7 @@ class TestCameraHexapodCorrection(unittest.TestCase):
         self.v = 0.5
         self.w = 0.6
         self.hexapodCorrection = CameraHexapodCorrection(
-                            self.x, self.y, self.z, self.u, self.v, w=self.w)
+            self.x, self.y, self.z, self.u, self.v, w=self.w)
 
     def testGetCorrection(self):
 

@@ -1,5 +1,5 @@
 class FWHMToPSSN(object):
-    """Base class for converting FWHM data provided by DM to PSSN data 
+    """Base class for converting FWHM data provided by DM to PSSN data
     utilized by OFC.
 
     Nominally the final implementation will be provided by SE.

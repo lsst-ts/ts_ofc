@@ -74,7 +74,7 @@ class CameraHexapodCorrection(object):
             The Z rotation offset in deg.
         """
 
-        return self.x, self.y, self.z, self.u, self.v, self.w 
+        return self.x, self.y, self.z, self.u, self.v, self.w
 
 
 if __name__ == "__main__":

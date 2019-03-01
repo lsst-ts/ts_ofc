@@ -4,7 +4,7 @@ from lsst.ts.ofc.ctrlIntf.OFCCalculationOfComCam import OFCCalculationOfComCam
 
 
 class OFCCalculationFactory(object):
-    """Factory for creating the correct OFC calculation based off the 
+    """Factory for creating the correct OFC calculation based off the
     instrument currently being used.
     """
 

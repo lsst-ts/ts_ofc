@@ -33,7 +33,7 @@ class M2Correction(object):
         """
 
         if (len(zForces) != self.NUM_OF_ACT):
-            raise ValueError("zForces must be an array of %d floats." 
+            raise ValueError("zForces must be an array of %d floats."
                              % self.NUM_OF_ACT)
         self.zForces = zForces
 

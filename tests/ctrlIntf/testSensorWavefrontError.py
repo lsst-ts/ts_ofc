@@ -14,7 +14,7 @@ class TestSensorWavefrontError(unittest.TestCase):
         self.sensorId = 1
         self.annularZernikePoly = np.ones(self.numOfZk)
         self.sensorWavefrontError = SensorWavefrontError(
-                                        self.sensorId, self.annularZernikePoly)
+            self.sensorId, self.annularZernikePoly)
 
     def testGetSensorId(self):
 

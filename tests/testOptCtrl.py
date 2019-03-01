@@ -31,7 +31,7 @@ class TestOptCtrl(unittest.TestCase):
                                    "lsst_wfs_error_iter0.z4c")
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
         wfErr, fieldIdx = optStateEstiData.getWfAndFieldIdFromFile(
-                                            wfsFilePath, sensorNameList)
+            wfsFilePath, sensorNameList)
 
         self.filterType = FilterType.REF
         self.optSt = optStateEsti.estiOptState(optStateEstiData,

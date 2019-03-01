@@ -3,7 +3,7 @@ import re
 import numpy as np
 
 from lsst.ts.ofc.Utility import InstName, DofGroup, getMatchFilePath, \
-                                getDirFiles
+    getDirFiles
 from lsst.ts.ofc.ParamReader import ParamReader
 
 
@@ -59,7 +59,7 @@ class DataShare(object):
         zkAndDofIdxArraySetFilePath = os.path.join(configDir,
                                                    zkAndDofIdxArraySetFileName)
         self._zkAndDofIdxArraySetFile = ParamReader(
-                                        filePath=zkAndDofIdxArraySetFilePath)
+            filePath=zkAndDofIdxArraySetFilePath)
 
         mappingFilePath = os.path.join(self.getInstDir(), mappingFileName)
         self._mappingFile = ParamReader(filePath=mappingFilePath)
@@ -70,7 +70,7 @@ class DataShare(object):
         sensorIdToNameFilePath = os.path.join(configDir,
                                               sensorIdToNameFileName)
         self._sensorIdToNameFile = ParamReader(
-                                        filePath=sensorIdToNameFilePath)
+            filePath=sensorIdToNameFilePath)
 
         senMfilePath = self._getSenMfilePath(reMatchStr=r"\AsenM\S+")
         self._senMfile = ParamReader(filePath=senMfilePath)
@@ -537,7 +537,7 @@ class DataShare(object):
 
             for sensorName in sensorNameList:
                 sensorIdList.append(self._mapSensorNameToIdFromContent(
-                                                     content, sensorName))
+                    content, sensorName))
 
         return sensorIdList
 

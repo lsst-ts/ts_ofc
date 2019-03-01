@@ -13,11 +13,11 @@ class OFCCalculation(object):
     utilized by M1M3 (figure), M2 (position and figure), and Hexapod
     (position).
 
-    There will be different implementations of this for different 
+    There will be different implementations of this for different
     types of CCDs (normal, full array mode, comcam, cmos, shwfs).
     """
     def __init__(self, fwhmToPssn):
-        """Construct an OFC calculation. 
+        """Construct an OFC calculation.
 
         This should be unique to an OFC algorithm / CCD.
 
@@ -40,7 +40,7 @@ class OFCCalculation(object):
         self.dofAgg = np.zeros(50)
 
     def setFWHMSensorDataOfCam(self, listOfFWHMSensorData):
-        """Set the list of FWHMSensorData of each CCD of camera. 
+        """Set the list of FWHMSensorData of each CCD of camera.
 
         Parameters
         ----------
@@ -50,7 +50,8 @@ class OFCCalculation(object):
 
         pssnList = []
         for aFWHMSensorData in listOfFWHMSensorData:
-            sensorId = aFWHMSensorData.getSensorId()
+            # Comment the following sensorId for the future use.
+            # sensorId = aFWHMSensorData.getSensorId()
             fwhm = aFWHMSensorData.getFwhmValues()
 
             # Need to transfrom the pssn array to effective pssn single value
@@ -124,13 +125,13 @@ class OFCCalculation(object):
 
         # I also need to clean OFC internal state data.
         camHexapodCorrection = CameraHexapodCorrection(0.0, 0.0, 0.0, 0.0, 0.0,
-                                                    0.0)
+                                                       0.0)
         m2HexapodCorrection = M2HexapodCorrection(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         m1m3Correction = M1M3Correction([0.0] * 156)
         m2Correction = M2Correction([0.0] * 72)
 
         return camHexapodCorrection, m2HexapodCorrection, m1m3Correction, \
-               m2Correction
+            m2Correction
 
     def setGainByUser(self, gainByUser=-1):
         """Set the gain value by the user.
@@ -140,7 +141,8 @@ class OFCCalculation(object):
         gainByUser : float, optional
             The gain value by the user. This value should be in (0, 1). The
             default value is -1, which means the gain value will be decided by
-            the PSSN, which comes from the FWHM by DM team. (the default is -1.) 
+            the PSSN, which comes from the FWHM by DM team. (the default is
+            -1.).
         """
 
         self.gainByUser = gainByUser
@@ -179,7 +181,7 @@ class OFCCalculation(object):
         m2Correction = M2Correction([0.0] * 72)
 
         return camHexapodCorrection, m2HexapodCorrection, m1m3Correction, \
-               m2Correction
+            m2Correction
 
     def getStateCorrectionFromLastVisit(self):
         """Get the state (or degree of freedom, DOF) correction from the last

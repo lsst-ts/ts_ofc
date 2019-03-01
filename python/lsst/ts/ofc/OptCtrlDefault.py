@@ -207,7 +207,8 @@ class OptCtrlDefault(object):
         return fwhmGq
 
     def estiUkWithGain(self, optCtrlData, filterType, optSt):
-        """Estimate uk in the basis of degree of freedom (DOF) with gain compensation.
+        """Estimate uk in the basis of degree of freedom (DOF) with gain
+        compensation.
 
         Parameters
         ----------

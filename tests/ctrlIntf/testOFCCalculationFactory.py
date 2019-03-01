@@ -10,7 +10,7 @@ class TestOFCCalculationFactory(unittest.TestCase):
     """Test the OFCCalculationFactory class."""
 
     def setUp(self):
-        
+
         self.ofcCalculationFactory = OFCCalculationFactory()
 
     def testGetCalculatorOfLsst(self):

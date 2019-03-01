@@ -18,6 +18,8 @@ pipeline {
     }
 
     environment {
+        // Position of LSST stack directory
+        LSST_STACK="/opt/lsst/software/stack"
         // Use the double quote instead of single quote
         // Add the PYTHONPATH
         PYTHONPATH="${env.WORKSPACE}/python:${env.WORKSPACE}/ts_tcs_wep/python"
@@ -36,7 +38,7 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source /opt/rh/devtoolset-6/enable
-                        source /opt/lsst/loadLSST.bash
+                        source ${LSST_STACK}/loadLSST.bash
                         conda install scikit-image
                         git clone --branch develop https://github.com/lsst-ts/ts_tcs_wep.git
                         cd ts_tcs_wep/
@@ -57,7 +59,7 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source /opt/rh/devtoolset-6/enable
-                        source /opt/lsst/loadLSST.bash
+                        source ${LSST_STACK}/loadLSST.bash
                         setup sims_catUtils -t sims_w_2019_08
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py ${env.WORKSPACE}/tests/ctrlIntf/*.py
                     """

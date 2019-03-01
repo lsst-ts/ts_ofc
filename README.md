@@ -1,17 +1,15 @@
 # Optical Feedback Control (OFC) in Python
 
 *This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors. The process contains: (1) estimate the optical state in the basis of DOF, (2) estimate the offset of DOF used in the next iteration/ visit, and (3) rotate the DOF based on the camera rotation angle.*
-<br/>
-<br/>
+
 *This repository is to fulfill the requirement that the scientist wants to change the OFC algorithm in Python script. This module will provide the interface python script to OFC with component template in LabVIEW in a latter time.*
 
 ## 1. Version History
 
 The version history is [here](./doc/VersionHistory.md).
 
-*Author: Te-Wei Tsai*
-<br/>
-*Date: 2-15-2019*
+*Author: Te-Wei Tsai* \
+*Date: 3-1-2019*
 
 ## 2. Platform
 
@@ -25,17 +23,17 @@ The version history is [here](./doc/VersionHistory.md).
 
 ## 4. Use of Module
 
-*1. Setup the WEP environment:*
-<br/>
-`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep/python`
-<br/>
+*1. Setup the WEP environment:* \
+`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep/python` \
 (e.g. `export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep/python`)
 
-*2. Setup the OFC environment:*
-<br/>
-`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_ofcPython/python`
-<br/>
-(e.g. `export PYTHONPATH=$PYTHONPATH:/home/ttsai/Documents/github/ts_tcs_ofcPython/python`)
+*2. Setup the OFC environment by eups:*
+
+```bash
+cd $ts_ofc_directory
+setup -k -r .
+scons
+```
 
 ## 5. Content
 
@@ -77,11 +75,7 @@ The version history is [here](./doc/VersionHistory.md).
 - **Estimate the optical state**: Inherit from the OptStateEstiDefault class, and realize the estiOptState() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
 - **Calculate the DOF offset**: Inherit from the OptCtrlDefault class, and realize the estiUkWithoutGain() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
 
-## 7. Unit Test
-
-- **Unit Tests**: Under the repository directory, do `pytest tests/test*.py`.
-
-## 8. Reference of Baseline Algorithm
+## 7. Reference of Baseline Algorithm
 
 1. Angeli, George Z. et al., Real time wavefront control system for the Large Synoptic Survey Telescope (LSST), Proc. SPIE 9150, Modeling, Systems Engineering, and Project Management for Astronomy VI, 91500H (2014). [https://doi.org/10.1117/12.2055390]
 2. Angeli, George Z. et al., An integrated modeling framework for the Large Synoptic Survey Telescope (LSST), Proc. SPIE 9911, Modeling, Systems Engineering, and Project Management for Astronomy VI, 991118 (2016). [https://doi.org/10.1117/12.2234078]

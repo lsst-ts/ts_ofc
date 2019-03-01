@@ -8,7 +8,7 @@ pipeline {
         // The nodes in T&S teams is 'jenkins-el7-1'.
         // It is recommended by SQUARE team do not add the label.
         docker {
-            image 'lsstts/aos:w_2019_02'
+            image 'lsstts/aos:w_2019_08'
             args '-u root'
         }
     }
@@ -58,7 +58,7 @@ pipeline {
                     sh """
                         source /opt/rh/devtoolset-6/enable
                         source /opt/lsst/loadLSST.bash
-                        setup sims_catUtils -t sims_w_2019_02
+                        setup sims_catUtils -t sims_w_2019_08
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py ${env.WORKSPACE}/tests/ctrlIntf/*.py
                     """
                 }

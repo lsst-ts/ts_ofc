@@ -4,7 +4,6 @@ config.log
 *.o
 *.os
 *.so
-*.c
 *.cfgc
 *.pyc
 *_wrap.cc
@@ -20,3 +19,6 @@ pytest_session.txt
 .cache/
 .pytest_cache
 .coverage
+
+# Cython related file
+*.c

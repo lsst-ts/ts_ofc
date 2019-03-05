@@ -38,7 +38,7 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source /opt/rh/devtoolset-6/enable
-                        source ${LSST_STACK}/loadLSST.bash
+                        source ${env.LSST_STACK}/loadLSST.bash
                         conda install scikit-image
                         git clone --branch develop https://github.com/lsst-ts/ts_tcs_wep.git
                         cd ts_tcs_wep/
@@ -59,9 +59,9 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source /opt/rh/devtoolset-6/enable
-                        source ${LSST_STACK}/loadLSST.bash
+                        source ${env.LSST_STACK}/loadLSST.bash
                         setup sims_catUtils -t sims_w_2019_08
-                        pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py ${env.WORKSPACE}/tests/ctrlIntf/*.py
+                        pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT} tests/
                     """
                 }
             }
@@ -72,7 +72,7 @@ pipeline {
         always {
             // The path of xml needed by JUnit is relative to
             // the workspace.
-            junit 'jenkinsReport/*.xml'
+            junit "${env.XML_REPORT}"
 
             // Publish the HTML report
             publishHTML (target: [

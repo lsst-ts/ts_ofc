@@ -18,10 +18,10 @@ class ParamReader(object):
         else:
             self.filePath = filePath
 
-        self._content = self._readTxtContent(self.filePath)
+        self._content = self._readContent(self.filePath)
 
-    def _readTxtContent(self, filePath):
-        """Read the content of text file.
+    def _readContent(self, filePath):
+        """Read the content of file.
 
         Parameters
         ----------

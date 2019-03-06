@@ -7,7 +7,7 @@ from lsst.ts.ofc.Utility import getModulePath
 
 
 class TestParamReader(unittest.TestCase):
-    """Test the Utility functions."""
+    """Test the ParamReader class."""
 
     def setUp(self):
 

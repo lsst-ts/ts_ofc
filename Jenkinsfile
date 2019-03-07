@@ -22,7 +22,7 @@ pipeline {
         LSST_STACK="/opt/lsst/software/stack"
         // Use the double quote instead of single quote
         // Add the PYTHONPATH
-        PYTHONPATH="${env.WORKSPACE}/python:${env.WORKSPACE}/ts_tcs_wep/python"
+        PYTHONPATH="${env.WORKSPACE}/ts_tcs_wep/python"
         // XML report path
         XML_REPORT="jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
@@ -60,7 +60,7 @@ pipeline {
                     sh """
                         source /opt/rh/devtoolset-6/enable
                         source ${env.LSST_STACK}/loadLSST.bash
-                        setup sims_catUtils -t sims_w_2019_08
+                        setup -k -r .
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT} tests/
                     """
                 }

@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from lsst.ts.ofc.DataShare import DataShare
-from lsst.ts.ofc.Utility import InstName, DofGroup, getModulePath
+from lsst.ts.ofc.Utility import InstName, DofGroup, getConfigDir, getModulePath
 
 
 class TestDataShare(unittest.TestCase):
@@ -12,7 +12,7 @@ class TestDataShare(unittest.TestCase):
     def setUp(self):
 
         self.dataShare = DataShare()
-        self.configDir = os.path.join(getModulePath(), "configData")
+        self.configDir = getConfigDir()
         self.dataShare.config(self.configDir, instName=InstName.LSST)
 
     def testLsstSetting(self):
@@ -46,16 +46,6 @@ class TestDataShare(unittest.TestCase):
         instDirPath = os.path.join(self.configDir, "comcam")
         self.assertEqual(dataShare.getInstDir(), instDirPath)
         self.assertEqual(dataShare.getSenM().shape, (9, 19, 50))
-
-    def testSenMShape(self):
-
-        dataShare = DataShare()
-        configDir = os.path.join(getModulePath(), "tests", "testData")
-        dataShare.config(configDir, instName=InstName.LSST)
-        self.assertRaises(ValueError, dataShare.getSenM)
-
-        dataShare.config(configDir, instName=InstName.COMCAM)
-        self.assertRaises(ValueError, dataShare.getSenM)
 
     def testGetFieldIdx(self):
 
@@ -195,7 +185,7 @@ class TestDataShare(unittest.TestCase):
         self.assertEqual(sensorIdList, [])
 
         incorrectSensorNameList = ["R00_S21", "R000_S1111"]
-        self.assertRaises(ValueError, self.dataShare.mapSensorNameToId,
+        self.assertRaises(KeyError, self.dataShare.mapSensorNameToId,
                           incorrectSensorNameList)
 
         incorrectSensorNameList = "R00_S21"

@@ -58,6 +58,22 @@ class TestParamReader(unittest.TestCase):
         self.assertEqual(len(matContent), 0)
         self.assertTrue(isinstance(matContent, np.ndarray))
 
+    def testSenMShape(self):
+
+        shape = ParamReader.getSenMshape("senM_35_19_50.txt")
+        self.assertEqual(shape, (35, 19, 50))
+
+    def testSenMShapeWithError(self):
+
+        self.assertRaises(ValueError,
+                          ParamReader.getSenMshape, "senM_19_50.txt")
+        self.assertRaises(ValueError,
+                          ParamReader.getSenMshape, "senM_35_19_50_41.txt")
+        self.assertRaises(ValueError,
+                          ParamReader.getSenMshape, "2senM_35_19_50.txt")
+        self.assertRaises(ValueError,
+                          ParamReader.getSenMshape, "senM2_35_19_50.txt")
+
 
 if __name__ == "__main__":
 

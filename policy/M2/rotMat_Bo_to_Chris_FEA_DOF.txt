@@ -1,0 +1,23 @@
+# Rotation matrix from Bo's FEA model to Chris's FEA model. The basis is the degree of freedom (DOF).
+# 20 bending modes are listed here. This roation matrix is a diagonal matrix. 
+# The column is Chris's DOF and the row is Bo's DOF.
+1
+-1
+1
+1
+1
+-1
+-1
+-1
+-1
+1
+-1
+-1
+-1
+-1
+-1
+1
+-1
+-1
+-1
+-1

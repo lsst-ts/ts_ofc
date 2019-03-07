@@ -91,5 +91,17 @@ def getModulePath():
     return getPackageDir("ts_ofc")
 
 
+def getConfigDir():
+    """Get the directory of configuration files.
+
+    Returns
+    -------
+    str
+        Directory of configuration files.
+    """
+
+    return os.path.join(getModulePath(), "policy")
+
+
 if __name__ == "__main__":
     pass

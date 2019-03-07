@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 
 
@@ -145,6 +146,38 @@ class ParamReader(object):
             raise ValueError("Can not find the setting of %s." % param)
 
         return val
+
+    @staticmethod
+    def getSenMshape(senMFileName):
+        """Get the shape of sensitivity matrix M.
+
+        Parameters
+        ----------
+        senMFileName : str
+            Sensitivity matrix M file name.
+
+        Returns
+        -------
+        tuple
+            Shape of sensitivity matrix M.
+
+        Raises
+        ------
+        ValueError
+            Cannot match the shape of M.
+        """
+
+        shape = None
+
+        m = re.match(r"[a-zA-Z]+_(\d+)_(\d+)_(\d+)[.a-zA-Z]+", senMFileName)
+        if (m is not None):
+            shape = m.groups()
+            shape = tuple(map(int, shape))
+
+        if shape is None:
+            raise ValueError("Cannot match the shape of M.")
+
+        return shape
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+import os
+import numpy as np
 import yaml
 
 
@@ -33,17 +35,101 @@ class ParamReaderYaml(object):
             Content of file.
         """
 
-        with open(filePath, "r") as yamlFile:
-            content = yaml.load(yamlFile)
+        if (os.path.exists(filePath)):
+            with open(filePath, "r") as yamlFile:
+                content = yaml.load(yamlFile)
+        else:
+            content = ""
 
         return content
 
-    def getSetting(self, param, specialParamList=[]):
+    def getFilePath(self):
+        """Get the parameter file path.
 
-        if param not in specialParamList:
-            val = self._content[param]
+        Returns
+        -------
+        str
+            Get the file path.
+        """
 
-        return val
+        return self.filePath
+
+    def setFilePath(self, filePath):
+        """Set the file path.
+
+        Parameters
+        ----------
+        filePath : str
+            File path.
+        """
+
+        self.__init__(filePath=filePath)
+
+    def getContent(self):
+        """Get the content.
+
+        Returns
+        -------
+        list or dict
+            Content.
+        """
+
+        return self._content
+
+    def getSetting(self, param):
+        """Get the setting value.
+
+        Parameters
+        ----------
+        str
+            Parameter name.
+
+        Returns
+        -------
+        int, float, list, or dict
+            Parameter value.
+        """
+
+        return self._content[param]
+
+    @staticmethod
+    def writeMatToFile(matrix, filePath):
+        """Write the matrix data to file.
+
+        Parameters
+        ----------
+        matrix : numpy.ndarray
+            Matrix data.
+        filePath : str
+            Yaml file path.
+
+        Raises
+        ------
+        ValueError
+            The file name should end with '.yaml'.
+        """
+
+        if filePath.endswith(".yaml"):
+            with open(filePath, "w") as yamlFile:
+                yaml.dump(matrix.tolist(), yamlFile)
+        else:
+            raise ValueError("The file name should end with '.yaml'.")
+
+    def getMatContent(self):
+        """Get the matrix content.
+
+        Returns
+        -------
+        numpy.ndarray
+            Matrix content.
+        """
+
+        if (self._content == ""):
+            mat = np.array([])
+        else:
+            mat = np.array(self._content)
+
+        return mat
 
 
 if __name__ == "__main__":

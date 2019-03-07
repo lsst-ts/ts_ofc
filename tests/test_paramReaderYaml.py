@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from lsst.ts.ofc.YamlParamReader import YamlParamReader
+from lsst.ts.ofc.ParamReaderYaml import ParamReaderYaml
 from lsst.ts.ofc.Utility import getModulePath
 
 
@@ -14,7 +14,7 @@ class TestYamlParamReader(unittest.TestCase):
         self.fileName = "zkAndDofIdxArraySet.yaml"
 
         filePath = os.path.join(self.configDir, self.fileName)
-        self.paramReader = YamlParamReader(filePath=filePath)
+        self.paramReader = ParamReaderYaml(filePath=filePath)
 
     def testGetSetting(self):
         global paramReader

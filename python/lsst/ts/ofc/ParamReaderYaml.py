@@ -1,10 +1,10 @@
 import yaml
 
 
-class YamlParamReader(object):
+class ParamReaderYaml(object):
 
     def __init__(self, filePath=None):
-        """Initialization of yaml parameter reader class.
+        """Initialization of parameter reader of yaml format class.
 
         Parameters
         ----------
@@ -38,9 +38,10 @@ class YamlParamReader(object):
 
         return content
 
-    def getSetting(self, param):
+    def getSetting(self, param, specialParamList=[]):
 
-        val = self._content[param]
+        if param not in specialParamList:
+            val = self._content[param]
 
         return val
 

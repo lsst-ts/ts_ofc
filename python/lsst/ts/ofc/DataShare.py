@@ -70,7 +70,7 @@ class DataShare(object):
         self._sensorNameToIdFile.setFilePath(sensorNameToIdFilePath)
 
         senMfilePath = self._getSenMfilePath(reMatchStr=r"\AsenM\S+")
-        self._senMfile.setFilePath(filePath=senMfilePath)
+        self._senMfile.setFilePath(senMfilePath)
 
         self._readZn3AndDofIdxArray()
 
@@ -88,10 +88,28 @@ class DataShare(object):
         dofIdxDict = self._zkAndDofIdxArraySetFile.getSetting("dofIdx")
 
         # Get the dof index as an array from the dictionary values
-        dofIdxList = []
-        for groupIdx in dofIdxDict.values():
-            dofIdxList.extend(groupIdx)
-        self.dofIdx = self._getNonZeroIdx(dofIdxList)
+        dofIdxArray = self._appendDictValuesToArray(dofIdxDict)
+        self.dofIdx = self._getNonZeroIdx(dofIdxArray)
+
+    def _appendDictValuesToArray(self, aDict):
+        """Append the dictionary values to array.
+
+        Parameters
+        ----------
+        aDict : dict
+            A dictionary instance.
+
+        Returns
+        -------
+        numpy.ndarray
+            Values in array.
+        """
+
+        array = np.array([])
+        for value in aDict.values():
+            array = np.append(array, value)
+
+        return array
 
     def _getNonZeroIdx(self, array):
         """Get the non-zero index array.
@@ -500,47 +518,6 @@ class DataShare(object):
                 sensorIdList.append(sensorId)
 
         return sensorIdList
-
-    def _mapSensorNameToIdFromContent(self, content, sensorName):
-        """Map the sensor name to Id based on the mapping content.
-
-        Parameters
-        ----------
-        content : str
-            File content.
-        sensorName : str
-            Abbreviated sensor name.
-
-        Returns
-        -------
-        int
-            Sensor Id.
-
-        Raises
-        ------
-        ValueError
-            Can not find the sensor Id of input sensor name.
-        """
-
-        sensorId = None
-        for line in content.splitlines():
-            line = line.strip()
-
-            # Skip the comment or empty line
-            if line.startswith("#") or (len(line) == 0):
-                continue
-
-            sensorIdInFile, sensorNameInFile = line.split()
-
-            if (sensorNameInFile == sensorName):
-                sensorId = int(sensorIdInFile)
-                break
-
-        if (sensorId is None):
-            raise ValueError("Can not find the sensor Id of '%s'."
-                             % sensorName)
-
-        return sensorId
 
 
 if __name__ == "__main__":

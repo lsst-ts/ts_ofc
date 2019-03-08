@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from lsst.ts.ofc.Decorator import Decorator
-from lsst.ts.ofc.ParamReader import ParamReader
+from lsst.ts.ofc.ParamReaderYaml import ParamReaderYaml
 
 
 class OptCtrlDataDecorator(Decorator):
@@ -21,61 +21,80 @@ class OptCtrlDataDecorator(Decorator):
         self.xRef = ""
 
         self._authority = np.array([])
-        self._rigidBodyStrokeFile = ParamReader()
-        self._weightingFile = ParamReader()
-        self._pssnAlphaFile = ParamReader()
-        self._configOptCtrlFile = ParamReader()
+        self._rigidBodyStrokeFile = ParamReaderYaml()
+        self._weightingFile = ParamReaderYaml()
+        self._pssnAlphaFile = ParamReaderYaml()
+        self._configOptCtrlFile = ParamReaderYaml()
 
-    def configOptCtrlData(self, configFileName="optiPSSN_x00.ctrl",
-                          weightingFileName="imgQualWgt.txt",
-                          pssnAlphaFileName="pssn_alpha.txt",
-                          rigidBodyStrokeFileName="rbStroke.txt",
-                          m1m3ActuatorForceFileName="M1M3_1um_156_force.txt",
-                          m2ActuatorForceFileName="M2_1um_force.DAT",
+    def configOptCtrlData(self, configFileName="optiPSSN.yaml",
+                          weightingFileName="imgQualWgt.yaml",
+                          pssnAlphaFileName="pssnAlpha.yaml",
+                          rigidBodyStrokeFileName="rbStroke.yaml",
+                          m1m3ActuatorForceFileName="M1M3_1um_156_force.yaml",
+                          m2ActuatorForceFileName="M2_1um_force.yaml",
                           numOfBendingMode=20):
         """Do the configuration of OptCtrlDataDecorator class.
 
         Parameters
         ----------
         configFileName : str, optional
-            Name of configuration file. (the default is "optiPSSN_x00.ctrl".)
+            Name of configuration file. (the default is "optiPSSN.yaml".)
         weightingFileName : str, optional
             Weighting file name for image quality. (the default is
-            "imgQualWgt.txt".)
+            "imgQualWgt.yaml".)
         pssnAlphaFileName : str, optional
             Normalized point source sensitivity (PSSN) alpha file name.
-            (the default is "pssn_alpha.txt".)
+            (the default is "pssnAlpha.yaml".)
         rigidBodyStrokeFileName : str, optional
-            Rigid body stroke file name. (the default is "rbStroke.txt".)
+            Rigid body stroke file name. (the default is "rbStroke.yaml".)
         m1m3ActuatorForceFileName : str, optional
             M1M3 actuator force file name. (the default is
-            "M1M3_1um_156_force.txt".)
+            "M1M3_1um_156_force.yaml".)
         m2ActuatorForceFileName : str, optional
-            M2 actuator force file name. (the default is "M2_1um_force.DAT".)
+            M2 actuator force file name. (the default is "M2_1um_force.yaml".)
         numOfBendingMode : int, optional
             Number of mirror bending mode. (the default is 20.)
         """
 
         rigidBodyStrokeFilePath = os.path.join(self.getConfigDir(),
                                                rigidBodyStrokeFileName)
-        self._rigidBodyStrokeFile = ParamReader(
-            filePath=rigidBodyStrokeFilePath)
+        self._rigidBodyStrokeFile.setFilePath(rigidBodyStrokeFilePath)
 
         weightingFilePath = os.path.join(self.getInstDir(), weightingFileName)
-        self._weightingFile = ParamReader(filePath=weightingFilePath)
+        self._weightingFile.setFilePath(weightingFilePath)
 
         pssnAlphaFilePath = os.path.join(self.getConfigDir(),
                                          pssnAlphaFileName)
-        self._pssnAlphaFile = ParamReader(filePath=pssnAlphaFilePath)
+        self._pssnAlphaFile.setFilePath(pssnAlphaFilePath)
 
         configOptCtrlFilePath = os.path.join(self.getConfigDir(),
                                              configFileName)
-        self._configOptCtrlFile = ParamReader(filePath=configOptCtrlFilePath)
-
-        self.xRef = self._configOptCtrlFile.getSetting("xref")
-
+        self._configOptCtrlFile.setFilePath(configOptCtrlFilePath)
+        self.xRef = self._getXref()
         self._setAuthority(m1m3ActuatorForceFileName, m2ActuatorForceFileName,
                            int(numOfBendingMode))
+
+    def _getXref(self):
+        """Get the reference point in the control algorithm.
+
+        Returns
+        -------
+        str
+            Reference point.
+
+        Raises
+        ------
+        ValueError
+            The xRef is not in the xRefList.
+        """
+
+        xRef = self._configOptCtrlFile.getSetting("xref")
+        xRefList = self._configOptCtrlFile.getSetting("xrefList")
+
+        if xRef not in xRefList:
+            raise ValueError("The xRef(%s) is not in the xRefList." % xRef)
+
+        return xRef
 
     def _setAuthority(self, m1m3ActuatorForceFileName, m2ActuatorForceFileName,
                       numOfBendingMode):
@@ -140,9 +159,9 @@ class OptCtrlDataDecorator(Decorator):
         """
 
         rbStroke = self._rigidBodyStrokeFile.getSetting("rbStroke")
-        rbStroke = list(map(float, rbStroke))
+        rbStrokeFloat = list(map(float, rbStroke))
 
-        return rbStroke
+        return rbStrokeFloat
 
     def _calcMirrorAuth(self, mirrorDirName, actuatorForceFileName,
                         usecols=None):
@@ -170,7 +189,9 @@ class OptCtrlDataDecorator(Decorator):
 
         filePath = os.path.join(self.configDir, mirrorDirName,
                                 actuatorForceFileName)
-        bendingMode = np.loadtxt(filePath, usecols=usecols)
+        paramReader = ParamReaderYaml(filePath=filePath)
+        mat = paramReader.getMatContent()
+        bendingMode = mat[:, usecols]
         authority = np.std(bendingMode, axis=0)
 
         return authority
@@ -200,12 +221,13 @@ class OptCtrlDataDecorator(Decorator):
             Weighting ratio for the iamge quality Q matrix calculation.
         """
 
-        qWgt = self._weightingFile.getMatContent(usecols=1)
+        qWgtDict = self._weightingFile.getContent()
+        qWgt = self._appendDictValuesToArray(qWgtDict)
 
         # Do the normalization
-        qWgt = qWgt/np.sum(qWgt)
+        qWgtNormalized = qWgt/np.sum(qWgt)
 
-        return qWgt
+        return qWgtNormalized
 
     def getPssnAlpha(self):
         """Get the PSSN alpha value.
@@ -218,7 +240,7 @@ class OptCtrlDataDecorator(Decorator):
             PSSN alpha.
         """
 
-        pssnAlpha = self._pssnAlphaFile.getMatContent(usecols=0)
+        pssnAlpha = self._pssnAlphaFile.getSetting("alpha")
 
         return pssnAlpha
 
@@ -249,14 +271,14 @@ class OptCtrlDataDecorator(Decorator):
 
         return motRng
 
-    def getState0FromFile(self, state0InDofFileName="state0inDof.txt"):
+    def getState0FromFile(self, state0InDofFileName="state0inDof.yaml"):
         """Get the state 0 in degree of freedom (DOF) from the file.
 
         Parameters
         ----------
         state0InDofFileName : str, optional
             File name to read the telescope state 0, which depends on the
-            instrument. (the default is "state0inDof.txt".)
+            instrument. (the default is "state0inDof.yaml".)
 
         Returns
         -------
@@ -265,7 +287,9 @@ class OptCtrlDataDecorator(Decorator):
         """
 
         filePath = os.path.join(self.getInstDir(), state0InDofFileName)
-        state0InDof = np.loadtxt(filePath, usecols=1)
+        paramReader = ParamReaderYaml(filePath=filePath)
+        state0InDofDict = paramReader.getContent()
+        state0InDof = self._appendDictValuesToArray(state0InDofDict)
 
         return state0InDof
 
@@ -280,11 +304,11 @@ class OptCtrlDataDecorator(Decorator):
 
         penality = {}
         penality["M1M3Act"] = float(self._configOptCtrlFile.getSetting(
-            "M1M3_actuator_penalty"))
+            "m1M3ActuatorPenalty"))
         penality["M2Act"] = float(self._configOptCtrlFile.getSetting(
-            "M2_actuator_penalty"))
+            "m2ActuatorPenalty"))
         penality["Motion"] = float(self._configOptCtrlFile.getSetting(
-            "Motion_penalty"))
+            "motionPenalty"))
         return penality
 
     def getXref(self):

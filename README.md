@@ -8,8 +8,7 @@
 
 The version history is [here](./doc/VersionHistory.md).
 
-*Author: Te-Wei Tsai* \
-*Date: 3-1-2019*
+*Author: Te-Wei Tsai*
 
 ## 2. Platform
 

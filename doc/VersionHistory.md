@@ -1,5 +1,8 @@
 # Version History
 
+*Version 1.1.4* \
+*Use the eups as the package manager and yaml configuration file format.*
+
 *Version 1.1.3* \
 *Add the get functions of state in OFCCalculation class.*
 

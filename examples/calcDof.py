@@ -3,7 +3,7 @@ import numpy as np
 
 from lsst.ts.wep.Utility import FilterType
 
-from lsst.ts.ofc.Utility import InstName, DofGroup, getModulePath
+from lsst.ts.ofc.Utility import InstName, DofGroup, getModulePath, getConfigDir
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
 from lsst.ts.ofc.OptCtrlDataDecorator import OptCtrlDataDecorator
@@ -20,7 +20,7 @@ def setup():
     # information of indexes of zk and degree of freedom (DOF)
     # to use.
     dataShare = DataShare()
-    configDir = os.path.join(getModulePath(), "configData")
+    configDir = getConfigDir()
     dataShare.config(configDir, instName=InstName.LSST)
 
     # Decorate the DataShare object to get the data needed
@@ -31,7 +31,7 @@ def setup():
     # Decorate the DataShare object to get the data needed
     # for the OptCtrl object.
     mixedData = OptCtrlDataDecorator(optStateEstiData)
-    mixedData.configOptCtrlData(configFileName="optiPSSN_x00.ctrl")
+    mixedData.configOptCtrlData()
 
     # Instantiate the objects of OptStateEsti and OptCtrl classes.
     optStateEsti = OptStateEsti()
@@ -48,7 +48,7 @@ def setup():
     # In the real control, the state 0 should come from the subsystem
     # by SAL (software abstracion layer). But the algorithm for this
     # needs to be developed.
-    ztaac.setState0FromFile(state0InDofFileName="state0inDof.txt")
+    ztaac.setState0FromFile(state0InDofFileName="state0inDof.yaml")
 
     # Initialize the state to state 0.
     ztaac.setStateToState0()

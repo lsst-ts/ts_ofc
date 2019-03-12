@@ -1,3 +1,0 @@
-# Allowed moving range of rigid body of M2 hexapod and Camera hexapod in the unit of um
-# e.g. rbStroke[0] means the M2 piston is allowed to move +5900 um to -5900 um.
-rbStroke 5900 6700 6700 432 432 8700 7600 7600 864 864

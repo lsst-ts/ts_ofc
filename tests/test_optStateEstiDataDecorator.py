@@ -1,4 +1,3 @@
-import os
 import unittest
 import numpy as np
 
@@ -6,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
-from lsst.ts.ofc.Utility import InstName, getModulePath
+from lsst.ts.ofc.Utility import InstName, getConfigDir
 
 
 class TestOptStateEstiDataDecorator(unittest.TestCase):
@@ -15,7 +14,7 @@ class TestOptStateEstiDataDecorator(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join(getModulePath(), "configData")
+        configDir = getConfigDir()
         dataShare.config(configDir, instName=InstName.LSST)
 
         self.optStateEstiData = OptStateEstiDataDecorator(dataShare)
@@ -26,8 +25,23 @@ class TestOptStateEstiDataDecorator(unittest.TestCase):
         effWave = self.optStateEstiData.getEffWave(FilterType.REF)
         self.assertEqual(effWave, 0.5)
 
+        effWave = self.optStateEstiData.getEffWave(FilterType.U)
+        self.assertEqual(effWave, 0.365)
+
         effWave = self.optStateEstiData.getEffWave(FilterType.G)
         self.assertEqual(effWave, 0.480)
+
+        effWave = self.optStateEstiData.getEffWave(FilterType.R)
+        self.assertEqual(effWave, 0.622)
+
+        effWave = self.optStateEstiData.getEffWave(FilterType.I)
+        self.assertEqual(effWave, 0.754)
+
+        effWave = self.optStateEstiData.getEffWave(FilterType.Z)
+        self.assertEqual(effWave, 0.868)
+
+        effWave = self.optStateEstiData.getEffWave(FilterType.Y)
+        self.assertEqual(effWave, 0.973)
 
     def testGetY2Corr(self):
 

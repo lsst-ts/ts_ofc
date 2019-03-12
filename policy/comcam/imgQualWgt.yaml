@@ -1,5 +1,6 @@
 # Weighting ratio of image quality used in the Q matrix in cost function
 # Field: weighting
+
 "0": 1
 "1": 1
 "2": 1

@@ -14,7 +14,7 @@ class TestUtility(unittest.TestCase):
     def testGetDirFiles(self):
 
         filePaths = getDirFiles(self.configDir)
-        self.assertEqual(len(filePaths), 7)
+        self.assertEqual(len(filePaths), 6)
 
     def testGetMatchFilePath(self):
 

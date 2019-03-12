@@ -39,7 +39,7 @@ class ParamReaderYaml(object):
             with open(filePath, "r") as yamlFile:
                 content = yaml.load(yamlFile)
         else:
-            content = ""
+            content = dict()
 
         return content
 
@@ -124,7 +124,7 @@ class ParamReaderYaml(object):
             Matrix content.
         """
 
-        if (self._content == ""):
+        if (self._content == dict()):
             mat = np.array([])
         else:
             mat = np.array(self._content)

@@ -53,6 +53,13 @@ class TestParamReaderYaml(unittest.TestCase):
         content = self.paramReader.getContent()
         self.assertTrue(isinstance(content, dict))
 
+    def testGetContentWithDefaultSetting(self):
+
+        paramReader = ParamReaderYaml()
+
+        content = paramReader.getContent()
+        self.assertTrue(isinstance(content, dict))
+
     def testWriteMatToFile(self):
 
         self._writeMatToFile()
@@ -88,6 +95,14 @@ class TestParamReaderYaml(unittest.TestCase):
 
         delta = np.sum(np.abs(matInYamlFile - mat))
         self.assertLess(delta, 1e-10)
+
+    def testGetMatContentWithDefaultSetting(self):
+
+        paramReader = ParamReaderYaml()
+        matInYamlFile = paramReader.getMatContent()
+
+        self.assertTrue(isinstance(matInYamlFile, np.ndarray))
+        self.assertEqual(len(matInYamlFile), 0)
 
 
 if __name__ == "__main__":

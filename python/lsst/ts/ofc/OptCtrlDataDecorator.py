@@ -242,7 +242,7 @@ class OptCtrlDataDecorator(Decorator):
 
         pssnAlpha = self._pssnAlphaFile.getSetting("alpha")
 
-        return pssnAlpha
+        return np.array(pssnAlpha)
 
     def getNumOfFieldInQwgt(self):
         """Get the number of field in the image quality weighting ratio.

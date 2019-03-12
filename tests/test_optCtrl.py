@@ -4,7 +4,7 @@ import unittest
 
 from lsst.ts.wep.Utility import FilterType
 
-from lsst.ts.ofc.Utility import InstName, getModulePath
+from lsst.ts.ofc.Utility import InstName, getModulePath, getConfigDir
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
 from lsst.ts.ofc.OptCtrlDataDecorator import OptCtrlDataDecorator
@@ -18,13 +18,13 @@ class TestOptCtrl(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join(getModulePath(), "configData")
+        configDir = getConfigDir()
         dataShare.config(configDir, instName=InstName.LSST)
 
         optStateEstiData = OptStateEstiDataDecorator(dataShare)
         optStateEstiData.configOptStateEstiData()
         self.mixedData = OptCtrlDataDecorator(optStateEstiData)
-        self.mixedData.configOptCtrlData(configFileName="optiPSSN_x00.ctrl")
+        self.mixedData.configOptCtrlData()
 
         optStateEsti = OptStateEsti()
         wfsFilePath = os.path.join(getModulePath(), "tests", "testData",

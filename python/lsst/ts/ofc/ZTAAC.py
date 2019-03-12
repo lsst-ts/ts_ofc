@@ -142,14 +142,14 @@ class ZTAAC(object):
 
         self.optCtrl.initStateToState0()
 
-    def setState0FromFile(self, state0InDofFileName="state0inDof.txt"):
+    def setState0FromFile(self, state0InDofFileName="state0inDof.yaml"):
         """Set the state 0 in degree of freedom (DOF) from the file.
 
         Parameters
         ----------
         state0InDofFileName : str, optional
             File name to read the telescope state 0, which depends on the
-            instrument. (the default is "state0inDof.txt".)
+            instrument. (the default is "state0inDof.yaml".)
         """
 
         state0InDof = self.dataShare.getState0FromFile(

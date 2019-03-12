@@ -50,6 +50,7 @@ class TestOptCtrlDataDecorator(unittest.TestCase):
     def testGetPssnAlpha(self):
 
         pssnAlpha = self.optCtrlData.getPssnAlpha()
+        self.assertTrue(isinstance(pssnAlpha, np.ndarray))
         self.assertEqual(len(pssnAlpha), 19)
         self.assertEqual(pssnAlpha[0], 6.6906168e-03)
 

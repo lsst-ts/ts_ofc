@@ -4,7 +4,7 @@ import unittest
 
 from lsst.ts.wep.Utility import FilterType
 
-from lsst.ts.ofc.Utility import InstName, getModulePath
+from lsst.ts.ofc.Utility import InstName, getModulePath, getConfigDir
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
 from lsst.ts.ofc.OptStateEsti import OptStateEsti
@@ -16,7 +16,7 @@ class TestOptStateEsti(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join(getModulePath(), "configData")
+        configDir = getConfigDir()
         dataShare.config(configDir, instName=InstName.LSST)
 
         self.optStateEstiData = OptStateEstiDataDecorator(dataShare)

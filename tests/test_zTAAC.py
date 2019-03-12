@@ -4,7 +4,7 @@ import unittest
 
 from lsst.ts.wep.Utility import FilterType
 
-from lsst.ts.ofc.Utility import InstName, DofGroup, getModulePath
+from lsst.ts.ofc.Utility import InstName, DofGroup, getModulePath, getConfigDir
 from lsst.ts.ofc.DataShare import DataShare
 from lsst.ts.ofc.OptStateEstiDataDecorator import OptStateEstiDataDecorator
 from lsst.ts.ofc.OptCtrlDataDecorator import OptCtrlDataDecorator
@@ -20,14 +20,14 @@ class TestZTAAC(unittest.TestCase):
     def setUp(self):
 
         dataShare = DataShare()
-        configDir = os.path.join(getModulePath(), "configData")
+        configDir = getConfigDir()
         dataShare.config(configDir, instName=InstName.LSST)
 
         optStateEstiData = OptStateEstiDataDecorator(dataShare)
         optStateEstiData.configOptStateEstiData()
 
         mixedData = OptCtrlDataDecorator(optStateEstiData)
-        mixedData.configOptCtrlData(configFileName="optiPSSN_x00.ctrl")
+        mixedData.configOptCtrlData()
 
         optStateEsti = OptStateEsti()
         optCtrl = OptCtrl()
@@ -87,7 +87,7 @@ class TestZTAAC(unittest.TestCase):
 
     def testSetState0FromFile(self):
 
-        self.ztaac.setState0FromFile(state0InDofFileName="state0inDof.txt")
+        self.ztaac.setState0FromFile(state0InDofFileName="state0inDof.yaml")
 
         state0 = self.ztaac.getState0()
         self.assertEqual(len(state0), 50)
@@ -180,14 +180,14 @@ class TestZTAAC(unittest.TestCase):
     def testEstiUkWithGainOfComCam(self):
 
         dataShare = DataShare()
-        configDir = os.path.join(getModulePath(), "configData")
+        configDir = getConfigDir()
         dataShare.config(configDir, instName=InstName.COMCAM)
 
         optStateEstiData = OptStateEstiDataDecorator(dataShare)
         optStateEstiData.configOptStateEstiData()
 
         mixedData = OptCtrlDataDecorator(optStateEstiData)
-        mixedData.configOptCtrlData(configFileName="optiPSSN_x00.ctrl")
+        mixedData.configOptCtrlData()
 
         optStateEsti = OptStateEsti()
         optCtrl = OptCtrl()
@@ -213,7 +213,7 @@ class TestZTAAC(unittest.TestCase):
 
     def _setStateAndState0FromFile(self):
 
-        self.ztaac.setState0FromFile(state0InDofFileName="state0inDof.txt")
+        self.ztaac.setState0FromFile(state0InDofFileName="state0inDof.yaml")
         self.ztaac.setStateToState0()
 
     def testAggState(self):

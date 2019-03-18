@@ -115,19 +115,18 @@ class OptCtrlDataDecorator(Decorator):
 
         rbStrokeAuthority = self._calcRigidBodyAuth()
 
-        # Skip the first three columns (M1M3 only)
-        usecols = np.arange(3, 3+numOfBendingMode)
+        # The first three terms (actuator ID in ZEMAX, x position in m,
+        # y position in m) are not needed.
+        usecols = np.arange(3, 3 + numOfBendingMode)
         m1m3Authority = self._calcMirrorAuth("M1M3", m1m3ActuatorForceFileName,
                                              usecols=usecols)
-
-        usecols = np.arange(numOfBendingMode)
         m2Authority = self._calcMirrorAuth("M2", m2ActuatorForceFileName,
                                            usecols=usecols)
 
         penality = self.getPenality()
         self._authority = np.concatenate((rbStrokeAuthority,
-                                         penality["M1M3Act"]*m1m3Authority,
-                                         penality["M2Act"]*m2Authority))
+                                         penality["M1M3Act"] * m1m3Authority,
+                                         penality["M2Act"] * m2Authority))
 
     def _calcRigidBodyAuth(self):
         """Calculate the distribution of control authority of rigid body.

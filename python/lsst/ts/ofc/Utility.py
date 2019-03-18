@@ -76,6 +76,28 @@ def getMatchFilePath(reMatchStr, filePaths):
     return matchFilePath
 
 
+def rot1dArray(array, rotMat):
+    """Rotate 1D array from one basis to another.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        1D array.
+    rotMat : numpy.ndarray
+        Rotation matrix.
+
+    Returns
+    -------
+    numpy.ndarray
+        Rotated array in another basis compared with the original one.
+    """
+
+    array2d = array.reshape(-1, 1)
+    rotArray = rotMat.dot(array)
+
+    return rotArray.ravel()
+
+
 def getModulePath():
     """Get the path of module.
 

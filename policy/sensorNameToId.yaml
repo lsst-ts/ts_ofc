@@ -1,3 +1,5 @@
+---
+
 # This file list the sensor abbreviated name and Id for the SAL communication.
 R00_S12: 0
 R00_S21: 1

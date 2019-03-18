@@ -1,3 +1,5 @@
+---
+
 # This file is for the initial state of telescope in the basis of DOF
 # 0-4: M2 dz (um), dx (um), dy (um), rx (arcsec), ry (arcsec)
 # 5-9: Cam dz (um), dx (um), dy (um), rx (arcsec), ry (arcsec)

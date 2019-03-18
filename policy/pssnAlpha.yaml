@@ -1,3 +1,5 @@
+---
+
 # Normalized point-source sensitivity (PSSN) information
 # PSSN ~ 1 - alpha * delta^2
 # Eq (7.1) in Normalized Point Source Sensitivity for LSST (document-17242)

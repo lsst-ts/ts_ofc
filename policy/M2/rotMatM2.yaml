@@ -1,0 +1,15 @@
+---
+
+# Rotation matrix from Bo's FEA model (ZEMAX) to Chris's FEA model (optical
+# coordinate systems). The basis is the degree of freedom (DOF).
+# 20 bending modes are listed here. This roation matrix is a diagonal matrix.
+
+# The row is in the ZEMAX basis and the column is in the optical coordinate
+# system.
+
+bend: [1.0, -1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0,
+        -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0]
+
+# +z in Bo's FEA (ZEMAX) is -z in Chris's FEA (optical coordinate systems)
+# for actuator force
+act: -1.0

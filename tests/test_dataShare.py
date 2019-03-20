@@ -47,23 +47,25 @@ class TestDataShare(unittest.TestCase):
         self.assertEqual(dataShare.getInstDir(), instDirPath)
         self.assertEqual(dataShare.getSenM().shape, (9, 19, 50))
 
-    def testGetFieldIdx(self):
+    def testGetFieldIdxWithListInput(self):
 
-        sensorNameList = ["R04_S20", "R10_S02"]
-        fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
+        sensorName = ["R04_S20", "R10_S02"]
+        fieldIdx = self.dataShare.getFieldIdx(sensorName)
         self.assertEqual(fieldIdx, [32, 23])
 
-        sensorNameList = []
-        fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
+        sensorName = []
+        fieldIdx = self.dataShare.getFieldIdx(sensorName)
         self.assertEqual(fieldIdx, [])
 
-        sensorNameList = ["R04_S20", "R04_S20"]
-        fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
+        sensorName = ["R04_S20", "R04_S20"]
+        fieldIdx = self.dataShare.getFieldIdx(sensorName)
         self.assertEqual(fieldIdx, [32, 32])
 
-        sensorNameList = "R04_S20"
-        self.assertRaises(TypeError, self.dataShare.getFieldIdx,
-                          sensorNameList)
+    def testGetFieldIdxWithStrInput(self):
+
+        sensorName = "R04_S20"
+        fieldIdx = self.dataShare.getFieldIdx(sensorName)
+        self.assertEqual(fieldIdx, [32])
 
     def testGetGroupIdxAndLeng(self):
 
@@ -153,44 +155,55 @@ class TestDataShare(unittest.TestCase):
         self.assertEqual(fieldIdx, [0])
         self.assertEqual(wfErr[0], 1000)
 
-    def testMapSensorIdToName(self):
+    def testMapSensorIdToNameWithListInput(self):
 
-        sensorIdList = [1, 2, 3, 4]
+        sensorId = [1, 2, 3, 4]
         sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
-            sensorIdList)
+            sensorId)
         self.assertEqual(sensorNameList,
                          ["R00_S21", "R00_S22", "R01_S00", "R01_S01"])
         self.assertEqual(numOfsensor, 4)
 
-        sensorIdList = [1, -1]
+        sensorId = [1, -1]
         sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
-            sensorIdList)
+            sensorId)
         self.assertEqual(sensorNameList, ["R00_S21"])
         self.assertEqual(numOfsensor, 1)
 
-        sensorIdList = []
+        sensorId = []
         sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
-            sensorIdList)
+            sensorId)
         self.assertEqual(sensorNameList, [])
         self.assertEqual(numOfsensor, 0)
 
-    def testMapSensorNameToId(self):
+    def testMapSensorIdToNameWithIntInput(self):
 
-        sensorNameList = ["R00_S21", "R00_S22", "R01_S00", "R01_S01"]
-        sensorIdList = self.dataShare.mapSensorNameToId(sensorNameList)
+        sensorId = 1
+        sensorNameList, numOfsensor = self.dataShare.mapSensorIdToName(
+            sensorId)
+
+        self.assertEqual(sensorNameList, ["R00_S21"])
+        self.assertEqual(numOfsensor, 1)
+
+    def testMapSensorNameToIdWithListInput(self):
+
+        sensorName = ["R00_S21", "R00_S22", "R01_S00", "R01_S01"]
+        sensorIdList = self.dataShare.mapSensorNameToId(sensorName)
         self.assertEqual(sensorIdList, [1, 2, 3, 4])
 
-        sensorNameList = []
-        sensorIdList = self.dataShare.mapSensorNameToId(sensorNameList)
+        sensorName = []
+        sensorIdList = self.dataShare.mapSensorNameToId(sensorName)
         self.assertEqual(sensorIdList, [])
 
-        incorrectSensorNameList = ["R00_S21", "R000_S1111"]
+        incorrectSensorName = ["R00_S21", "R000_S1111"]
         self.assertRaises(KeyError, self.dataShare.mapSensorNameToId,
-                          incorrectSensorNameList)
+                          incorrectSensorName)
 
-        incorrectSensorNameList = "R00_S21"
-        self.assertRaises(TypeError, self.dataShare.mapSensorNameToId,
-                          incorrectSensorNameList)
+    def testMapSensorNameToIdWithStrInput(self):
+
+        sensorName = "R00_S21"
+        sensorIdList = self.dataShare.mapSensorNameToId(sensorName)
+        self.assertEqual(sensorIdList, [1])
 
 
 if __name__ == "__main__":

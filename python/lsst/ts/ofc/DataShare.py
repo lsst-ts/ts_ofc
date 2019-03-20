@@ -207,60 +207,48 @@ class DataShare(object):
 
         return self.zn3Idx
 
-    def getFieldIdx(self, sensorNameList):
-        """Get the list of field index based on the abbreviated sensor
-        name (e.g. R22_S11) and mapping file.
+    def getFieldIdx(self, sensorName):
+        """Get the field index based on the abbreviated sensor name (e.g.
+        R22_S11) and mapping file.
 
         Parameters
         ----------
-        sensorNameList : list[str]
-            List of abbreviated sensor name.
+        sensorName : list[str] or str
+            List or string of abbreviated sensor name.
 
         Returns
         -------
         list[int]
             Field index array.
-
-        Raises
-        ------
-        TypeError
-            The input type is not list.
         """
 
+        sensorNameList = self._changeToListIfNeed(sensorName)
+
         fieldIdx = []
-        if (self._inputIsList(sensorNameList)):
-            for sensorName in sensorNameList:
-                field = self._mappingFile.getSetting(sensorName)
-                fieldIdx.append(int(field))
+        for sensor in sensorNameList:
+            field = self._mappingFile.getSetting(sensor)
+            fieldIdx.append(int(field))
 
         return fieldIdx
 
-    def _inputIsList(self, input):
-        """Check the type of input is list or not.
+    def _changeToListIfNeed(self, inputArg):
+        """Change the input argument to list type if needed.
 
         Parameters
         ----------
-        input : obj
-            Input.
+        inputArg : obj
+            Input argument.
 
         Returns
         -------
-        bool
-            True if the input's type is list.
-
-        Raises
-        ------
-        TypeError
-            The input type is not list.
+        list
+            Input argument as the list type.
         """
 
-        inputIsList = True
-        if (not isinstance(input, list)):
-            inputIsList = False
-            raise TypeError("The input type is '%s' instead of list."
-                            % type(input))
+        if (not isinstance(inputArg, list)):
+            inputArg = [inputArg]
 
-        return inputIsList
+        return inputArg
 
     def getGroupIdxAndLeng(self, dofGroup):
         """Get the start index and length of specific group of degree of
@@ -448,16 +436,16 @@ class DataShare(object):
 
         return wfErr, fieldIdx
 
-    def mapSensorIdToName(self, sensorIdList):
-        """Map the list of sensor Id to sensor name.
+    def mapSensorIdToName(self, sensorId):
+        """Map the sensor Id to sensor name.
 
         If no sensor name is found for a specific Id, there will be no returned
         value.
 
         Parameters
         ----------
-        sensorIdList : list[int]
-            List of sensor Id.
+        sensorId : list[int] or int
+            List or integer of sensor Id.
 
         Returns
         -------
@@ -467,15 +455,16 @@ class DataShare(object):
             Number of sensors.
         """
 
+        sensorIdList = self._changeToListIfNeed(sensorId)
+
         sensorNameList = []
-        if (self._inputIsList(sensorIdList)):
-            content = self._sensorNameToIdFile.getContent()
-            for sensorId in sensorIdList:
-                try:
-                    sensorName = self._getKeyFromValueInDict(content, sensorId)
-                    sensorNameList.append(sensorName)
-                except ValueError:
-                    pass
+        content = self._sensorNameToIdFile.getContent()
+        for sensor in sensorIdList:
+            try:
+                sensorName = self._getKeyFromValueInDict(content, sensor)
+                sensorNameList.append(sensorName)
+            except ValueError:
+                pass
 
         return sensorNameList, len(sensorNameList)
 
@@ -497,13 +486,13 @@ class DataShare(object):
 
         return list(aDict.keys())[list(aDict.values()).index(value)]
 
-    def mapSensorNameToId(self, sensorNameList):
-        """Map the array of sensor name to sensor Id.
+    def mapSensorNameToId(self, sensorName):
+        """Map the sensor name to sensor Id.
 
         Parameters
         ----------
-        sensorNameList : list[str]
-            List of abbreviated sensor names.
+        sensorName : list[str] or str
+            List or string of abbreviated sensor names.
 
         Returns
         -------
@@ -511,11 +500,12 @@ class DataShare(object):
             List of sensor Id.
         """
 
+        sensorNameList = self._changeToListIfNeed(sensorName)
+
         sensorIdList = []
-        if (self._inputIsList(sensorNameList)):
-            for sensorName in sensorNameList:
-                sensorId = self._sensorNameToIdFile.getSetting(sensorName)
-                sensorIdList.append(sensorId)
+        for sensor in sensorNameList:
+            sensorId = self._sensorNameToIdFile.getSetting(sensor)
+            sensorIdList.append(sensorId)
 
         return sensorIdList
 

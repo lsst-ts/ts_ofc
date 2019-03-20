@@ -1,5 +1,8 @@
 # Version History
 
+*Version 1.1.5* \
+*Add the classes to translate the Zemax coordinate to subsystem's coordinate and vice versa.*
+
 *Version 1.1.4* \
 *Use the eups as the package manager and yaml configuration file format.*
 

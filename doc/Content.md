@@ -1,6 +1,6 @@
 # Content
 
-*This module contains the following classes and functions ([class diagram](./ofcPythonClassDiag.png)):*
+*This module contains the following classes and functions ([class diagram](./ofcClassDiag.png)):*
 
 - **ParamReaderYaml**: Parameter reader class to read the yaml configuration files used in the calculation.
 - **DataShare**: Data share class for the information change used in the algorithms. This class includes the information of indexes of annular Zernike polynomials (zk) and DOF to use.
@@ -15,6 +15,8 @@
 - **CamRot**: Camera rotation class to rotate the calculated DOF offset.
 - **Utility**: Some functions used in this module.
 - **IterDataReader**: Iteration data reader class used in the unit test only. This is just to read the test iteration data.
+- **BendModeToForce**: Bending mode to force class to transform the bending mode to actuator forces and vice versa.
+- **SubSysAdap**: Subsystem adaptor class to transform the degree of freedom or actuator forces from ZEMAX coordinate to subsystem's coordinate and vice versa.
 
 *There is one module in OFC:*
 

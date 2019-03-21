@@ -4,7 +4,7 @@ import numpy as np
 class SensorWavefrontError(object):
     """Contains the wavefront errors for a single sensor."""
 
-    NUM_OF_ZER = 19
+    NUM_OF_ZK = 19
 
     def __init__(self, sensorId, annularZernikePoly):
         """Constructs a sensor wavefront error.
@@ -14,11 +14,11 @@ class SensorWavefrontError(object):
         sensorId : int
             The Id of the sensor this wavefront error is for.
         annularZernikePoly : numpy.ndarray[19] (float)
-            The poly describing the wavefront error.
+            The poly describing the wavefront error in um.
         """
 
         self.sensorId = 0
-        self.annularZernikePoly = np.zeros(self.NUM_OF_ZER)
+        self.annularZernikePoly = np.zeros(self.NUM_OF_ZK)
 
         self.setSensorId(sensorId)
         self.setAnnularZernikePoly(annularZernikePoly)
@@ -58,7 +58,7 @@ class SensorWavefrontError(object):
         Parameters
         ----------
         annularZernikePoly : numpy.ndarray[19] (float)
-            The poly describing the wavefront error.
+            The poly describing the wavefront error in um.
 
         Raises
         ------
@@ -66,9 +66,9 @@ class SensorWavefrontError(object):
             annularZernikePoly must be an array of 19 floats.
         """
 
-        if (len(annularZernikePoly) != self.NUM_OF_ZER):
+        if (len(annularZernikePoly) != self.NUM_OF_ZK):
             raise ValueError("annularZernikePoly must be an array of %d floats."
-                             % self.NUM_OF_ZER)
+                             % self.NUM_OF_ZK)
         self.annularZernikePoly = np.array(annularZernikePoly)
 
     def getAnnularZernikePoly(self):
@@ -77,7 +77,7 @@ class SensorWavefrontError(object):
         Returns
         -------
         numpy.ndarray[19] (float)
-            The poly describing the wavefront error.
+            The poly describing the wavefront error in um.
         """
 
         return self.annularZernikePoly

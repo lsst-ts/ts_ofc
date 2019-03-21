@@ -16,7 +16,7 @@ class OFCCalculationFactory(object):
 
         Parameters
         ----------
-        instName : InstName
+        instName : enum 'InstName'
             The instrument to get the wavefront calculator for.
 
         Returns

@@ -5,6 +5,11 @@ class FWHMToPSSN(object):
     Nominally the final implementation will be provided by SE.
     """
     def __init__(self):
+        """Initialization of FWHM to PSSN class.
+
+        FWHM: Full width at half maximum.
+        PSSN: Normalized point source sensitivity.
+        """
         super().__init__()
 
     def convertToPssn(self, fwhm):
@@ -23,7 +28,13 @@ class FWHMToPSSN(object):
         numpy.ndarray[y]
             An array of PSSN values.
         """
-        return [0.0] * len(fwhm)
+
+        eta = 1.086
+        FWHMatm = 0.6
+        denominator = eta * FWHMatm
+        pssn = 1 / ((fwhm / denominator) ** 2 + 1)
+
+        return pssn
 
 
 if __name__ == "__main__":

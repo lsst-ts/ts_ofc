@@ -64,7 +64,7 @@ class BendModeToForce(object):
         elif (dofGroup == DofGroup.M2Bend):
             mirrorDirName = "M2"
         else:
-            raise ValueError("The input(%s) is not a mirror group." % dofGroup)
+            raise ValueError("The input (%s) is not a mirror group." % dofGroup)
 
         return mirrorDirName
 
@@ -134,7 +134,7 @@ class BendModeToForce(object):
         elif (dofGroup == DofGroup.M2Bend):
             groupName = "m2Bend"
         else:
-            raise ValueError("The input(%s) is not a mirror group." % dofGroup)
+            raise ValueError("The input (%s) is not a mirror group." % dofGroup)
 
         numOfBendingMode = idxDofFile.getSetting(groupName).get("idxLength")
 

@@ -9,7 +9,7 @@ class TestSensorWavefrontError(unittest.TestCase):
 
     def setUp(self):
 
-        self.numOfZk = SensorWavefrontError.NUM_OF_ZER
+        self.numOfZk = SensorWavefrontError.NUM_OF_ZK
 
         self.sensorId = 1
         self.annularZernikePoly = np.ones(self.numOfZk)

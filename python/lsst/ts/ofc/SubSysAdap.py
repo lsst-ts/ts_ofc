@@ -295,8 +295,8 @@ class SubSysAdap(object):
         return rot1dArray(mirrorBend, invRotMat)
 
     def transHexaPosToZemax(self, hexaPos):
-        """Transform the hexapod's position from subsystem's coordinate to ZEMAX
-        coordinate.
+        """Transform the hexapod's position from subsystem's coordinate to
+        ZEMAX coordinate.
 
         Parameters
         ----------
@@ -312,8 +312,8 @@ class SubSysAdap(object):
         return rot1dArray(hexaPos, self.rotMatHex)
 
     def transHexaPosToSubSys(self, hexaPos):
-        """Transform the hexapod's position from ZEMAX coordinate to subsystem's
-        coordinate.
+        """Transform the hexapod's position from ZEMAX coordinate to
+        subsystem's coordinate.
 
         Parameters
         ----------

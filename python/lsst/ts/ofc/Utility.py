@@ -93,7 +93,7 @@ def rot1dArray(array, rotMat):
     """
 
     array2d = array.reshape(-1, 1)
-    rotArray = rotMat.dot(array)
+    rotArray = rotMat.dot(array2d)
 
     return rotArray.ravel()
 

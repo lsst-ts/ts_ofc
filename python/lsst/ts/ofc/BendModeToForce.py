@@ -175,7 +175,7 @@ class BendModeToForce(object):
         ----------
         actForce : numpy.ndarray
             Actuator forces in N.
-        
+
         Returns
         -------
         numpy.ndarray

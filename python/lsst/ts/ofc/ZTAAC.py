@@ -167,7 +167,7 @@ class ZTAAC(object):
 
         self.optCtrl.setGain(gain)
 
-    def setGainByPSSN(self, pssn, sensorNameList, eta=1.086, fwhmAtm=0.6):
+    def setGainByPSSN(self, pssn, sensorNameList):
         """Set the gain value based on PSSN.
 
         PSSN: Normalized point spread function.
@@ -178,10 +178,6 @@ class ZTAAC(object):
             PSSN.
         sensorNameList : list[str]
             List of abbreviated sensor names.
-        eta : float, optional
-            Eta in FWHM calculation. (the default is 1.086.)
-        fwhmAtm : float, optional
-            FWHM in atmosphere. (the default is 0.6.)
         """
 
         fieldIdx = self.dataShare.getFieldIdx(sensorNameList)

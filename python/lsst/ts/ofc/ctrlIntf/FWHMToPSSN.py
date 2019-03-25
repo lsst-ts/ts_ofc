@@ -1,9 +1,13 @@
+from lsst.ts.ofc.OptCtrlDefault import OptCtrlDefault
+
+
 class FWHMToPSSN(object):
     """Base class for converting FWHM data provided by DM to PSSN data
     utilized by OFC.
 
     Nominally the final implementation will be provided by SE.
     """
+
     def __init__(self):
         """Initialization of FWHM to PSSN class.
 
@@ -29,9 +33,7 @@ class FWHMToPSSN(object):
             An array of PSSN values.
         """
 
-        eta = 1.086
-        FWHMatm = 0.6
-        denominator = eta * FWHMatm
+        denominator = OptCtrlDefault.ETA * OptCtrlDefault.FWHM_ATM
         pssn = 1 / ((fwhm / denominator) ** 2 + 1)
 
         return pssn

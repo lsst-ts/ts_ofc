@@ -81,6 +81,11 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertRaises(ValueError, BendModeToForce.getMirrorDirName,
                           DofGroup.M2HexPos)
 
+    def testCheckDofGroupIsMirrorWithError(self):
+
+        self.assertRaises(ValueError, BendModeToForce.checkDofGroupIsMirror,
+                          DofGroup.CamHexPos)
+
 
 if __name__ == "__main__":
 

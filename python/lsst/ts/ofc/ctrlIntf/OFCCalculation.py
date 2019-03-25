@@ -379,7 +379,7 @@ class OFCCalculation(object):
             Mirror actuator forces correction.
         """
 
-        self._checkDofGroupIsMirror(dofGroup)
+        BendModeToForce.checkDofGroupIsMirror(dofGroup)
 
         # Get the DOF of mirror
         mirrorDof = self.ztaac.getGroupDof(dofGroup)
@@ -409,26 +409,6 @@ class OFCCalculation(object):
             mirrorCorr = M2Correction(transActForce)
 
         return mirrorCorr
-
-    def _checkDofGroupIsMirror(self, dofGroup):
-        """Check the input DOF group is mirror.
-
-        DOF: Degree of freedom.
-
-        Parameters
-        ----------
-        dofGroup : enum 'DofGroup'
-            DOF group (M1M3Bend or M2Bend).
-
-        Raises
-        ------
-        ValueError
-            The input DOF group is not mirror.
-        """
-
-        if dofGroup not in (DofGroup.M1M3Bend, DofGroup.M2Bend):
-            raise ValueError("The input DOF group (%s) is not mirror."
-                             % dofGroup)
 
     def setGainByUser(self, gainByUser=-1):
         """Set the gain value by the user.
@@ -511,6 +491,9 @@ class OFCCalculation(object):
         # Consider the camera rotation
         rotUk = self.ztaac.rotUk(self.camRot, uk)
 
+        # Assign the value to the last visit DOF
+        self._setStateCorrectionFromLastVisit(rotUk)
+
         # Aggregate the rotated uk
         self.ztaac.aggState(rotUk)
 
@@ -529,6 +512,24 @@ class OFCCalculation(object):
         sensorNameList = self.ztaac.mapSensorIdToName(sensorId.tolist())[0]
 
         self.ztaac.setGainByPSSN(pssn, sensorNameList)
+
+    def _setStateCorrectionFromLastVisit(self, calcDof):
+        """Set the state (or degree of freedom, DOF) correction from the last
+        visit.
+
+        Parameters
+        ----------
+        calcDof : numpy.ndarray
+            Calculated DOF.
+        """
+
+        numOfState0 = self.ztaac.optCtrl.getNumOfState0()
+        dofFromLastVisit = np.zeros(numOfState0)
+
+        dofIdx = self.ztaac.dataShare.getDofIdx()
+        dofFromLastVisit[dofIdx] = calcDof
+
+        self.dofFromLastVisit = dofFromLastVisit
 
     def getStateCorrectionFromLastVisit(self):
         """Get the state (or degree of freedom, DOF) correction from the last

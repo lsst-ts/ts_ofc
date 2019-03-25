@@ -51,22 +51,37 @@ class BendModeToForce(object):
         -------
         str
             Mirror directory name
-
-        Raises
-        ------
-        ValueError
-            The input is not a mirror group.
         """
 
-        mirrorDirName = ""
+        BendModeToForce.checkDofGroupIsMirror(dofGroup)
+
         if (dofGroup == DofGroup.M1M3Bend):
             mirrorDirName = "M1M3"
         elif (dofGroup == DofGroup.M2Bend):
             mirrorDirName = "M2"
-        else:
-            raise ValueError("The input (%s) is not a mirror group." % dofGroup)
 
         return mirrorDirName
+
+    @staticmethod
+    def checkDofGroupIsMirror(dofGroup):
+        """Check the input DOF group is mirror.
+
+        DOF: Degree of freedom.
+
+        Parameters
+        ----------
+        dofGroup : enum 'DofGroup'
+            DOF group (M1M3Bend or M2Bend).
+
+        Raises
+        ------
+        ValueError
+            The input DOF group is not mirror.
+        """
+
+        if dofGroup not in (DofGroup.M1M3Bend, DofGroup.M2Bend):
+            raise ValueError("The input DOF group (%s) is not mirror."
+                             % dofGroup)
 
     def _getMirRotMat(self, configDir, dofGroup, bendingModeFile,
                       idxDofFileName="idxDOF.yaml"):
@@ -121,20 +136,14 @@ class BendModeToForce(object):
         -------
         int
             Number of bending mode.
-
-        Raises
-        ------
-        ValueError
-            The input is not a mirror group.
         """
 
-        groupName = ""
+        BendModeToForce.checkDofGroupIsMirror(dofGroup)
+
         if (dofGroup == DofGroup.M1M3Bend):
             groupName = "m1M3Bend"
         elif (dofGroup == DofGroup.M2Bend):
             groupName = "m2Bend"
-        else:
-            raise ValueError("The input (%s) is not a mirror group." % dofGroup)
 
         numOfBendingMode = idxDofFile.getSetting(groupName).get("idxLength")
 

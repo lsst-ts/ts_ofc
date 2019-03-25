@@ -199,13 +199,52 @@ class IterDataReader(object):
             PSSN data.
         """
 
+        data = self._getImgQualData(iterNum)
+        pssn = data[0, 0:31]
+
+        return pssn
+
+    def _getImgQualData(self, iterNum):
+        """Get the image quality data.
+
+        Parameters
+        ----------
+        iterNum : int
+            Iteration number.
+
+        Returns
+        -------
+        numpy.ndarray
+            Image quality data.
+        """
+
         reMatchStr = r"\w*PSSN.txt"
         matchFilePath = self._getMatchFilePathInIter(reMatchStr, iterNum)
 
         data = np.loadtxt(matchFilePath)
-        pssn = data[0, 0:31]
 
-        return pssn
+        return data
+
+    def getFwhm(self, iterNum):
+        """Get the FWHM in specific iteration number.
+
+        FWHM: Full width at half maximum.
+
+        Parameters
+        ----------
+        iterNum : int
+            Iteration number.
+
+        Returns
+        -------
+        numpy.ndarray
+            FWHM data.
+        """
+
+        data = self._getImgQualData(iterNum)
+        fwhm = data[1, 0:31]
+
+        return fwhm
 
     def getDof(self, iterNum):
         """Get the degree of freedom (DOF) in specific iteration number.

@@ -37,7 +37,7 @@ class ParamReaderYaml(object):
 
         if (os.path.exists(filePath)):
             with open(filePath, "r") as yamlFile:
-                content = yaml.load(yamlFile)
+                content = yaml.safe_load(yamlFile)
         else:
             content = dict()
 
@@ -111,7 +111,7 @@ class ParamReaderYaml(object):
 
         if filePath.endswith(".yaml"):
             with open(filePath, "w") as yamlFile:
-                yaml.dump(matrix.tolist(), yamlFile)
+                yaml.safe_dump(matrix.tolist(), yamlFile)
         else:
             raise ValueError("The file name should end with '.yaml'.")
 

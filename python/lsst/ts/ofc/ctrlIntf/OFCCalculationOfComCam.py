@@ -7,6 +7,10 @@ class OFCCalculationOfComCam(OFCCalculation):
     """The concrete child class of OFCCalculation of the ComCam"""
 
     def __init__(self):
+        """Construct an OFC calculation of ComCam.
+
+        ComCam: Commissioning camera.
+        """
         super(OFCCalculationOfComCam, self).__init__(FWHMToPSSN(),
                                                      InstName.COMCAM)
 

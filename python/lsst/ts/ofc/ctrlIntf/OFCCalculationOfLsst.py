@@ -7,6 +7,7 @@ class OFCCalculationOfLsst(OFCCalculation):
     """The concrete child class of OFCCalculation of the LSST."""
 
     def __init__(self):
+        """Construct an OFC calculation of LSST."""
         super(OFCCalculationOfLsst, self).__init__(FWHMToPSSN(), InstName.LSST)
 
 

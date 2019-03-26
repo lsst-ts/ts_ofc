@@ -1,0 +1,16 @@
+---
+
+# This file defines the index group of Zk and degree of freedom (DOF) to use.
+
+# Max number of zernikes used (to be filtered with zn3Idx)
+znmax: 22
+
+# Index of degree of freedom (1: in use, 0: not in use)
+dofIdx:
+  m2Hex: [1, 1, 1, 1, 1]
+  camHex: [1, 1, 1, 1, 1]
+  m1m3Bend: [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  m2Bend: [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+# Index of annular Zernke polynomicals (z3-z22) (1: in use, 0: not in use)
+zn3Idx: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]

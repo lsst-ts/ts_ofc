@@ -25,6 +25,9 @@
   - **OFCCalculation**: OFC calculation default class as the parent class of concrete child classes for different instrument. The user shall get the concrete object by the creation method of OFCCalculationFactory class.
   - **OFCCalculationOfLsst**: OFC calculation of LSST class. This is the concrete child class of OFCCalculation class.
   - **OFCCalculationOfComCam**: OFC calculation of ComCam class. This is the concrete child class of OFCCalculation class.
+  - **OFCCalculationOfIota**: OFC calculation of IOTA class. This is a child class of OFCCalculation class.
+  - **OFCCalculationOfSh**: OFC calculation of Shack-Hartmann camera class. This is the concrete child class of OFCCalculationOfIota class.
+  - **OFCCalculationOfCmos**: OFC calculation of CMOS class. This is the concrete child class of OFCCalculationOfIota class.
   - **SensorWavefrontError**: Sensor wavefront error class. This class contains the information of sensor Id and related wavefront error. The details will be populated by the MTAOS and pass to the child class of OFCCalculation to do the calculation.
   - **CameraHexapodCorrection**: Camera hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.
   - **M2HexapodCorrection**: M2 hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.

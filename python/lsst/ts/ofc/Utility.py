@@ -8,6 +8,8 @@ from lsst.utils import getPackageDir
 class InstName(Enum):
     LSST = 1
     COMCAM = 2
+    SH = 3
+    CMOS = 4
 
 
 class DofGroup(Enum):

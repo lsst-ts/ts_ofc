@@ -16,8 +16,7 @@ class TestIteration(unittest.TestCase):
 
     def setUp(self):
 
-        ofcFactory = OFCCalculationFactory()
-        self.ofc = ofcFactory.getCalculator(InstName.LSST)
+        self.ofc = OFCCalculationFactory.getCalculator(InstName.LSST)
         self.ofc.setFilter(FilterType.REF)
         self.ofc.setRotAng(0.0)
         self.ofc.setGainByPSSN()

@@ -11,7 +11,8 @@ class OFCCalculationFactory(object):
     def __init__(self):
         super().__init__()
 
-    def getCalculator(self, instName):
+    @staticmethod
+    def getCalculator(instName):
         """Get a calculator to process wavefront error.
 
         Parameters

@@ -1,5 +1,8 @@
 # Version History
 
+*Version 1.1.6* \
+*Add the unit tests of control interface classes and fix the minor errors.*
+
 *Version 1.1.5* \
 *Add the classes to translate the Zemax coordinate to subsystem's coordinate and vice versa.*
 

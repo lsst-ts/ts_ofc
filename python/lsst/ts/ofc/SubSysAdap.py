@@ -173,7 +173,6 @@ class SubSysAdap(object):
 
         self._checkMirrorGroup(dofGroup)
 
-        rotMat = 1.0
         if (dofGroup == DofGroup.M1M3Bend):
             rotMat = self.rotMatM1M3Act
         elif (dofGroup == DofGroup.M2Bend):
@@ -262,7 +261,6 @@ class SubSysAdap(object):
 
         self._checkMirrorGroup(dofGroup)
 
-        rotMat = np.array([])
         if (dofGroup == DofGroup.M1M3Bend):
             rotMat = self.rotMatM1M3Bend
         elif (dofGroup == DofGroup.M2Bend):

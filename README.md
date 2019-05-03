@@ -1,30 +1,23 @@
 # Optical Feedback Control (OFC) in Python
 
-*This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors. The process contains: (1) estimate the optical state in the basis of DOF, (2) estimate the offset of DOF used in the next iteration/ visit, and (3) rotate the DOF based on the camera rotation angle.*
+*This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors.*
 
-## 1. Version History
-
-The version history is [here](./doc/VersionHistory.md).
-
-*Author: Te-Wei Tsai*
-
-## 2. Platform
+## 1. Platform
 
 - *CentOS 7*
-- *Python: 3.6.6*
-- *Scientific pipeline (newinstall.sh from master branch)*
+- *python: 3.7.2*
+- *scientific pipeline (newinstall.sh from master branch)*
 
-## 3. Needed Package
+## 2. Needed Package
 
-- *ts_tcs_wep - develop branch (commit: d59002a)*
+- *[ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: b8b331e)*
+- *[documenteer](https://github.com/lsst-sqre/documenteer) (optional)*
+- *[plantuml](http://plantuml.com) (optional)*
+- *[sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)*
 
-## 4. Use of Module
+## 3. Use of Module
 
-*1. Setup the WEP environment:* \
-`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep/python` \
-(e.g. `export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep/python`)
-
-*2. Setup the OFC environment by eups:*
+*Setup the WEP environment first, and then, setup the OFC environment by eups:*
 
 ```bash
 cd $ts_ofc_directory
@@ -32,14 +25,18 @@ setup -k -r .
 scons
 ```
 
-## 5. Content
-
-*The strategy pattern is used for the algorithm study. The decorator pattern is used for the data/ parameters needed in the new algorithm if necessary. The details of cotent is [here](./doc/Content.md).*
-
-## 6. Extension of Algorithm
+## 4. Extension of Algorithm
 
 - **Estimate the optical state**: Inherit from the OptStateEstiDefault class, and realize the estiOptState() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
 - **Calculate the DOF offset**: Inherit from the OptCtrlDefault class, and realize the estiUkWithoutGain() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
+
+## 5. Example Script
+
+- **calcDof.py**: Calculate DOF with 5 iterations.
+
+## 6. Build the Document
+
+*The user can use `package-docs build` to build the documentation. The packages of documenteer, plantuml, and sphinxcontrib-plantuml are needed. The path of plantuml.jar in doc/conf.py needs to be updated to the correct path. To clean the built documents, use `package-docs clean`. See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.*
 
 ## 7. Reference of Baseline Algorithm
 

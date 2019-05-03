@@ -2,8 +2,6 @@
 
 *This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors. The process contains: (1) estimate the optical state in the basis of DOF, (2) estimate the offset of DOF used in the next iteration/ visit, and (3) rotate the DOF based on the camera rotation angle.*
 
-*This repository is to fulfill the requirement that the scientist wants to change the OFC algorithm in Python script. This module will provide the interface python script to OFC with component template in LabVIEW in a latter time.*
-
 ## 1. Version History
 
 The version history is [here](./doc/VersionHistory.md).

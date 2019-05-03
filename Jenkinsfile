@@ -43,7 +43,7 @@ pipeline {
                         setup -k -r . -t sims_w_2019_17
                         scons
                         cd ..
-                        git clone --branch develop https://github.com/lsst-ts/ts_wep.git
+                        git clone --branch master https://github.com/lsst-ts/ts_wep.git
                         cd ts_wep/
                         git checkout b8b331e
                         setup -k -r .

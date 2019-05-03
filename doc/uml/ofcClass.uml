@@ -1,0 +1,15 @@
+@startuml
+class IterDataReader
+SubSysAdap ..> BendModeToForce
+Decorator o-- DataShare
+Decorator <|-- OptStateEstiDataDecorator
+Decorator <|-- OptCtrlDataDecorator
+OptStateEstiDefault <|-- OptStateEsti
+OptCtrlDefault <|-- OptCtrl
+ZTAAC *-- DataShare
+ZTAAC *-- OptStateEstiDefault
+ZTAAC *-- OptCtrlDefault
+ZTAAC ..> CamRot
+OptStateEstiDefault ..> OptStateEstiDataDecorator
+OptCtrlDefault ..> OptCtrlDataDecorator
+@enduml

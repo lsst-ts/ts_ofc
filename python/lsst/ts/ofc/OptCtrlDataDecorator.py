@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from lsst.ts.ofc.Decorator import Decorator
-from lsst.ts.ofc.ParamReaderYaml import ParamReaderYaml
+from lsst.ts.wep.ParamReader import ParamReader
 
 
 class OptCtrlDataDecorator(Decorator):
@@ -21,10 +21,10 @@ class OptCtrlDataDecorator(Decorator):
         self.xRef = ""
 
         self._authority = np.array([])
-        self._rigidBodyStrokeFile = ParamReaderYaml()
-        self._weightingFile = ParamReaderYaml()
-        self._pssnAlphaFile = ParamReaderYaml()
-        self._configOptCtrlFile = ParamReaderYaml()
+        self._rigidBodyStrokeFile = ParamReader()
+        self._weightingFile = ParamReader()
+        self._pssnAlphaFile = ParamReader()
+        self._configOptCtrlFile = ParamReader()
 
     def configOptCtrlData(self, configFileName="optiPSSN.yaml",
                           weightingFileName="imgQualWgt.yaml",
@@ -188,7 +188,7 @@ class OptCtrlDataDecorator(Decorator):
 
         filePath = os.path.join(self.configDir, mirrorDirName,
                                 actuatorForceFileName)
-        paramReader = ParamReaderYaml(filePath=filePath)
+        paramReader = ParamReader(filePath=filePath)
         mat = paramReader.getMatContent()
         bendingMode = mat[:, usecols]
         authority = np.std(bendingMode, axis=0)
@@ -286,7 +286,7 @@ class OptCtrlDataDecorator(Decorator):
         """
 
         filePath = os.path.join(self.getInstDir(), state0InDofFileName)
-        paramReader = ParamReaderYaml(filePath=filePath)
+        paramReader = ParamReader(filePath=filePath)
         state0InDofDict = paramReader.getContent()
         state0InDof = self._appendDictValuesToArray(state0InDofDict)
 

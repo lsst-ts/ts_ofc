@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.ofc.Decorator import Decorator
 from lsst.ts.ofc.Utility import getMatchFilePath, getDirFiles
-from lsst.ts.ofc.ParamReaderYaml import ParamReaderYaml
+from lsst.ts.wep.ParamReader import ParamReader
 
 
 class OptStateEstiDataDecorator(Decorator):
@@ -23,10 +23,10 @@ class OptStateEstiDataDecorator(Decorator):
 
         super(OptStateEstiDataDecorator, self).__init__(decoratedObj)
 
-        self._wavelengthTable = ParamReaderYaml()
+        self._wavelengthTable = ParamReader()
         self._intrincZkFileName = ""
-        self._intrincZkFile = ParamReaderYaml()
-        self._y2CorrectionFile = ParamReaderYaml()
+        self._intrincZkFile = ParamReader()
+        self._y2CorrectionFile = ParamReader()
 
     def configOptStateEstiData(self, wavelengthTable="effWaveLength.yaml",
                                intrincZkFileName="intrinsicZn",

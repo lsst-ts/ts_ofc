@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from lsst.ts.ofc.ParamReaderYaml import ParamReaderYaml
+from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.ofc.BendModeToForce import BendModeToForce
 from lsst.ts.ofc.Utility import DofGroup, rot1dArray
 
@@ -71,7 +71,7 @@ class SubSysAdap(object):
 
         mirrorDirName = BendModeToForce.getMirrorDirName(dofGroup)
         rotMatFilePath = os.path.join(configDir, mirrorDirName, rotMatfileName)
-        rotMatFile = ParamReaderYaml(filePath=rotMatFilePath)
+        rotMatFile = ParamReader(filePath=rotMatFilePath)
 
         rotMatBend = rotMatFile.getSetting("bend")
         rotMatAct = rotMatFile.getSetting("act")
@@ -95,7 +95,7 @@ class SubSysAdap(object):
         """
 
         rotMatFilePath = os.path.join(configDir, rotMatfileName)
-        rotMatFile = ParamReaderYaml(filePath=rotMatFilePath)
+        rotMatFile = ParamReader(filePath=rotMatFilePath)
         rotMat = rotMatFile.getMatContent()
 
         return rotMat

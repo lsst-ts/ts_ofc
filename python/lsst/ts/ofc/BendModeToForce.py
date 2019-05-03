@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from lsst.ts.ofc.Utility import DofGroup, rot1dArray
-from lsst.ts.ofc.ParamReaderYaml import ParamReaderYaml
+from lsst.ts.wep.ParamReader import ParamReader
 
 
 class BendModeToForce(object):
@@ -32,7 +32,7 @@ class BendModeToForce(object):
         mirrorDirName = self.getMirrorDirName(dofGroup)
         bendModeFilePath = os.path.join(configDir, mirrorDirName,
                                         bendingModeFileName)
-        bendingModeFile = ParamReaderYaml(filePath=bendModeFilePath)
+        bendingModeFile = ParamReader(filePath=bendModeFilePath)
 
         self.rotMat = self._getMirRotMat(configDir, dofGroup, bendingModeFile)
 
@@ -95,7 +95,7 @@ class BendModeToForce(object):
             Configuration directory.
         dofGroup : DofGroup
             DOF group.
-        bendingModeFile : ParamReaderYaml
+        bendingModeFile : lsst.ts.wep.ParamReader
             Bending mode file.
         idxDofFileName : str, optional
             Index of DOF file name. (the default is "idxDOF.yaml".)
@@ -108,7 +108,7 @@ class BendModeToForce(object):
 
         # Get the number of bending mode
         idxDofFilePath = os.path.join(configDir, idxDofFileName)
-        idxDofFile = ParamReaderYaml(filePath=idxDofFilePath)
+        idxDofFile = ParamReader(filePath=idxDofFilePath)
         numOfBendingMode = self._getNumOfBendingMode(dofGroup, idxDofFile)
 
         # Get the bending mode
@@ -129,7 +129,7 @@ class BendModeToForce(object):
         ----------
         dofGroup : DofGroup
             DOF group.
-        idxDofFile : ParamReaderYaml
+        idxDofFile : lsst.ts.wep.ParamReader
             Index of DOF file.
 
         Returns

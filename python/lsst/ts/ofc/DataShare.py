@@ -3,7 +3,7 @@ import numpy as np
 
 from lsst.ts.ofc.Utility import InstName, DofGroup, getMatchFilePath, \
     getDirFiles
-from lsst.ts.ofc.ParamReaderYaml import ParamReaderYaml
+from lsst.ts.wep.ParamReader import ParamReader
 
 
 class DataShare(object):
@@ -17,11 +17,11 @@ class DataShare(object):
         self.zn3Idx = np.array([], dtype=int)
         self.dofIdx = np.array([], dtype=int)
 
-        self._zkAndDofIdxArraySetFile = ParamReaderYaml()
-        self._senMfile = ParamReaderYaml()
-        self._mappingFile = ParamReaderYaml()
-        self._idxDofFile = ParamReaderYaml()
-        self._sensorNameToIdFile = ParamReaderYaml()
+        self._zkAndDofIdxArraySetFile = ParamReader()
+        self._senMfile = ParamReader()
+        self._mappingFile = ParamReader()
+        self._idxDofFile = ParamReader()
+        self._sensorNameToIdFile = ParamReader()
 
     def config(self, configDir, instName=InstName.LSST,
                zkAndDofIdxArraySetFileName="zkAndDofIdxArraySet.yaml",

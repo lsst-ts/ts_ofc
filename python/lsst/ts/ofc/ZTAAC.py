@@ -1,7 +1,7 @@
 import numpy as np
 
 from lsst.ts.wep.Utility import FilterType
-
+from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 from lsst.ts.ofc.Utility import DofGroup
 
 
@@ -53,16 +53,16 @@ class ZTAAC(object):
         self.defaultGain = defaultGain
         self.fwhmThresholdInArcsec = fwhmThresholdInArcsec
 
-    def mapSensorIdToName(self, sensorIdList):
-        """Map the list of sensor Id to sensor name.
+    def mapSensorIdToName(self, sensorId):
+        """Map the sensor Id to sensor name.
 
         If no sensor name is found for a specific Id, there will be no returned
         value.
 
         Parameters
         ----------
-        sensorIdList : list[int]
-            List of sensor Id.
+        sensorId : list[int] or int
+            List or integer of sensor Id.
 
         Returns
         -------
@@ -72,15 +72,17 @@ class ZTAAC(object):
             Number of sensors.
         """
 
-        return self.dataShare.mapSensorIdToName(sensorIdList)
+        mapSensorNameAndId = MapSensorNameAndId()
 
-    def mapSensorNameToId(self, sensorNameList):
-        """Map the array of sensor name to sensor Id.
+        return mapSensorNameAndId.mapSensorIdToName(sensorId)
+
+    def mapSensorNameToId(self, sensorName):
+        """Map the sensor name to sensor Id.
 
         Parameters
         ----------
-        sensorNameList : list[str]
-            List of abbreviated sensor names.
+        sensorName : list[str] or str
+            List or string of abbreviated sensor names.
 
         Returns
         -------
@@ -88,7 +90,9 @@ class ZTAAC(object):
             List of sensor Id.
         """
 
-        return self.dataShare.mapSensorNameToId(sensorNameList)
+        mapSensorNameAndId = MapSensorNameAndId()
+
+        return mapSensorNameAndId.mapSensorNameToId(sensorName)
 
     def setFilter(self, filterType):
         """Set the active filter type.

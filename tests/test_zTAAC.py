@@ -120,7 +120,7 @@ class TestZTAAC(unittest.TestCase):
                         44, 46, 93, 180, 120, 118, 18, 45, 82, 183,
                         122, 116, 24, 40, 81, 179, 161, 70, 5, 33,
                         123]
-        sensorNameList = self.ztaac.dataShare.mapSensorIdToName(
+        sensorNameList = self.ztaac.mapSensorIdToName(
             sensorIdList)[0]
 
         self.ztaac.setGainByPSSN(pssn, sensorNameList)

@@ -8,7 +8,7 @@ pipeline {
         // The nodes in T&S teams is 'jenkins-el7-1'.
         // It is recommended by SQUARE team do not add the label.
         docker {
-            image 'lsstts/aos:w_2019_12'
+            image 'lsstts/aos:w_2019_17'
             args '-u root'
         }
     }
@@ -20,9 +20,6 @@ pipeline {
     environment {
         // Position of LSST stack directory
         LSST_STACK="/opt/lsst/software/stack"
-        // Use the double quote instead of single quote
-        // Add the PYTHONPATH
-        PYTHONPATH="${env.WORKSPACE}/ts_tcs_wep/python"
         // XML report path
         XML_REPORT="jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
@@ -40,10 +37,17 @@ pipeline {
                         source /opt/rh/devtoolset-6/enable
                         source ${env.LSST_STACK}/loadLSST.bash
                         conda install scikit-image
-                        git clone --branch develop https://github.com/lsst-ts/ts_tcs_wep.git
-                        cd ts_tcs_wep/
-                        git checkout d59002a
-                        python builder/setup.py build_ext --build-lib python/lsst/ts/wep/cwfs/lib
+                        git clone --branch master https://github.com/lsst-dm/phosim_utils.git
+                        cd phosim_utils/
+                        git checkout 7b02084
+                        setup -k -r . -t sims_w_2019_17
+                        scons
+                        cd ..
+                        git clone --branch develop https://github.com/lsst-ts/ts_wep.git
+                        cd ts_wep/
+                        git checkout a74acfd
+                        setup -k -r .
+                        scons
                     """
                 }
             }
@@ -60,6 +64,11 @@ pipeline {
                     sh """
                         source /opt/rh/devtoolset-6/enable
                         source ${env.LSST_STACK}/loadLSST.bash
+                        cd phosim_utils/
+                        setup -k -r . -t sims_w_2019_17
+                        cd ../ts_wep/
+                        setup -k -r .
+                        cd ..
                         setup -k -r .
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT} tests/
                     """

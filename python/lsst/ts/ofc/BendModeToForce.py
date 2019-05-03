@@ -23,7 +23,7 @@ class BendModeToForce(object):
         ----------
         configDir : str
             Configuration directory.
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
         bendingModeFileName : str
             Bending mode file name.
@@ -44,7 +44,7 @@ class BendModeToForce(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
 
         Returns
@@ -93,7 +93,7 @@ class BendModeToForce(object):
         ----------
         configDir : str
             Configuration directory.
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
         bendingModeFile : lsst.ts.wep.ParamReader
             Bending mode file.
@@ -127,7 +127,7 @@ class BendModeToForce(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
         idxDofFile : lsst.ts.wep.ParamReader
             Index of DOF file.

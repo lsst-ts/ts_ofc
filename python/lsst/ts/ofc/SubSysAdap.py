@@ -56,7 +56,7 @@ class SubSysAdap(object):
         ----------
         configDir : str
             Configuration directory.
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
         rotMatfileName : str
             Rotation matrix file name.
@@ -108,7 +108,7 @@ class SubSysAdap(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
 
         Returns
@@ -142,7 +142,7 @@ class SubSysAdap(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group (M1M3Bend or M2Bend).
         actForce : numpy.ndarray
             Actuator forces in subsystem's coordinate.
@@ -162,7 +162,7 @@ class SubSysAdap(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
 
         Returns
@@ -187,7 +187,7 @@ class SubSysAdap(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
 
         Raises
@@ -207,7 +207,7 @@ class SubSysAdap(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group (M1M3Bend or M2Bend).
         actForce : numpy.ndarray
             Actuator forces in ZEMAX coordinate.
@@ -230,7 +230,7 @@ class SubSysAdap(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group (M1M3Bend or M2Bend).
         mirrorBend : numpy.ndarray
             Mirror bending mode in subsystem's coordinate.
@@ -250,7 +250,7 @@ class SubSysAdap(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group.
 
         Returns
@@ -276,7 +276,7 @@ class SubSysAdap(object):
 
         Parameters
         ----------
-        dofGroup : DofGroup
+        dofGroup : enum 'DofGroup'
             DOF group (M1M3Bend or M2Bend).
         mirrorBend : numpy.ndarray
             Mirror bending mode in ZEMAX coordinate.

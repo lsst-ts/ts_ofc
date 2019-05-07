@@ -1,4 +1,4 @@
-# Optical Feedback Control (OFC) in Python
+# Optical Feedback Control (OFC)
 
 *This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors.*
 

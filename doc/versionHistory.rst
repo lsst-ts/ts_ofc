@@ -12,7 +12,7 @@ Version History
 1.1.7
 -------------
 
-Dependent on ts_wep and support the documenteer.
+Depend on the ts_wep and support the documenteer. Use sims_w_2019_18.
 
 .. _lsst.ts.ofc-1.2.4:
 

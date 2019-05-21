@@ -8,7 +8,7 @@ pipeline {
         // The nodes in T&S teams is 'jenkins-el7-1'.
         // It is recommended by SQUARE team do not add the label.
         docker {
-            image 'lsstts/aos:w_2019_18'
+            image 'lsstts/aos:w_2019_20'
             args '-u root'
         }
     }
@@ -40,7 +40,7 @@ pipeline {
                         git clone --branch master https://github.com/lsst-dm/phosim_utils.git
                         cd phosim_utils/
                         git checkout 7b02084
-                        setup -k -r . -t sims_w_2019_18
+                        setup -k -r . -t sims_w_2019_20
                         scons
                         cd ..
                         git clone --branch master https://github.com/lsst-ts/ts_wep.git
@@ -65,7 +65,7 @@ pipeline {
                         source /opt/rh/devtoolset-6/enable
                         source ${env.LSST_STACK}/loadLSST.bash
                         cd phosim_utils/
-                        setup -k -r . -t sims_w_2019_18
+                        setup -k -r . -t sims_w_2019_20
                         cd ../ts_wep/
                         setup -k -r .
                         cd ..

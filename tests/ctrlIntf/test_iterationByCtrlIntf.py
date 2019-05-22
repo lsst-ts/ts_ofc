@@ -71,7 +71,7 @@ class TestIteration(unittest.TestCase):
 
         listOfFWHMSensorData = []
         for fwhmId, fwhm in zip(fwhmIdList, fwhmValues):
-            fwhmSensorData = FWHMSensorData(fwhmId, np.array(fwhm))
+            fwhmSensorData = FWHMSensorData(fwhmId, np.array([fwhm]))
             listOfFWHMSensorData.append(fwhmSensorData)
 
         return listOfFWHMSensorData

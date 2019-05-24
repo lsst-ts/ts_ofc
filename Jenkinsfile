@@ -45,7 +45,7 @@ pipeline {
                         cd ..
                         git clone --branch master https://github.com/lsst-ts/ts_wep.git
                         cd ts_wep/
-                        git checkout b8b331e
+                        git checkout b0d90ce
                         setup -k -r .
                         scons
                     """

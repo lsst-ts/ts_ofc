@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.1.9:
+
+-------------
+1.1.9
+-------------
+
+Use sims_w_2019_24. Add the dependency of ts_wep in the table file.
+
 .. _lsst.ts.ofc-1.1.8:
 
 -------------

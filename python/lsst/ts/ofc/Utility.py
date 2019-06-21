@@ -103,9 +103,6 @@ def rot1dArray(array, rotMat):
 def getModulePath():
     """Get the path of module.
 
-    Parameters
-    ----------
-
     Returns
     -------
     str

@@ -1,6 +1,5 @@
 @startuml
 OFCCalculation *-- FWHMToPSSN
-OFCCalculation ..> SensorWavefrontError
 OFCCalculation ..> FWHMSensorData
 OFCCalculation ..> CameraHexapodCorrection
 OFCCalculation ..> M2HexapodCorrection

@@ -3,16 +3,15 @@ import numpy as np
 import unittest
 
 from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 
 from lsst.ts.ofc.Utility import InstName, getModulePath
-
 from lsst.ts.ofc.ctrlIntf.OFCCalculation import OFCCalculation
 from lsst.ts.ofc.ctrlIntf.FWHMToPSSN import FWHMToPSSN
 from lsst.ts.ofc.ctrlIntf.CameraHexapodCorrection import CameraHexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M2HexapodCorrection import M2HexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M1M3Correction import M1M3Correction
 from lsst.ts.ofc.ctrlIntf.M2Correction import M2Correction
-from lsst.ts.ofc.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
 
 
@@ -165,8 +164,9 @@ class TestOFCCalculation(unittest.TestCase):
 
         listOfWfErr = []
         for sensorId, annularZernikePoly in zip(sensorIdList, wfErr):
-            sensorWavefrontError = SensorWavefrontError(sensorId,
-                                                        annularZernikePoly)
+            sensorWavefrontError = SensorWavefrontError(numOfZk=19)
+            sensorWavefrontError.setSensorId(sensorId)
+            sensorWavefrontError.setAnnularZernikePoly(annularZernikePoly)
             listOfWfErr.append(sensorWavefrontError)
 
         return listOfWfErr

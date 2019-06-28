@@ -13,7 +13,6 @@ from lsst.ts.ofc.CamRot import CamRot
 from lsst.ts.ofc.BendModeToForce import BendModeToForce
 from lsst.ts.ofc.SubSysAdap import SubSysAdap
 
-from lsst.ts.ofc.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 from lsst.ts.ofc.ctrlIntf.CameraHexapodCorrection import CameraHexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M2HexapodCorrection import M2HexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M1M3Correction import M1M3Correction
@@ -454,7 +453,7 @@ class OFCCalculation(object):
 
         Parameters
         ----------
-        listOfWfErr : list [SensorWavefrontError]
+        listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontError]
             The list of wavefront error of each sensor for an exposure.
 
         Returns
@@ -474,7 +473,8 @@ class OFCCalculation(object):
             self._setZtaacGainByPSSN()
 
         # Collect the wavefront error and sensor name
-        wfZkData = np.empty((0, SensorWavefrontError.NUM_OF_ZK))
+        numOfZk = listOfWfErr[0].getNumOfZk()
+        wfZkData = np.empty((0, numOfZk))
         sensorIdList = []
         for wfErr in listOfWfErr:
             sensorId = wfErr.getSensorId()

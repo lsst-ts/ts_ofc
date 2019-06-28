@@ -12,7 +12,7 @@ Version History
 1.1.9
 -------------
 
-Use sims_w_2019_24. Add the dependency of ts_wep in the table file.
+Use sims_w_2019_24. Add the dependency of ts_wep in the table file. Move the SensorWavefronError class to ts_wep.
 
 .. _lsst.ts.ofc-1.1.8:
 

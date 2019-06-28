@@ -3,9 +3,9 @@ import numpy as np
 import unittest
 
 from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 
 from lsst.ts.ofc.Utility import InstName, getModulePath
-from lsst.ts.ofc.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
 from lsst.ts.ofc.ctrlIntf.OFCCalculationFactory import OFCCalculationFactory
 from lsst.ts.ofc.IterDataReader import IterDataReader
@@ -80,7 +80,10 @@ class TestIteration(unittest.TestCase):
 
         listOfWfErr = []
         for wfId, wfErr in zip(wfIdList, wfErrValues):
-            sensorWavefrontError = SensorWavefrontError(wfId, wfErr)
+            sensorWavefrontError = SensorWavefrontError(numOfZk=19)
+            sensorWavefrontError.setSensorId(wfId)
+            sensorWavefrontError.setAnnularZernikePoly(wfErr)
+
             listOfWfErr.append(sensorWavefrontError)
 
         return listOfWfErr

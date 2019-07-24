@@ -165,6 +165,19 @@ class OFCCalculation(object):
         numOfState0 = self.ztaac.optCtrl.getNumOfState0()
         self.dofFromLastVisit = np.zeros(numOfState0)
 
+    def getZtaac(self):
+        """Get the ZTAAC.
+
+        ZTAAC: Zernike to actuator adjustment calculator.
+
+        Returns
+        -------
+        lsst.ts.ofc.ZTAAC
+            ZTAAC object.
+        """
+
+        return self.ztaac
+
     def getPssnData(self):
         """Get the PSSN data.
 

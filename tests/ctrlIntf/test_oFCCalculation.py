@@ -13,6 +13,7 @@ from lsst.ts.ofc.ctrlIntf.M2HexapodCorrection import M2HexapodCorrection
 from lsst.ts.ofc.ctrlIntf.M1M3Correction import M1M3Correction
 from lsst.ts.ofc.ctrlIntf.M2Correction import M2Correction
 from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
+from lsst.ts.ofc.ZTAAC import ZTAAC
 
 
 class TestOFCCalculation(unittest.TestCase):
@@ -22,6 +23,10 @@ class TestOFCCalculation(unittest.TestCase):
 
         self.ofcCalculation = OFCCalculation(FWHMToPSSN(), InstName.LSST)
         self.testDataDir = os.path.join(getModulePath(), "tests", "testData")
+
+    def testGetZtaac(self):
+
+        self.assertTrue(isinstance(self.ofcCalculation.getZtaac(), ZTAAC))
 
     def testGetPssnData(self):
 

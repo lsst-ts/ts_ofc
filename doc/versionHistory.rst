@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.2.0:
+
+-------------
+1.2.0
+-------------
+
+Use sims_w_2019_29 and the latest ts_wep version. Add the getZtaac() in OFCCalculation class.
+
 .. _lsst.ts.ofc-1.1.9:
 
 -------------

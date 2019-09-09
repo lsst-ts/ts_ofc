@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.2.1:
+
+-------------
+1.2.1
+-------------
+
+Use sims_w_2019_31 and the latest ts_wep version. Remove the conda package installation in Jenkinsfile. Update the permission of workspace after the unit test.
+
 .. _lsst.ts.ofc-1.2.0:
 
 -------------

@@ -48,6 +48,11 @@ class TestIteration(unittest.TestCase):
         self.iterDataReader = IterDataReader(iterDataDir)
 
     def testIteration(self):
+        """
+        This makes sure the ofc controller is intact.
+        This test relies on test data from a successful simulation run.
+        The test data is in testData/
+        """
 
         sensorIdList = self.iterDataReader.getWfsSensorIdList()
         sensorNameList = self.ztaac.mapSensorIdToName(sensorIdList)[0]

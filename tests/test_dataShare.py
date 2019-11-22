@@ -97,7 +97,7 @@ class TestDataShare(unittest.TestCase):
 
         senM = self.dataShare.getSenM()
         self.assertEqual(senM.shape, (35, 6, 13))
-        self.assertEqual(senM[4, 3, 5], -6.8834e-03)
+        self.assertEqual(senM[4, 3, 5], -0.0050238)
 
     def testSetZkAndDofInGroups(self):
 

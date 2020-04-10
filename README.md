@@ -1,23 +1,23 @@
 # Optical Feedback Control (OFC)
 
-*This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors.*
+This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors.
 
 ## 1. Platform
 
-- *CentOS 7*
-- *python: 3.7.2*
-- *scientific pipeline (newinstall.sh from master branch)*
+- CentOS 7
+- python: 3.7.6
+- scientific pipeline (newinstall.sh from master branch)
 
 ## 2. Needed Package
 
-- *[ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: f5a6090)*
-- *[documenteer](https://github.com/lsst-sqre/documenteer) (optional)*
-- *[plantuml](http://plantuml.com) (optional)*
-- *[sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)*
+- [ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: 3c661a4)
+- [documenteer](https://github.com/lsst-sqre/documenteer) (optional)
+- [plantuml](http://plantuml.com) (optional)
+- [sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)
 
 ## 3. Use of Module
 
-*Setup the WEP environment first, and then, setup the OFC environment by eups:*
+Setup the WEP environment first, and then, setup the OFC environment by `eups`:
 
 ```bash
 cd $ts_ofc_directory
@@ -36,7 +36,7 @@ scons
 
 ## 6. Build the Document
 
-*The user can use `package-docs build` to build the documentation. The packages of documenteer, plantuml, and sphinxcontrib-plantuml are needed. The path of plantuml.jar in doc/conf.py needs to be updated to the correct path. To clean the built documents, use `package-docs clean`. See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.*
+The user can use `package-docs build` to build the documentation. The packages of documenteer, plantuml, and sphinxcontrib-plantuml are needed. The path of plantuml.jar in doc/conf.py needs to be updated to the correct path. To clean the built documents, use `package-docs clean`. See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.
 
 ## 7. Reference of Baseline Algorithm
 

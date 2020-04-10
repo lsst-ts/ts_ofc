@@ -8,7 +8,7 @@ pipeline {
         // It is recommended by SQUARE team do not add the label and let the
         // sytem decide.
         docker {
-            image 'lsstts/aos:w_2020_04'
+            image 'lsstts/aos:w_2020_14'
             args '-u root'
         }
     }
@@ -23,7 +23,7 @@ pipeline {
         // Position of LSST stack directory
         LSST_STACK="/opt/lsst/software/stack"
         // Pipeline Sims Version
-        SIMS_VERSION="sims_w_2020_04"
+        SIMS_VERSION="sims_w_2020_14"
         // XML report path
         XML_REPORT="jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
@@ -48,7 +48,7 @@ pipeline {
                         cd ..
                         git clone --branch master https://github.com/lsst-ts/ts_wep.git
                         cd ts_wep/
-                        git checkout f5a6090
+                        git checkout 3c661a4
                         setup -k -r .
                         scons
                     """

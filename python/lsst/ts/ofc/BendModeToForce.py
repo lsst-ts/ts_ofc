@@ -12,6 +12,8 @@ class BendModeToForce(object):
     def __init__(self):
         """Initialization of bending mode to force class."""
 
+        # Rotation matrix to rotate the basis from bending mode to actuator
+        # forces
         self.rotMat = np.array([])
 
     def config(self, configDir, dofGroup, bendingModeFileName):

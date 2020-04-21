@@ -29,7 +29,7 @@ class OFCCalculation(object):
     """
     def __init__(self, fwhmToPssn, instName,
                  m1m3BendModeFileName="M1M3_1um_156_force.yaml",
-                 m2BendModeFileName="M2_1um_force.yaml"):
+                 m2BendModeFileName="M2_1um_72_force.yaml"):
         """Construct an OFC calculation.
 
         This should be unique to an OFC algorithm / CCD.
@@ -47,7 +47,7 @@ class OFCCalculation(object):
             M1M3 bending mode file name. (the default is
             "M1M3_1um_156_force.yaml".)
         m2BendModeFileName : str, optional
-            M2 bending mode file name. (the default is "M2_1um_force.yaml".)
+            M2 bending mode file name. (the default is "M2_1um_72_force.yaml".)
         """
 
         self.fwhmToPssn = fwhmToPssn

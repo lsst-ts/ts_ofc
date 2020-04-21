@@ -11,13 +11,13 @@ class SubSysAdap(object):
     def __init__(self):
         """Initialization of subsystem adaptor class."""
 
-        # The row is in the ZEMAX basis. The column is in the subsystem basis.
-        self.rotMatM1M3Bend = np.array([])
-        self.rotMatM2Bend = np.array([])
-
+        # Rotation matrix of M1M3 actuator force
         self.rotMatM1M3Act = 1.0
+
+        # Rotation matrix of M2 actuator force
         self.rotMatM2Act = 1.0
 
+        # Rotation matrix of hexapod position
         self.rotMatHex = np.array([])
 
     def config(self, configDir, rotMatM1M3FileName="rotMatM1M3.yaml",
@@ -39,12 +39,10 @@ class SubSysAdap(object):
             "rotMatHexapod.yaml".)
         """
 
-        self.rotMatM1M3Bend, self.rotMatM1M3Act = \
-            self._getRotMatMirror(configDir, DofGroup.M1M3Bend,
-                                  rotMatM1M3FileName)
-        self.rotMatM2Bend, self.rotMatM2Act = \
-            self._getRotMatMirror(configDir, DofGroup.M2Bend,
-                                  rotMatM2FileName)
+        self.rotMatM1M3Act = self._getRotMatMirror(
+            configDir, DofGroup.M1M3Bend, rotMatM1M3FileName)
+        self.rotMatM2Act = self._getRotMatMirror(
+            configDir, DofGroup.M2Bend, rotMatM2FileName)
         self.rotMatHex = self._getRotMatHex(configDir, rotMatHexpodFileName)
 
     def _getRotMatMirror(self, configDir, dofGroup, rotMatfileName):
@@ -63,8 +61,6 @@ class SubSysAdap(object):
 
         Returns
         -------
-        numpy.ndarray
-            Rotation matrix of mirror's bending mode.
         float
             Rotation matrix of mirror's actuator.
         """
@@ -73,10 +69,9 @@ class SubSysAdap(object):
         rotMatFilePath = os.path.join(configDir, mirrorDirName, rotMatfileName)
         rotMatFile = ParamReader(filePath=rotMatFilePath)
 
-        rotMatBend = rotMatFile.getSetting("bend")
         rotMatAct = rotMatFile.getSetting("act")
 
-        return np.diag(rotMatBend), rotMatAct
+        return rotMatAct
 
     def _getRotMatHex(self, configDir, rotMatfileName):
         """Get the rotation matrix of hexapod.
@@ -100,8 +95,8 @@ class SubSysAdap(object):
 
         return rotMat
 
-    def getRotMatInDof(self, dofGroup):
-        """Get the rotation matrix in the basis of DOF.
+    def getRotMatHexInDof(self, dofGroup):
+        """Get the rotation matrix of hexapod in the basis of DOF.
 
         The row is in the ZEMAX basis. The column is in the subsystem basis.
         DOF: Degree of freedom.
@@ -122,17 +117,10 @@ class SubSysAdap(object):
             The input is not supported.
         """
 
-        rotMat = np.array([])
-        if (dofGroup == DofGroup.M1M3Bend):
-            rotMat = self.rotMatM1M3Bend
-        elif (dofGroup == DofGroup.M2Bend):
-            rotMat = self.rotMatM2Bend
-        elif dofGroup in (DofGroup.M2HexPos, DofGroup.CamHexPos):
-            rotMat = self.rotMatHex
+        if dofGroup in (DofGroup.M2HexPos, DofGroup.CamHexPos):
+            return self.rotMatHex
         else:
             raise ValueError("The input(%s) is not supported." % dofGroup)
-
-        return rotMat
 
     def transActForceToZemax(self, dofGroup, actForce):
         """Transform the actuator forces in subsystem's coordinate to ZEMAX
@@ -174,11 +162,9 @@ class SubSysAdap(object):
         self._checkMirrorGroup(dofGroup)
 
         if (dofGroup == DofGroup.M1M3Bend):
-            rotMat = self.rotMatM1M3Act
+            return self.rotMatM1M3Act
         elif (dofGroup == DofGroup.M2Bend):
-            rotMat = self.rotMatM2Act
-
-        return rotMat
+            return self.rotMatM2Act
 
     def _checkMirrorGroup(self, dofGroup):
         """Check the input is in the mirror group or not.
@@ -221,76 +207,6 @@ class SubSysAdap(object):
         rotMat = 1 / self._getRotMatOfMirrorAct(dofGroup)
 
         return rotMat * actForce
-
-    def transBendingModeToZemax(self, dofGroup, mirrorBend):
-        """Transform the mirror bending mode in subsystem's coordinate to ZEMAX
-        coordinate.
-
-        DOF: Degree of freedom.
-
-        Parameters
-        ----------
-        dofGroup : enum 'DofGroup'
-            DOF group (M1M3Bend or M2Bend).
-        mirrorBend : numpy.ndarray
-            Mirror bending mode in subsystem's coordinate.
-
-        Returns
-        -------
-        numpy.ndarray
-            Mirror bending mode in ZEMAX coordinate.
-        """
-
-        rotMat = self._getRotMatOfMirrorBend(dofGroup)
-
-        return rot1dArray(mirrorBend, rotMat)
-
-    def _getRotMatOfMirrorBend(self, dofGroup):
-        """Get the rotation matrix of mirror's bending mode.
-
-        Parameters
-        ----------
-        dofGroup : enum 'DofGroup'
-            DOF group.
-
-        Returns
-        -------
-        numpy.ndarray
-            Rotation matrix of mirror's bending mode.
-        """
-
-        self._checkMirrorGroup(dofGroup)
-
-        if (dofGroup == DofGroup.M1M3Bend):
-            rotMat = self.rotMatM1M3Bend
-        elif (dofGroup == DofGroup.M2Bend):
-            rotMat = self.rotMatM2Bend
-
-        return rotMat
-
-    def transBendingModeToSubSys(self, dofGroup, mirrorBend):
-        """Transform the mirror bending mode in ZEMAX coordinate to subsystem's
-        coordinate.
-
-        DOF: Degree of freedom.
-
-        Parameters
-        ----------
-        dofGroup : enum 'DofGroup'
-            DOF group (M1M3Bend or M2Bend).
-        mirrorBend : numpy.ndarray
-            Mirror bending mode in ZEMAX coordinate.
-
-        Returns
-        -------
-        numpy.ndarray
-            Mirror bending mode in subsystem's coordinate.
-        """
-
-        rotMat = self._getRotMatOfMirrorBend(dofGroup)
-        invRotMat = np.linalg.inv(rotMat)
-
-        return rot1dArray(mirrorBend, invRotMat)
 
     def transHexaPosToZemax(self, hexaPos):
         """Transform the hexapod's position from subsystem's coordinate to

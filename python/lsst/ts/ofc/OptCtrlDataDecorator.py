@@ -3,6 +3,8 @@ import numpy as np
 
 from lsst.ts.ofc.Decorator import Decorator
 from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.ofc.BendModeToForce import BendModeToForce
+from lsst.ts.ofc.Utility import DofGroup
 
 
 class OptCtrlDataDecorator(Decorator):
@@ -31,8 +33,7 @@ class OptCtrlDataDecorator(Decorator):
                           pssnAlphaFileName="pssnAlpha.yaml",
                           rigidBodyStrokeFileName="rbStroke.yaml",
                           m1m3ActuatorForceFileName="M1M3_1um_156_force.yaml",
-                          m2ActuatorForceFileName="M2_1um_force.yaml",
-                          numOfBendingMode=20):
+                          m2ActuatorForceFileName="M2_1um_72_force.yaml"):
         """Do the configuration of OptCtrlDataDecorator class.
 
         Parameters
@@ -51,9 +52,8 @@ class OptCtrlDataDecorator(Decorator):
             M1M3 actuator force file name. (the default is
             "M1M3_1um_156_force.yaml".)
         m2ActuatorForceFileName : str, optional
-            M2 actuator force file name. (the default is "M2_1um_force.yaml".)
-        numOfBendingMode : int, optional
-            Number of mirror bending mode. (the default is 20.)
+            M2 actuator force file name. (the default is
+            "M2_1um_72_force.yaml".)
         """
 
         rigidBodyStrokeFilePath = os.path.join(self.getConfigDir(),
@@ -71,8 +71,7 @@ class OptCtrlDataDecorator(Decorator):
                                              configFileName)
         self._configOptCtrlFile.setFilePath(configOptCtrlFilePath)
         self.xRef = self._getXref()
-        self._setAuthority(m1m3ActuatorForceFileName, m2ActuatorForceFileName,
-                           int(numOfBendingMode))
+        self._setAuthority(m1m3ActuatorForceFileName, m2ActuatorForceFileName)
 
     def _getXref(self):
         """Get the reference point in the control algorithm.
@@ -96,8 +95,7 @@ class OptCtrlDataDecorator(Decorator):
 
         return xRef
 
-    def _setAuthority(self, m1m3ActuatorForceFileName, m2ActuatorForceFileName,
-                      numOfBendingMode):
+    def _setAuthority(self, m1m3ActuatorForceFileName, m2ActuatorForceFileName):
         """Set the authority of subsystems.
 
         The penality is considered. The array order is [M2 hexapod,
@@ -109,19 +107,14 @@ class OptCtrlDataDecorator(Decorator):
             M1M3 actuator force file name.
         m2ActuatorForceFileName : str
             M2 actuator force file name.
-        numOfBendingMode : int
-            Number of mirror bending mode.
         """
 
         rbStrokeAuthority = self._calcRigidBodyAuth()
 
-        # The first three terms (actuator ID in ZEMAX, x position in m,
-        # y position in m) are not needed.
-        usecols = np.arange(3, 3 + numOfBendingMode)
-        m1m3Authority = self._calcMirrorAuth("M1M3", m1m3ActuatorForceFileName,
-                                             usecols=usecols)
-        m2Authority = self._calcMirrorAuth("M2", m2ActuatorForceFileName,
-                                           usecols=usecols)
+        m1m3Authority = self._calcMirrorAuth(
+            DofGroup.M1M3Bend, m1m3ActuatorForceFileName)
+        m2Authority = self._calcMirrorAuth(
+            DofGroup.M2Bend, m2ActuatorForceFileName)
 
         penality = self.getPenality()
         self._authority = np.concatenate((rbStrokeAuthority,
@@ -162,23 +155,20 @@ class OptCtrlDataDecorator(Decorator):
 
         return rbStrokeFloat
 
-    def _calcMirrorAuth(self, mirrorDirName, actuatorForceFileName,
-                        usecols=None):
+    def _calcMirrorAuth(self, dofGroup, actuatorForceFileName):
         """Calculate the distribution of control authority of mirror.
 
         This is based on the standard deviation of actuator forces for each
         bending mode is used. The unit is 1 N RMS.
 
+        DOF: degree of freedom.
+
         Parameters
         ----------
-        mirrorDirName : str
-            Mirror directory name.
+        dofGroup : enum 'DofGroup'
+            DOF group.
         actuatorForceFileName : str
-            Mirror actuator force file name
-        usecols : int or sequence, optional
-            Which columns to read, with 0 being the first. For example,
-            usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
-            The default, None, results in all columns being read.
+            Mirror actuator force file name.
 
         Returns
         -------
@@ -186,11 +176,11 @@ class OptCtrlDataDecorator(Decorator):
             Authority of mirror.
         """
 
-        filePath = os.path.join(self.configDir, mirrorDirName,
-                                actuatorForceFileName)
-        paramReader = ParamReader(filePath=filePath)
-        mat = paramReader.getMatContent()
-        bendingMode = mat[:, usecols]
+        bendingModeToForce = BendModeToForce()
+        bendingModeToForce.config(self.configDir, dofGroup,
+                                  actuatorForceFileName)
+        bendingMode = bendingModeToForce.getRotMat()
+
         authority = np.std(bendingMode, axis=0)
 
         return authority

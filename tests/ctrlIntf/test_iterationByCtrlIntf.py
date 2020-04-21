@@ -16,25 +16,27 @@ class TestIteration(unittest.TestCase):
 
     def setUp(self):
 
-        self.ofc = OFCCalculationFactory.getCalculator(InstName.LSST)
+        self.ofc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
         self.ofc.setFilter(FilterType.REF)
         self.ofc.setRotAng(0.0)
         self.ofc.setGainByPSSN()
 
         iterDataDir = os.path.join(getModulePath(), "tests", "testData",
-                                   "iteration")
+                                   "iteration", "comcam")
         self.iterDataReader = IterDataReader(iterDataDir)
 
     def testIteration(self):
 
-        wfIdList = self.iterDataReader.getWfsSensorIdList()
-        fwhmIdList = self.iterDataReader.getPssnSensorIdList()
+        wfIdList = self.iterDataReader.getSensorIdListComCam()
+        fwhmIdList = self.iterDataReader.getPssnSensorIdListComCam()
+
+        numOfFwhm = 9
 
         maxIterNum = 5
         for iterNum in range(0, maxIterNum):
 
             # Simulate to get the FWHM data from DM
-            fwhmValues = self.iterDataReader.getFwhm(iterNum)
+            fwhmValues = self.iterDataReader.getFwhm(iterNum, numOfFwhm)
             listOfFWHMSensorData = self._getListOfFWHMSensorData(fwhmIdList,
                                                                  fwhmValues)
 
@@ -60,9 +62,8 @@ class TestIteration(unittest.TestCase):
             stateAgg = self.ofc.getStateAggregated()
 
             # Read the answer of DOF in the test file. The calculated DOF
-            # is applied to the next iteration/ visit. This is why we read
-            # the data in "iterNum + 1" instead of "iterNum".
-            dofAns = self.iterDataReader.getDof(iterNum + 1)
+            # is applied to the next iteration/ visit.
+            dofAns = self.iterDataReader.getDof(iterNum)
 
             delta = np.sum(np.abs(stateAgg - dofAns))
             self.assertLess(delta, 0.002)

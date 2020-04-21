@@ -19,22 +19,23 @@ class TestSubSysAdap(unittest.TestCase):
 
         self._testRotMatShape(self.subSysAdap, DofGroup.M2HexPos, (5, 6))
         self._testRotMatShape(self.subSysAdap, DofGroup.CamHexPos, (5, 6))
-        self._testRotMatShape(self.subSysAdap, DofGroup.M1M3Bend, (20, 20))
-        self._testRotMatShape(self.subSysAdap, DofGroup.M2Bend, (20, 20))
 
     def _testRotMatShape(self, subSysAdap, dofGroup, ansShape):
 
-        rotMat = subSysAdap.getRotMatInDof(dofGroup)
+        rotMat = subSysAdap.getRotMatHexInDof(dofGroup)
         self.assertEqual(rotMat.shape, ansShape)
 
-    def testGetRotMatInDof(self):
+    def testGetRotMatHexInDof(self):
 
         subSysAdap = SubSysAdap()
 
         self._testRotMatShape(subSysAdap, DofGroup.M2HexPos, (0, ))
         self._testRotMatShape(subSysAdap, DofGroup.CamHexPos, (0, ))
-        self._testRotMatShape(subSysAdap, DofGroup.M1M3Bend, (0, ))
-        self._testRotMatShape(subSysAdap, DofGroup.M2Bend, (0, ))
+
+        self.assertRaises(ValueError, self.subSysAdap.getRotMatHexInDof,
+                          DofGroup.M1M3Bend)
+        self.assertRaises(ValueError, self.subSysAdap.getRotMatHexInDof,
+                          DofGroup.M2Bend)
 
     def testTransActForceToZemaxWithWrongInputDofGroup(self):
 
@@ -43,9 +44,9 @@ class TestSubSysAdap(unittest.TestCase):
 
     def testTransActForceToZemax(self):
 
-        actForce = np.ones(156)
+        actForce = np.ones(72)
         transActForce = self.subSysAdap.transActForceToZemax(
-            DofGroup.M1M3Bend, actForce)
+            DofGroup.M2Bend, actForce)
 
         ansActForce = -actForce
         delta = np.sum(np.abs(transActForce - ansActForce))
@@ -53,31 +54,13 @@ class TestSubSysAdap(unittest.TestCase):
 
     def testTransActForceToSubSys(self):
 
-        actForce = np.ones(156)
+        actForce = np.ones(72)
         transActForce = self.subSysAdap.transActForceToSubSys(
-            DofGroup.M1M3Bend, actForce)
+            DofGroup.M2Bend, actForce)
 
         ansActForce = -actForce
         delta = np.sum(np.abs(transActForce - ansActForce))
         self.assertEqual(delta, 0)
-
-    def testTransBendingModeToZemax(self):
-
-        mirrorBend = np.ones(20)
-        transMirrorBend = self.subSysAdap.transBendingModeToZemax(
-            DofGroup.M1M3Bend, mirrorBend)
-
-        self.assertEqual(len(transMirrorBend), 20)
-        self.assertEqual(transMirrorBend[1], -1)
-
-    def testTransBendingModeToSubSys(self):
-
-        mirrorBend = np.ones(20)
-        transMirrorBend = self.subSysAdap.transBendingModeToSubSys(
-            DofGroup.M1M3Bend, mirrorBend)
-
-        self.assertEqual(len(transMirrorBend), 20)
-        self.assertEqual(transMirrorBend[1], -1)
 
     def testTransHexaPosToZemax(self):
 

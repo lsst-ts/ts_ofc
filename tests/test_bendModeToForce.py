@@ -28,10 +28,10 @@ class TestBendModeToForce(unittest.TestCase):
 
         rotMat = self.bendModeToForce.getRotMat()
         self.assertEqual(rotMat.shape, (156, 20))
-        self.assertEqual(rotMat[0, 0], 0.26501543)
-        self.assertEqual(rotMat[0, 1], -0.96061351)
-        self.assertEqual(rotMat[1, 0], 0.65245336)
-        self.assertEqual(rotMat[1, 1], -2.8548595)
+        self.assertEqual(rotMat[0, 0], 0.07088527)
+        self.assertEqual(rotMat[0, 1], -0.9108789)
+        self.assertEqual(rotMat[1, 0], 0.192324)
+        self.assertEqual(rotMat[1, 1], -2.764459)
 
     def testCalcActForceOfM1M3(self):
 
@@ -39,7 +39,7 @@ class TestBendModeToForce(unittest.TestCase):
         actForce = self._calcActForce()[0]
 
         self.assertEqual(len(actForce), 156)
-        self.assertEqual(actForce[0], 121.44954441)
+        self.assertAlmostEqual(actForce[0], 222.57988747, places=7)
 
     def _calcActForce(self):
 
@@ -54,13 +54,13 @@ class TestBendModeToForce(unittest.TestCase):
         self._configM2()
         actForce = self._calcActForce()[0]
 
-        self.assertEqual(len(actForce), 156)
-        self.assertEqual(actForce[0], 121.44954441)
+        self.assertEqual(len(actForce), 72)
+        self.assertAlmostEqual(actForce[0], -0.28011368, places=7)
 
     def _configM2(self):
 
         self.bendModeToForce.config(self.configDir, DofGroup.M2Bend,
-                                    "M2_1um_force.yaml")
+                                    "M2_1um_72_force.yaml")
 
     def testEstiBendingMode(self):
 

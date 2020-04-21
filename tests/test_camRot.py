@@ -32,7 +32,7 @@ class TestCamRot(unittest.TestCase):
         rotatedStateInDof = self.camRot.rotGroupDof(dofGroup, stateInDof,
                                                     tiltXYinArcsec)
 
-        self.assertAlmostEqual(rotatedStateInDof[1], 0.00841705)
+        self.assertAlmostEqual(rotatedStateInDof[1], 0.00841705, places=7)
 
     def testRotGroupDofOfCamHex(self):
 
@@ -52,7 +52,8 @@ class TestCamRot(unittest.TestCase):
         self.camRot.setRotAng(45)
         dofGroup = DofGroup.M1M3Bend
 
-        stateInDof = np.zeros(20)
+        numOfBendMode = 20
+        stateInDof = np.zeros(numOfBendMode)
         stateInDof[0] = 1
         stateInDof[2] = 2
         tiltXYinArcsec = (0, 0)
@@ -60,24 +61,27 @@ class TestCamRot(unittest.TestCase):
         rotatedStateInDof = self.camRot.rotGroupDof(dofGroup, stateInDof,
                                                     tiltXYinArcsec)
 
-        self.assertAlmostEqual(rotatedStateInDof[0], 0.70710678)
+        self.assertAlmostEqual(rotatedStateInDof[0], 0.70710678, places=7)
         self.assertEqual(rotatedStateInDof[2], 2)
+        self.assertEqual(len(rotatedStateInDof), numOfBendMode)
 
     def testRotGroupDofOfM2Bend(self):
 
         self.camRot.setRotAng(45)
         dofGroup = DofGroup.M2Bend
 
-        stateInDof = np.zeros(20)
+        numOfBendMode = 20
+        stateInDof = np.zeros(numOfBendMode)
         stateInDof[0] = 1
-        stateInDof[2] = 2
+        stateInDof[4] = 2
         tiltXYinArcsec = (0, 0)
 
         rotatedStateInDof = self.camRot.rotGroupDof(dofGroup, stateInDof,
                                                     tiltXYinArcsec)
 
-        self.assertAlmostEqual(rotatedStateInDof[0], 0.70710678)
-        self.assertEqual(rotatedStateInDof[2], 2)
+        self.assertAlmostEqual(rotatedStateInDof[0], 0.70710678, places=7)
+        self.assertEqual(rotatedStateInDof[4], 2)
+        self.assertEqual(len(rotatedStateInDof), numOfBendMode)
 
 
 if __name__ == "__main__":

@@ -156,11 +156,10 @@ class TestOFCCalculation(unittest.TestCase):
 
         uk = self.ofcCalculation.getStateCorrectionFromLastVisit()
 
-        ansFilePath = os.path.join(self.testDataDir, "lsst_pert_iter1.txt")
-        ukAns = gainByUser * np.loadtxt(ansFilePath, usecols=1)
-
-        delta = np.sum(np.abs(uk - ukAns))
-        self.assertLess(delta, 0.0012)
+        self.assertAlmostEqual(uk[0], -9.45590577, places=7)
+        self.assertAlmostEqual(uk[1], -2.53901017, places=7)
+        self.assertAlmostEqual(uk[5], -39.87900273, places=7)
+        self.assertAlmostEqual(uk[7], 3.24063367, places=7)
 
     def _getListOfSensorWavefrontError(self):
 

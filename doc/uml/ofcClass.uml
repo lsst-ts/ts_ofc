@@ -4,6 +4,7 @@ SubSysAdap ..> BendModeToForce
 Decorator o-- DataShare
 Decorator <|-- OptStateEstiDataDecorator
 Decorator <|-- OptCtrlDataDecorator
+OptCtrlDataDecorator ..> BendModeToForce
 OptStateEstiDefault <|-- OptStateEsti
 OptCtrlDefault <|-- OptCtrl
 ZTAAC *-- DataShare

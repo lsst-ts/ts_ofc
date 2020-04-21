@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.2.6:
+
+-------------
+1.2.6
+-------------
+
+Use sims_w_2020_15. Update the bending mode files. Update optiPSSN.yaml for the new penality values. Update OptCtrlDataDecorator class to use BendModeToForce to get the bending mode. Update the rotation matrix of mirror in CamRot class. Remove the bending mode transformation in SubSysAdap class.
+
 .. _lsst.ts.ofc-1.2.5:
 
 -------------

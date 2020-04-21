@@ -69,7 +69,7 @@ class OFCCalculation(object):
         self.subSysAdap = self._configSubSysAdap(configDir)
 
         self.dofFromLastVisit = np.array([])
-        self._initDofFromLastVisit()
+        self.initDofFromLastVisit()
 
     def _configZTAAC(self, configDir, instName):
         """Configurate the ZTAAC.
@@ -156,7 +156,7 @@ class OFCCalculation(object):
 
         return subSysAdap
 
-    def _initDofFromLastVisit(self):
+    def initDofFromLastVisit(self):
         """Initialize the DOF correction from the last visit.
 
         DOF: Degree of freedom.
@@ -288,7 +288,7 @@ class OFCCalculation(object):
         DOF: Degree of freedom.
 
         Returns
-        -------e
+        -------
         M2HexapodCorrection
             The position offset for the MT M2 Hexapod.
         CameraHexapodCorrection
@@ -300,7 +300,7 @@ class OFCCalculation(object):
         """
 
         self.ztaac.setStateToState0()
-        self._initDofFromLastVisit()
+        self.initDofFromLastVisit()
 
         return self._getSubSysCorr()
 

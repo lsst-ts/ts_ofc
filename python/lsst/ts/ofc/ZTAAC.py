@@ -53,6 +53,17 @@ class ZTAAC(object):
         self.defaultGain = defaultGain
         self.fwhmThresholdInArcsec = fwhmThresholdInArcsec
 
+    def getParamData(self):
+        """Get the parameters of control algorithm.
+
+        Returns
+        -------
+        Decorator, OptStateEstiDataDecorator, or OptCtrlDataDecorator
+            Parameter data.
+        """
+
+        return self.dataShare
+
     def mapSensorIdToName(self, sensorId):
         """Map the sensor Id to sensor name.
 

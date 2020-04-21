@@ -24,6 +24,17 @@ class TestOFCCalculation(unittest.TestCase):
         self.ofcCalculation = OFCCalculation(FWHMToPSSN(), InstName.LSST)
         self.testDataDir = os.path.join(getModulePath(), "tests", "testData")
 
+    def testInitDofFromLastVisit(self):
+
+        ztaac = self.ofcCalculation.getZtaac()
+        numOfState0 = ztaac.optCtrl.getNumOfState0()
+        self.ofcCalculation.dofFromLastVisit = np.random.rand(numOfState0)
+
+        self.ofcCalculation.initDofFromLastVisit()
+
+        dofFromLastVisit = self.ofcCalculation.getStateCorrectionFromLastVisit()
+        self.assertEqual(np.sum(np.abs(dofFromLastVisit)), 0)
+
     def testGetZtaac(self):
 
         self.assertTrue(isinstance(self.ofcCalculation.getZtaac(), ZTAAC))
@@ -53,7 +64,7 @@ class TestOFCCalculation(unittest.TestCase):
         pssn = pssnData["pssn"]
 
         self.assertEqual(sensorId.tolist(), list(range(numOfSensor)))
-        self.assertAlmostEqual(pssn[0], 0.9139012)
+        self.assertAlmostEqual(pssn[0], 0.9139012, places=6)
 
     def testGetFilter(self):
 

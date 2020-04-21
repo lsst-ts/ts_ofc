@@ -12,6 +12,7 @@ from lsst.ts.ofc.OptStateEsti import OptStateEsti
 from lsst.ts.ofc.OptCtrl import OptCtrl
 from lsst.ts.ofc.CamRot import CamRot
 from lsst.ts.ofc.ZTAAC import ZTAAC
+from lsst.ts.ofc.Decorator import Decorator
 
 
 class TestZTAAC(unittest.TestCase):
@@ -41,6 +42,10 @@ class TestZTAAC(unittest.TestCase):
         self.assertEqual(self.ztaac.getFilter(), FilterType.REF)
         self.assertEqual(self.ztaac.defaultGain, 0.7)
         self.assertEqual(self.ztaac.fwhmThresholdInArcsec, 0.2)
+
+    def testGetParamData(self):
+
+        self.assertTrue(isinstance(self.ztaac.getParamData(), Decorator))
 
     def testMapSensorIdToName(self):
 

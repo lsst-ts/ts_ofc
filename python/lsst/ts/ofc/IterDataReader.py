@@ -19,17 +19,6 @@ class IterDataReader(object):
 
         self.dataDir = dataDir
 
-    def setDataDir(self, dataDir):
-        """Set the simulation data directory.
-
-        Parameters
-        ----------
-        dataDir : str
-            Simulation data directory.
-        """
-
-        self.dataDir = dataDir
-
     def getAbsFilePathOfWfsErr(self, iterNum, reMatchStr=r"wfs.zer"):
         """Get the absolute file path of wavefront error.
 
@@ -68,9 +57,8 @@ class IterDataReader(object):
         """
 
         filePaths = self._getIterFiles(iterNum)
-        matchFilePath = self._getMatchFilePath(filePaths, reMatchStr)
 
-        return matchFilePath
+        return self._getMatchFilePath(filePaths, reMatchStr)
 
     def _getIterFiles(self, iterNum):
         """Get the file paths in specific iteration number.
@@ -104,9 +92,8 @@ class IterDataReader(object):
 
         onlyFiles = [f for f in os.listdir(dirPath)
                      if os.path.isfile(os.path.join(dirPath, f))]
-        filePaths = [os.path.join(dirPath, f) for f in onlyFiles]
 
-        return filePaths
+        return [os.path.join(dirPath, f) for f in onlyFiles]
 
     def _getIterDir(self, iterNum):
         """Get the directory of specific iteration data.
@@ -122,9 +109,7 @@ class IterDataReader(object):
             Path of iteration data directory.
         """
 
-        iterDir = os.path.join(self.dataDir, "iter%d" % int(iterNum))
-
-        return iterDir
+        return os.path.join(self.dataDir, "iter%d" % int(iterNum))
 
     def _getMatchFilePath(self, filePaths, reMatchStr):
         """Get the matched file path.
@@ -177,17 +162,15 @@ class IterDataReader(object):
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             Wavefront error.
         """
 
         wfsFilePath = self.getAbsFilePathOfWfsErr(iterNum,
                                                   reMatchStr=reMatchStr)
-
         wfsErr = np.loadtxt(wfsFilePath)
-        wfsErr = wfsErr[:, 0:self.NUM_ZK]
 
-        return wfsErr
+        return wfsErr[:, 0:self.NUM_ZK]
 
     def getPssn(self, iterNum, numOfPssn, reMatchStr=r"PSSN.txt"):
         """Get the PSSN in specific iteration number.
@@ -206,14 +189,13 @@ class IterDataReader(object):
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             PSSN data.
         """
 
         data = self._getImgQualData(iterNum, reMatchStr)
-        pssn = data[0, 0:numOfPssn]
 
-        return pssn
+        return data[0, 0:numOfPssn]
 
     def _getImgQualData(self, iterNum, reMatchStr):
         """Get the image quality data.
@@ -232,9 +214,8 @@ class IterDataReader(object):
         """
 
         matchFilePath = self._getMatchFilePathInIter(iterNum, reMatchStr)
-        data = np.loadtxt(matchFilePath)
 
-        return data
+        return np.loadtxt(matchFilePath)
 
     def getFwhm(self, iterNum, numOfFwhm, reMatchStr=r"PSSN.txt"):
         """Get the FWHM in specific iteration number.
@@ -258,9 +239,8 @@ class IterDataReader(object):
         """
 
         data = self._getImgQualData(iterNum, reMatchStr)
-        fwhm = data[1, 0:numOfFwhm]
 
-        return fwhm
+        return data[1, 0:numOfFwhm]
 
     def getDof(self, iterNum, reMatchStr=r"dofPertInNextIter.mat"):
         """Get the degree of freedom (DOF) in specific iteration number.
@@ -275,14 +255,13 @@ class IterDataReader(object):
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             DOF data.
         """
 
         matchFilePath = self._getMatchFilePathInIter(iterNum, reMatchStr)
-        dof = np.loadtxt(matchFilePath)
 
-        return dof
+        return np.loadtxt(matchFilePath)
 
     def getSensorIdListWfs(self):
         """Get the sensor Id list of corner wavefront sensor.
@@ -293,9 +272,7 @@ class IterDataReader(object):
             Sensor Id list.
         """
 
-        sensorIdList = [198, 31, 2, 169]
-
-        return sensorIdList
+        return [198, 31, 2, 169]
 
     def getSensorIdListComCam(self):
         """Get the sensor Id list of commissioning camera.
@@ -306,9 +283,7 @@ class IterDataReader(object):
             Sensor Id list.
         """
 
-        sensorIdList = list(range(96, 105))
-
-        return sensorIdList
+        return list(range(96, 105))
 
     def getPssnSensorIdListWfs(self):
         """Get the normalized point source sensitivity (PSSN) sensor Id list of
@@ -320,12 +295,9 @@ class IterDataReader(object):
             Sensor Id list.
         """
 
-        sensorIdList = [100, 103, 104, 105, 97, 96, 99, 140, 150, 117,
-                        60, 46, 83, 173, 120, 61, 11, 38, 82, 176,
-                        122, 116, 8, 35, 81, 179, 164, 70, 5, 33,
-                        123]
-
-        return sensorIdList
+        return [100, 103, 104, 105, 97, 96, 99, 140, 150, 117, 60, 46, 83, 173,
+                120, 61, 11, 38, 82, 176, 122, 116, 8, 35, 81, 179, 164, 70, 5,
+                33, 123]
 
     def getPssnSensorIdListComCam(self):
         """Get the normalized point source sensitivity (PSSN) sensor Id list of

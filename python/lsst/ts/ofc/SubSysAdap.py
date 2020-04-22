@@ -69,9 +69,7 @@ class SubSysAdap(object):
         rotMatFilePath = os.path.join(configDir, mirrorDirName, rotMatfileName)
         rotMatFile = ParamReader(filePath=rotMatFilePath)
 
-        rotMatAct = rotMatFile.getSetting("act")
-
-        return rotMatAct
+        return rotMatFile.getSetting("act")
 
     def _getRotMatHex(self, configDir, rotMatfileName):
         """Get the rotation matrix of hexapod.

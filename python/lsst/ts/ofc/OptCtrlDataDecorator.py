@@ -181,9 +181,7 @@ class OptCtrlDataDecorator(Decorator):
                                   actuatorForceFileName)
         bendingMode = bendingModeToForce.getRotMat()
 
-        authority = np.std(bendingMode, axis=0)
-
-        return authority
+        return np.std(bendingMode, axis=0)
 
     def getAuthority(self):
         """Get the authority of subsystems.

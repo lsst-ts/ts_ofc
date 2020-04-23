@@ -12,6 +12,7 @@ from lsst.ts.ofc.OptStateEsti import OptStateEsti
 from lsst.ts.ofc.OptCtrl import OptCtrl
 from lsst.ts.ofc.CamRot import CamRot
 from lsst.ts.ofc.ZTAAC import ZTAAC
+from lsst.ts.ofc.Decorator import Decorator
 
 
 class TestZTAAC(unittest.TestCase):
@@ -41,6 +42,10 @@ class TestZTAAC(unittest.TestCase):
         self.assertEqual(self.ztaac.getFilter(), FilterType.REF)
         self.assertEqual(self.ztaac.defaultGain, 0.7)
         self.assertEqual(self.ztaac.fwhmThresholdInArcsec, 0.2)
+
+    def testGetParamData(self):
+
+        self.assertTrue(isinstance(self.ztaac.getParamData(), Decorator))
 
     def testMapSensorIdToName(self):
 
@@ -170,12 +175,10 @@ class TestZTAAC(unittest.TestCase):
         wfErr, sensorNameList = self._getWfErrAndSensorNameListFromLsstFile()
         uk = self.ztaac.estiUkWithGain(wfErr, sensorNameList)
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "lsst_pert_iter1.txt")
-        ukAns = gainToUse * np.loadtxt(ansFilePath, usecols=1)
-
-        delta = np.sum(np.abs(uk - ukAns))
-        self.assertLess(delta, 0.0012)
+        self.assertAlmostEqual(uk[0], -8.51031520, places=7)
+        self.assertAlmostEqual(uk[1], -2.28510916, places=7)
+        self.assertAlmostEqual(uk[5], -35.89110245, places=7)
+        self.assertAlmostEqual(uk[7], 2.91657030, places=7)
 
     def testEstiUkWithGainOfComCam(self):
 
@@ -204,12 +207,9 @@ class TestZTAAC(unittest.TestCase):
         wfErr, sensorNameList = self._getWfErrAndSensorNameListFromComCamFile()
         uk = self.ztaac.estiUkWithGain(wfErr, sensorNameList)
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "comcam_pert_iter1.txt")
-        ukAns = gainToUse * np.loadtxt(ansFilePath, usecols=1)
-
-        delta = np.sum(np.abs(uk - ukAns))
-        self.assertLess(delta, 0.0012)
+        self.assertAlmostEqual(uk[0], -26.41858020, places=7)
+        self.assertAlmostEqual(uk[1], -2.33675970, places=7)
+        self.assertAlmostEqual(uk[2], 3.86120929, places=7)
 
     def _setStateAndState0FromFile(self):
 

@@ -74,7 +74,8 @@ class CamRot(object):
             rotatedStateInDof = self._rotHexPos(dofGroup, stateInDof,
                                                 tiltXYinDeg)
         elif dofGroup in (DofGroup.M1M3Bend, DofGroup.M2Bend):
-            rotatedStateInDof = self._rotBendingMode(stateInDof, tiltXYinDeg)
+            rotatedStateInDof = self._rotBendingMode(dofGroup, stateInDof,
+                                                     tiltXYinDeg)
 
         return rotatedStateInDof
 
@@ -102,7 +103,6 @@ class CamRot(object):
         if (dofGroup == DofGroup.M2HexPos):
             rotAngInDeg = self._mapRotAngByTiltXY(self.rotAngInDeg,
                                                   tiltXYinDeg)
-
         elif (dofGroup == DofGroup.CamHexPos):
             rotAngInDeg = self.rotAngInDeg
 
@@ -155,12 +155,12 @@ class CamRot(object):
             Hexapod rotation matrix.
         """
 
-        rotMat = self._calcMirRotMat(rotAngInDeg)
+        rotMat = self._calcRotMat(rotAngInDeg)
 
         return block_diag(1, rotMat, rotMat)
 
-    def _calcMirRotMat(self, rotAngInDeg):
-        """Calculate the mirror rotation matrix.
+    def _calcRotMat(self, rotAngInDeg):
+        """Calculate the 2D rotation matrix.
 
         Parameters
         ----------
@@ -179,12 +179,14 @@ class CamRot(object):
 
         return R
 
-    def _rotBendingMode(self, bendingMode, tiltXYinDeg):
+    def _rotBendingMode(self, dofGroup, bendingMode, tiltXYinDeg):
         """Rotate the bending mode (degree of freedom, DOF) based on the
         rotation angle and tilt angle compared with the camera.
 
         Parameters
         ----------
+        dofGroup : enum 'DofGroup'
+            DOF group.
         bendingMode : numpy.ndarray
             20 mirror bending mode.
         tiltXYinDeg : tuple
@@ -198,16 +200,18 @@ class CamRot(object):
         """
 
         rotAngInDeg = self._mapRotAngByTiltXY(self.rotAngInDeg, tiltXYinDeg)
-        rotMat = self._getMirRotMat(rotAngInDeg)
+        rotMat = self._getMirRotMat(dofGroup, rotAngInDeg)
         rotatedBendingMode = rotMat.dot(bendingMode.reshape(-1, 1))
 
         return rotatedBendingMode.ravel()
 
-    def _getMirRotMat(self, rotAngInDeg):
+    def _getMirRotMat(self, dofGroup, rotAngInDeg):
         """Get the mirror rotation matrix.
 
         Parameters
         ----------
+        dofGroup : enum 'DofGroup'
+            DOF group.
         rotAngInDeg : float
             Rotation angle in degree.
 
@@ -217,10 +221,14 @@ class CamRot(object):
             Mirror rotation matrix.
         """
 
-        rotMat = self._calcMirRotMat(rotAngInDeg)
+        rotMat = self._calcRotMat(rotAngInDeg)
 
-        return block_diag(rotMat, 1, rotMat, rotMat, rotMat, rotMat,
-                          1, rotMat, rotMat, rotMat, rotMat)
+        if (dofGroup == DofGroup.M1M3Bend):
+            return block_diag(rotMat, 1, rotMat, rotMat, rotMat, rotMat,
+                              1, rotMat, rotMat, rotMat, 1, 1)
+        elif (dofGroup == DofGroup.M2Bend):
+            return block_diag(rotMat, rotMat, 1, rotMat, rotMat, rotMat,
+                              rotMat, rotMat, rotMat, rotMat, 1)
 
 
 if __name__ == "__main__":

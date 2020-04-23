@@ -6,6 +6,8 @@ import numpy as np
 class IterDataReader(object):
     """Iteration data reader to read the active optics simulation data."""
 
+    NUM_ZK = 19
+
     def __init__(self, dataDir):
         """Initialization of class.
 
@@ -17,54 +19,46 @@ class IterDataReader(object):
 
         self.dataDir = dataDir
 
-    def setDataDir(self, dataDir):
-        """Set the simulation data directory.
-
-        Parameters
-        ----------
-        dataDir : str
-            Simulation data directory.
-        """
-
-        self.dataDir = dataDir
-
-    def _getIterDir(self, iterNum):
-        """Get the directory of specific iteration data.
+    def getAbsFilePathOfWfsErr(self, iterNum, reMatchStr=r"wfs.zer"):
+        """Get the absolute file path of wavefront error.
 
         Parameters
         ----------
         iterNum : int
             Iteration number.
+        reMatchStr : str, optional
+            Matching string for the regular expression. (the default is
+            r"wfs.zer", which is the ComCam data.)
 
         Returns
         -------
         str
-            Path of iteration data directory.
+            Absolute file path of wavefront error.
         """
 
-        iterDir = os.path.join(self.dataDir, "iter%d" % int(iterNum))
+        matchFilePath = self._getMatchFilePathInIter(iterNum, reMatchStr)
 
-        return iterDir
+        return os.path.abspath(matchFilePath)
 
-    def _getDirFiles(self, dirPath):
-        """Get the file paths in the directory.
+    def _getMatchFilePathInIter(self, iterNum, reMatchStr):
+        """Get the matched file path in specific iteration number.
 
         Parameters
         ----------
-        dirPath : str
-            Directory path.
+        iterNum : int
+            Iteration number.
+        reMatchStr : str
+            Matching string for the regular expression.
 
         Returns
         -------
-        list
-            List of file paths.
+        str
+            Matched file path.
         """
 
-        onlyFiles = [f for f in os.listdir(dirPath)
-                     if os.path.isfile(os.path.join(dirPath, f))]
-        filePaths = [os.path.join(dirPath, f) for f in onlyFiles]
+        filePaths = self._getIterFiles(iterNum)
 
-        return filePaths
+        return self._getMatchFilePath(filePaths, reMatchStr)
 
     def _getIterFiles(self, iterNum):
         """Get the file paths in specific iteration number.
@@ -82,15 +76,50 @@ class IterDataReader(object):
 
         return self._getDirFiles(self._getIterDir(iterNum))
 
-    def _getMatchFilePath(self, reMatchStr, filePaths):
+    def _getDirFiles(self, dirPath):
+        """Get the file paths in the directory.
+
+        Parameters
+        ----------
+        dirPath : str
+            Directory path.
+
+        Returns
+        -------
+        list
+            List of file paths.
+        """
+
+        onlyFiles = [f for f in os.listdir(dirPath)
+                     if os.path.isfile(os.path.join(dirPath, f))]
+
+        return [os.path.join(dirPath, f) for f in onlyFiles]
+
+    def _getIterDir(self, iterNum):
+        """Get the directory of specific iteration data.
+
+        Parameters
+        ----------
+        iterNum : int
+            Iteration number.
+
+        Returns
+        -------
+        str
+            Path of iteration data directory.
+        """
+
+        return os.path.join(self.dataDir, "iter%d" % int(iterNum))
+
+    def _getMatchFilePath(self, filePaths, reMatchStr):
         """Get the matched file path.
 
         Parameters
         ----------
-        reMatchStr : str
-            Matching string for the regular expression.
         filePaths : list
             File paths.
+        reMatchStr : str
+            Matching string for the regular expression.
 
         Returns
         -------
@@ -120,29 +149,8 @@ class IterDataReader(object):
 
         return matchFilePath
 
-    def _getMatchFilePathInIter(self, reMatchStr, iterNum):
-        """Get the matched file path in specific iteration number.
-
-        Parameters
-        ----------
-        reMatchStr : str
-            Matching string for the regular expression.
-        iterNum : int
-            Iteration number.
-
-        Returns
-        -------
-        str
-            Matched file path.
-        """
-
-        filePaths = self._getIterFiles(iterNum)
-        matchFilePath = self._getMatchFilePath(reMatchStr, filePaths)
-
-        return matchFilePath
-
-    def getAbsFilePathOfWfsErr(self, iterNum, reMatchStr=r"\w*E000.z4c"):
-        """Get the absolute file path of wavefront error.
+    def getWfsErr(self, iterNum, reMatchStr=r"wfs.zer"):
+        """Get the wavefront error in specific iteration number.
 
         Parameters
         ----------
@@ -150,40 +158,21 @@ class IterDataReader(object):
             Iteration number.
         reMatchStr : str, optional
             Matching string for the regular expression. (the default is
-            "w*E000.z4c", which is the LSST data.)
+            r"wfs.zer", which is the ComCam data.)
 
         Returns
         -------
-        str
-            Absolute file path of wavefront error.
-        """
-
-        matchFilePath = self._getMatchFilePathInIter(reMatchStr, iterNum)
-
-        return os.path.abspath(matchFilePath)
-
-    def getWfsErr(self, iterNum):
-        """Get the wavefront error in specific iteration number.
-
-        Parameters
-        ----------
-        iterNum : int
-            Iteration number.
-
-        Returns
-        -------
-        ndarray
+        numpy.ndarray
             Wavefront error.
         """
 
-        wfsFilePath = self.getAbsFilePathOfWfsErr(iterNum)
-
+        wfsFilePath = self.getAbsFilePathOfWfsErr(iterNum,
+                                                  reMatchStr=reMatchStr)
         wfsErr = np.loadtxt(wfsFilePath)
-        wfsErr = wfsErr[:, 0:19]
 
-        return wfsErr
+        return wfsErr[:, 0:self.NUM_ZK]
 
-    def getPssn(self, iterNum):
+    def getPssn(self, iterNum, numOfPssn, reMatchStr=r"PSSN.txt"):
         """Get the PSSN in specific iteration number.
 
         PSSN: Normalized point source sensitivity.
@@ -192,25 +181,31 @@ class IterDataReader(object):
         ----------
         iterNum : int
             Iteration number.
+        numOfPssn : int
+            Number of PSSN elements.
+        reMatchStr : str, optional
+            Matching string for the regular expression. (the default is
+            r"PSSN.txt", which is the ComCam data.)
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             PSSN data.
         """
 
-        data = self._getImgQualData(iterNum)
-        pssn = data[0, 0:31]
+        data = self._getImgQualData(iterNum, reMatchStr)
 
-        return pssn
+        return data[0, 0:numOfPssn]
 
-    def _getImgQualData(self, iterNum):
+    def _getImgQualData(self, iterNum, reMatchStr):
         """Get the image quality data.
 
         Parameters
         ----------
         iterNum : int
             Iteration number.
+        reMatchStr : str
+            Matching string for the regular expression.
 
         Returns
         -------
@@ -218,14 +213,11 @@ class IterDataReader(object):
             Image quality data.
         """
 
-        reMatchStr = r"\w*PSSN.txt"
-        matchFilePath = self._getMatchFilePathInIter(reMatchStr, iterNum)
+        matchFilePath = self._getMatchFilePathInIter(iterNum, reMatchStr)
 
-        data = np.loadtxt(matchFilePath)
+        return np.loadtxt(matchFilePath)
 
-        return data
-
-    def getFwhm(self, iterNum):
+    def getFwhm(self, iterNum, numOfFwhm, reMatchStr=r"PSSN.txt"):
         """Get the FWHM in specific iteration number.
 
         FWHM: Full width at half maximum.
@@ -234,6 +226,11 @@ class IterDataReader(object):
         ----------
         iterNum : int
             Iteration number.
+        numOfFwhm : int
+            Number of FWHM elements.
+        reMatchStr : str, optional
+            Matching string for the regular expression. (the default is
+            r"PSSN.txt", which is the ComCam data.)
 
         Returns
         -------
@@ -241,60 +238,78 @@ class IterDataReader(object):
             FWHM data.
         """
 
-        data = self._getImgQualData(iterNum)
-        fwhm = data[1, 0:31]
+        data = self._getImgQualData(iterNum, reMatchStr)
 
-        return fwhm
+        return data[1, 0:numOfFwhm]
 
-    def getDof(self, iterNum):
+    def getDof(self, iterNum, reMatchStr=r"dofPertInNextIter.mat"):
         """Get the degree of freedom (DOF) in specific iteration number.
 
         Parameters
         ----------
         iterNum : int
             Iteration number.
+        reMatchStr : str, optional
+            Matching string for the regular expression. (the default is
+            r"dofPertInNextIter.mat", which is the ComCam data.)
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             DOF data.
         """
 
-        reMatchStr = r"\w*pert.txt"
-        matchFilePath = self._getMatchFilePathInIter(reMatchStr, iterNum)
+        matchFilePath = self._getMatchFilePathInIter(iterNum, reMatchStr)
 
-        dof = np.loadtxt(matchFilePath, usecols=(2))
+        return np.loadtxt(matchFilePath)
 
-        return dof
-
-    def getWfsSensorIdList(self):
-        """Get the corner wavefront sensor Id list.
+    def getSensorIdListWfs(self):
+        """Get the sensor Id list of corner wavefront sensor.
 
         Returns
         -------
-        list
+        list [int]
             Sensor Id list.
         """
 
-        sensorIdList = [198, 31, 2, 169]
+        return [198, 31, 2, 169]
 
-        return sensorIdList
-
-    def getPssnSensorIdList(self):
-        """Get the normalized point source sensitivity (PSSN) sensor Id list.
+    def getSensorIdListComCam(self):
+        """Get the sensor Id list of commissioning camera.
 
         Returns
         -------
-        list
+        list [int]
             Sensor Id list.
         """
 
-        sensorIdList = [100, 103, 104, 105, 97, 96, 99, 140, 150, 117,
-                        60, 46, 83, 173, 120, 61, 11, 38, 82, 176,
-                        122, 116, 8, 35, 81, 179, 164, 70, 5, 33,
-                        123]
+        return list(range(96, 105))
 
-        return sensorIdList
+    def getPssnSensorIdListWfs(self):
+        """Get the normalized point source sensitivity (PSSN) sensor Id list of
+        corner wavefront sensor.
+
+        Returns
+        -------
+        list [int]
+            Sensor Id list.
+        """
+
+        return [100, 103, 104, 105, 97, 96, 99, 140, 150, 117, 60, 46, 83, 173,
+                120, 61, 11, 38, 82, 176, 122, 116, 8, 35, 81, 179, 164, 70, 5,
+                33, 123]
+
+    def getPssnSensorIdListComCam(self):
+        """Get the normalized point source sensitivity (PSSN) sensor Id list of
+        commissioning camera.
+
+        Returns
+        -------
+        list [int]
+            Sensor Id list.
+        """
+
+        return self.getSensorIdListComCam()
 
 
 if __name__ == "__main__":

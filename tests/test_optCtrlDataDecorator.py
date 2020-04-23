@@ -21,19 +21,19 @@ class TestOptCtrlDataDecorator(unittest.TestCase):
 
         authority = self.optCtrlData.getAuthority()
         self.assertEqual(len(authority), 50)
-        self.assertAlmostEqual(authority[0], 1)
-        self.assertAlmostEqual(authority[1], 0.880597015)
-        self.assertAlmostEqual(authority[11], 45.96449329039931)
-        self.assertAlmostEqual(authority[12], 103.4589756080062)
-        self.assertAlmostEqual(authority[31], 45.96449329039931)
-        self.assertAlmostEqual(authority[32], 103.4589756080062)
+        self.assertAlmostEqual(authority[0], 1, places=7)
+        self.assertAlmostEqual(authority[1], 0.88059701, places=7)
+        self.assertAlmostEqual(authority[11], 98.67768094, places=7)
+        self.assertAlmostEqual(authority[12], 411.52843713, places=7)
+        self.assertAlmostEqual(authority[31], 40.09005230, places=7)
+        self.assertAlmostEqual(authority[32], 286.99711319, places=7)
 
     def testGetQwgt(self):
 
         qWgt = self.optCtrlData.getQwgt()
         self.assertEqual(len(qWgt), 31)
-        self.assertAlmostEqual(np.sum(qWgt), 1)
-        self.assertAlmostEqual(qWgt[1], 0.01974265)
+        self.assertAlmostEqual(np.sum(qWgt), 1, places=7)
+        self.assertAlmostEqual(qWgt[1], 0.01974265, places=7)
 
     def testGetQwgtOfComcam(self):
 
@@ -45,7 +45,7 @@ class TestOptCtrlDataDecorator(unittest.TestCase):
 
         qWgt = optCtrlData.getQwgt()
         self.assertEqual(len(qWgt), 9)
-        self.assertAlmostEqual(np.sum(qWgt), 1)
+        self.assertAlmostEqual(np.sum(qWgt), 1, places=7)
 
     def testGetPssnAlpha(self):
 
@@ -74,8 +74,8 @@ class TestOptCtrlDataDecorator(unittest.TestCase):
     def testGetPenality(self):
 
         penality = self.optCtrlData.getPenality()
-        self.assertEqual(penality["M1M3Act"], 5.9)
-        self.assertEqual(penality["M2Act"], 5.9)
+        self.assertEqual(penality["M1M3Act"], 13.2584)
+        self.assertEqual(penality["M2Act"], 134)
         self.assertEqual(penality["Motion"], 0.001)
 
     def testGetXref(self):

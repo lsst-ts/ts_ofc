@@ -10,17 +10,18 @@ xref: x00
 # M1M3 actuator penalty factor
 # how many microns of M2 piston does 1N rms force correspond to
 # the bigger the number, the bigger the penalty
-# 5.9 below = 5900/1000
-# 1000 means 1000N, rms reaching 1000N is as bad as M2 piston reaching 5900um
-m1M3ActuatorPenalty: 5.9
+# 13.2584 below = 5900/445
+# 445 means 445N, rms reaching 445N is as bad as M2 piston reaching 5900um
+m1M3ActuatorPenalty: 13.2584
 
 # M2 actuator penalty factor
 # how many microns of M2 piston does 1N rms force correspond to
 # the bigger the number, the bigger the penalty
-m2ActuatorPenalty: 5.9
+# M2 F budget for AOS = 44N. 5900/44 = 134
+m2ActuatorPenalty: 134
 
 # penalty on control motion as a whole
-# default below is 0.0010, meaning 1N force is as bad as 0.0010 increase in pssn
+# default below is 0.001, meaning 1N force is as bad as 0.001 increase in pssn
 # use 0, if you accept whatever motion needed to produce best image quality
 # use 1e100, if you absolutely hate anything that moves
 motionPenalty: 0.001

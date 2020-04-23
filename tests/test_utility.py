@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import tempfile
 import unittest
 
 from lsst.ts.ofc.Utility import getDirFiles, getMatchFilePath, getModulePath, \
@@ -15,8 +16,17 @@ class TestUtility(unittest.TestCase):
 
     def testGetDirFiles(self):
 
-        filePaths = getDirFiles(self.configDir)
-        self.assertEqual(len(filePaths), 6)
+        dataDirPath = os.path.join(getModulePath(), "tests")
+        dataDir = tempfile.TemporaryDirectory(dir=dataDirPath)
+
+        filePaths = getDirFiles(dataDir.name)
+        self.assertEqual(len(filePaths), 0)
+
+        with tempfile.NamedTemporaryFile(dir=dataDir.name):
+            filePathsUpdate = getDirFiles(dataDir.name)
+            self.assertEqual(len(filePathsUpdate), 1)
+
+        dataDir.cleanup()
 
     def testGetMatchFilePath(self):
 

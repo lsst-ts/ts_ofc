@@ -24,6 +24,17 @@ class TestOFCCalculation(unittest.TestCase):
         self.ofcCalculation = OFCCalculation(FWHMToPSSN(), InstName.LSST)
         self.testDataDir = os.path.join(getModulePath(), "tests", "testData")
 
+    def testInitDofFromLastVisit(self):
+
+        ztaac = self.ofcCalculation.getZtaac()
+        numOfState0 = ztaac.optCtrl.getNumOfState0()
+        self.ofcCalculation.dofFromLastVisit = np.random.rand(numOfState0)
+
+        self.ofcCalculation.initDofFromLastVisit()
+
+        dofFromLastVisit = self.ofcCalculation.getStateCorrectionFromLastVisit()
+        self.assertEqual(np.sum(np.abs(dofFromLastVisit)), 0)
+
     def testGetZtaac(self):
 
         self.assertTrue(isinstance(self.ofcCalculation.getZtaac(), ZTAAC))
@@ -53,7 +64,7 @@ class TestOFCCalculation(unittest.TestCase):
         pssn = pssnData["pssn"]
 
         self.assertEqual(sensorId.tolist(), list(range(numOfSensor)))
-        self.assertAlmostEqual(pssn[0], 0.9139012)
+        self.assertAlmostEqual(pssn[0], 0.9139012, places=6)
 
     def testGetFilter(self):
 
@@ -156,11 +167,10 @@ class TestOFCCalculation(unittest.TestCase):
 
         uk = self.ofcCalculation.getStateCorrectionFromLastVisit()
 
-        ansFilePath = os.path.join(self.testDataDir, "lsst_pert_iter1.txt")
-        ukAns = gainByUser * np.loadtxt(ansFilePath, usecols=1)
-
-        delta = np.sum(np.abs(uk - ukAns))
-        self.assertLess(delta, 0.0012)
+        self.assertAlmostEqual(uk[0], -9.45590577, places=7)
+        self.assertAlmostEqual(uk[1], -2.53901017, places=7)
+        self.assertAlmostEqual(uk[5], -39.87900273, places=7)
+        self.assertAlmostEqual(uk[7], 3.24063367, places=7)
 
     def _getListOfSensorWavefrontError(self):
 

@@ -29,7 +29,7 @@ class OFCCalculation(object):
     """
     def __init__(self, fwhmToPssn, instName,
                  m1m3BendModeFileName="M1M3_1um_156_force.yaml",
-                 m2BendModeFileName="M2_1um_force.yaml"):
+                 m2BendModeFileName="M2_1um_72_force.yaml"):
         """Construct an OFC calculation.
 
         This should be unique to an OFC algorithm / CCD.
@@ -47,7 +47,7 @@ class OFCCalculation(object):
             M1M3 bending mode file name. (the default is
             "M1M3_1um_156_force.yaml".)
         m2BendModeFileName : str, optional
-            M2 bending mode file name. (the default is "M2_1um_force.yaml".)
+            M2 bending mode file name. (the default is "M2_1um_72_force.yaml".)
         """
 
         self.fwhmToPssn = fwhmToPssn
@@ -69,7 +69,7 @@ class OFCCalculation(object):
         self.subSysAdap = self._configSubSysAdap(configDir)
 
         self.dofFromLastVisit = np.array([])
-        self._initDofFromLastVisit()
+        self.initDofFromLastVisit()
 
     def _configZTAAC(self, configDir, instName):
         """Configurate the ZTAAC.
@@ -156,7 +156,7 @@ class OFCCalculation(object):
 
         return subSysAdap
 
-    def _initDofFromLastVisit(self):
+    def initDofFromLastVisit(self):
         """Initialize the DOF correction from the last visit.
 
         DOF: Degree of freedom.
@@ -288,7 +288,7 @@ class OFCCalculation(object):
         DOF: Degree of freedom.
 
         Returns
-        -------e
+        -------
         M2HexapodCorrection
             The position offset for the MT M2 Hexapod.
         CameraHexapodCorrection
@@ -300,7 +300,7 @@ class OFCCalculation(object):
         """
 
         self.ztaac.setStateToState0()
-        self._initDofFromLastVisit()
+        self.initDofFromLastVisit()
 
         return self._getSubSysCorr()
 

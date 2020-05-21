@@ -6,7 +6,7 @@ pipeline {
         // Use the docker to assign the Python version.
         // Use the label to assign the node to run the test.
         // It is recommended by SQUARE team do not add the label and let the
-        // sytem decide.
+        // system decide.
         docker {
             image 'lsstts/aos:w_2020_15'
             args '-u root'
@@ -42,13 +42,11 @@ pipeline {
                         source ${env.LSST_STACK}/loadLSST.bash
                         git clone --branch master https://github.com/lsst-dm/phosim_utils.git
                         cd phosim_utils/
-                        git checkout 8744592
                         setup -k -r . -t ${env.SIMS_VERSION}
                         scons
                         cd ..
                         git clone --branch master https://github.com/lsst-ts/ts_wep.git
                         cd ts_wep/
-                        git checkout 3c661a4
                         setup -k -r .
                         scons
                     """

@@ -1,61 +1,64 @@
 ---
 
 # This file is for the initial state of telescope in the basis of DOF
-# 0-4: M2 dz (um), dx (um), dy (um), rx (arcsec), ry (arcsec)
-# 5-9: Cam dz (um), dx (um), dy (um), rx (arcsec), ry (arcsec)
-# 10-29: M1M3 20 bending mode (um)
-# 30-49: M2 20 bending mode (um)
+# d[XYZ] are in um
+# r[XY] are in arcsec
+# mode[1-20] are in um
 
-m2HexDz: 0
-m2HexDx: 0
-m2HexDy: 0
-m2HexRx: 0
-m2HexRy: 0
+M2Hexapod:
+  dZ: 0
+  dX: 0
+  dY: 0
+  rX: 0
+  rY: 0
 
-camHexDz: 0
-camHexDx: 0
-camHexDy: 0
-camHexRx: 0
-camHexRy: 0
+cameraHexapod:
+  dZ: 0
+  dX: 0
+  dY: 0
+  rX: 0
+  rY: 0
 
-m1M3BendMode1: 0
-m1M3BendMode2: 0
-m1M3BendMode3: 0
-m1M3BendMode4: 0
-m1M3BendMode5: 0
-m1M3BendMode6: 0
-m1M3BendMode7: 0
-m1M3BendMode8: 0
-m1M3BendMode9: 0
-m1M3BendMode10: 0
-m1M3BendMode11: 0
-m1M3BendMode12: 0
-m1M3BendMode13: 0
-m1M3BendMode14: 0
-m1M3BendMode15: 0
-m1M3BendMode16: 0
-m1M3BendMode17: 0
-m1M3BendMode18: 0
-m1M3BendMode19: 0
-m1M3BendMode20: 0
+M1M3Bending:
+  mode1: 0
+  mode2: 0
+  mode3: 0
+  mode4: 0
+  mode5: 0
+  mode6: 0
+  mode7: 0
+  mode8: 0
+  mode9: 0
+  mode10: 0
+  mode11: 0
+  mode12: 0
+  mode13: 0
+  mode14: 0
+  mode15: 0
+  mode16: 0
+  mode17: 0
+  mode18: 0
+  mode19: 0
+  mode20: 0
 
-m2BendMode1: 0
-m2BendMode2: 0
-m2BendMode3: 0
-m2BendMode4: 0
-m2BendMode5: 0
-m2BendMode6: 0
-m2BendMode7: 0
-m2BendMode8: 0
-m2BendMode9: 0
-m2BendMode10: 0
-m2BendMode11: 0
-m2BendMode12: 0
-m2BendMode13: 0
-m2BendMode14: 0
-m2BendMode15: 0
-m2BendMode16: 0
-m2BendMode17: 0
-m2BendMode18: 0
-m2BendMode19: 0
-m2BendMode20: 0
+M2Bending:
+  mode1: 0
+  mode2: 0
+  mode3: 0
+  mode4: 0
+  mode5: 0
+  mode6: 0
+  mode7: 0
+  mode8: 0
+  mode9: 0
+  mode10: 0
+  mode11: 0
+  mode12: 0
+  mode13: 0
+  mode14: 0
+  mode15: 0
+  mode16: 0
+  mode17: 0
+  mode18: 0
+  mode19: 0
+  mode20: 0

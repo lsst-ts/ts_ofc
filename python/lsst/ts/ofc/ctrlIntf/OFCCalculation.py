@@ -27,7 +27,7 @@ class OFCCalculation(object):
     There will be different implementations of this for different
     types of CCDs (normal, full array mode, comcam, cmos, shwfs).
     """
-    def __init__(self, fwhmToPssn, instName,
+    def __init__(self, fwhmToPssn, instName, state0Dof=None,
                  m1m3BendModeFileName="M1M3_1um_156_force.yaml",
                  m2BendModeFileName="M2_1um_72_force.yaml"):
         """Construct an OFC calculation.
@@ -43,6 +43,11 @@ class OFCCalculation(object):
             The object used to convert FWHM values to PSSN values used by OFC.
         instName : enum 'InstName'
             Instrument name.
+        state0Dof : dict, optional
+            State 0 DoF dictionary. If None (=default), the instrument's
+            default will be used. See
+            :lsst:ts:ofc:`OptCtrlDataDecorator.getState0FromDict` for format
+            details.
         m1m3BendModeFileName : str, optional
             M1M3 bending mode file name. (the default is
             "M1M3_1um_156_force.yaml".)
@@ -59,7 +64,7 @@ class OFCCalculation(object):
         self.camRot = CamRot(rotAngInDeg=0.0)
 
         configDir = getConfigDir()
-        self.ztaac = self._configZTAAC(configDir, instName)
+        self.ztaac = self._configZTAAC(configDir, instName, state0Dof)
 
         self.m1m3BendModeToForce = self._configBendingModeToForce(
             configDir, DofGroup.M1M3Bend, m1m3BendModeFileName)
@@ -71,7 +76,7 @@ class OFCCalculation(object):
         self.dofFromLastVisit = np.array([])
         self.initDofFromLastVisit()
 
-    def _configZTAAC(self, configDir, instName):
+    def _configZTAAC(self, configDir, instName, state0Dof):
         """Configurate the ZTAAC.
 
         ZTAAC: Zernike to actuator adjustment calculator.
@@ -82,6 +87,8 @@ class OFCCalculation(object):
             Configuration directory.
         instName : enum 'InstName'
             Instrument name.
+        state0Dof : dict
+            State 0 DoF.
 
         Returns
         -------
@@ -103,7 +110,10 @@ class OFCCalculation(object):
         ztaac = ZTAAC(OptStateEsti(), OptCtrl(), mixedData)
 
         # Set the state 0 and state
-        ztaac.setState0FromFile()
+        if state0Dof is None:
+            ztaac.setState0FromFile()
+        else:
+            ztaac.setState0FromDict(state0Dof)
         ztaac.setStateToState0()
 
         # Configure the parameters
@@ -136,6 +146,17 @@ class OFCCalculation(object):
         bendModeToForce.config(configDir, dofGroup, bendingModeFileName)
 
         return bendModeToForce
+
+    def setState0FromFile(self, state0DofFileName):
+        """Sets state 0 DoF filename.
+
+        Parameters
+        ----------
+        state0DofFileName : str
+            State 0 DoF file name
+        """
+
+        self.ztaac.setState0FromFile(state0DofFileName)
 
     def _configSubSysAdap(self, configDir):
         """Configurate the subsystem adaptor.
@@ -587,7 +608,3 @@ class OFCCalculation(object):
             stateAgg = np.append(stateAgg, dof)
 
         return stateAgg
-
-
-if __name__ == "__main__":
-    pass

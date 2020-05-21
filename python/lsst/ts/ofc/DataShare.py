@@ -91,7 +91,7 @@ class DataShare(object):
         dofIdxArray = self._appendDictValuesToArray(dofIdxDict)
         self.dofIdx = self._getNonZeroIdx(dofIdxArray)
 
-    def _appendDictValuesToArray(self, aDict):
+    def _appendDictValuesToArray(self, aDict, aSchema=None):
         """Append the dictionary values to array.
 
         Parameters
@@ -99,15 +99,38 @@ class DataShare(object):
         aDict : dict
             A dictionary instance.
 
+        aSchema: array, optional
+            Schema for array elements. None (which is default) for no schema,
+            array elements are set from flattened yaml dictionary.
+
         Returns
         -------
         numpy.ndarray
             Values in array.
-        """
 
+        Raises
+        ------
+        ValueError
+            Value isn't find in schema.
+        """
         array = np.array([])
-        for value in aDict.values():
-            array = np.append(array, value)
+        if aSchema is None:
+            # load aDict as flat array for loading without schema
+            for value in aDict.values():
+                array = np.append(array, value)
+
+        else:
+            # load aDict using values in array
+            for aMember in aSchema:
+                value = aDict
+                for key in aMember:
+                    try:
+                        value = value[key]
+                    except KeyError:
+                        raise ValueError(f'Cannot find value for {".".join(aMember)}')
+                if type(value) == list:
+                    raise ValueError(f'{".".join(aMember)} points to struct, not element')
+                array = np.append(array, value)
 
         return array
 

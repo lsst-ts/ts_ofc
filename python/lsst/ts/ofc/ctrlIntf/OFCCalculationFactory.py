@@ -14,13 +14,18 @@ class OFCCalculationFactory(object):
         super().__init__()
 
     @staticmethod
-    def getCalculator(instName):
+    def getCalculator(instName, state0Dof=None):
         """Get a calculator to process wavefront error.
 
         Parameters
         ----------
         instName : enum 'InstName'
             The instrument to get the wavefront calculator for.
+        state0Dof : dict, optional
+            State 0 DoF dictionary. If None (=default), the instrument's
+            default will be used. See
+            :lsst:ts:ofc:`OptCtrlDataDecorator.getState0FromDict` for format
+            details.
 
         Returns
         -------
@@ -35,13 +40,13 @@ class OFCCalculationFactory(object):
         """
 
         if (instName == InstName.LSST):
-            return OFCCalculationOfLsst()
+            return OFCCalculationOfLsst(state0Dof)
         elif (instName == InstName.COMCAM):
-            return OFCCalculationOfComCam()
+            return OFCCalculationOfComCam(state0Dof)
         elif (instName == InstName.SH):
-            return OFCCalculationOfSh()
+            return OFCCalculationOfSh(state0Dof)
         elif (instName == InstName.CMOS):
-            return OFCCalculationOfCmos()
+            return OFCCalculationOfCmos(state0Dof)
         else:
             raise ValueError("This instrument is not supported.")
 

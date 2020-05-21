@@ -6,7 +6,6 @@ from lsst.ts.ofc.Utility import DofGroup
 
 
 class ZTAAC(object):
-
     def __init__(self, optStateEsti, optCtrl, dataShare):
         """Initialization of Zernike to actuator adjustment calculator
         (ZTAAC) class.
@@ -29,8 +28,7 @@ class ZTAAC(object):
         self.defaultGain = 0
         self.fwhmThresholdInArcsec = 0
 
-    def config(self, filterType=None, defaultGain=0.7,
-               fwhmThresholdInArcsec=0.2):
+    def config(self, filterType=None, defaultGain=0.7, fwhmThresholdInArcsec=0.2):
         """Do the configuration of Zernike to actuator adjustment calculator
         (ZTAAC).
 
@@ -157,18 +155,29 @@ class ZTAAC(object):
 
         self.optCtrl.initStateToState0()
 
-    def setState0FromFile(self, state0InDofFileName="state0inDof.yaml"):
+    def setState0FromDict(self, state0InDofDict):
+        """Set the state 0 in degree of freedom (DOF) from hash.
+
+        Parameters
+        ----------
+        state0InDofDict : dict
+            Dictionary with state 0 DoF data.
+        """
+
+        state0InDof = self.dataShare.getState0FromDict(state0InDofDict)
+        self.setState0(state0InDof)
+
+    def setState0FromFile(self, state0InDofFileName=None):
         """Set the state 0 in degree of freedom (DOF) from the file.
 
         Parameters
         ----------
         state0InDofFileName : str, optional
             File name to read the telescope state 0, which depends on the
-            instrument. (the default is "state0inDof.yaml".)
+            instrument. Default = None.
         """
 
-        state0InDof = self.dataShare.getState0FromFile(
-            state0InDofFileName=state0InDofFileName)
+        state0InDof = self.dataShare.getState0FromFile(state0InDofFileName)
         self.setState0(state0InDof)
 
     def setGain(self, gain):
@@ -198,7 +207,7 @@ class ZTAAC(object):
         fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
         fwhmGq = self.optCtrl.calcEffGQFWHM(self.dataShare, pssn, fieldIdx)
 
-        if (fwhmGq > self.fwhmThresholdInArcsec):
+        if fwhmGq > self.fwhmThresholdInArcsec:
             gainToUse = 1
         else:
             gainToUse = self.defaultGain
@@ -219,9 +228,9 @@ class ZTAAC(object):
 
         return self.optCtrl.getGain()
 
-    def getWfFromFile(self, wfFilePath,
-                      sensorNameList=["R44_S00", "R04_S20", "R00_S22",
-                                      "R40_S02"]):
+    def getWfFromFile(
+        self, wfFilePath, sensorNameList=["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
+    ):
         """Get the wavefront error from the file.
 
         Parameters
@@ -238,8 +247,7 @@ class ZTAAC(object):
             Wavefront error.
         """
 
-        wfErr = self.dataShare.getWfAndFieldIdFromFile(wfFilePath,
-                                                       sensorNameList)[0]
+        wfErr = self.dataShare.getWfAndFieldIdFromFile(wfFilePath, sensorNameList)[0]
         return wfErr
 
     def getWfFromShwfsFile(self, wfFilePath):
@@ -262,7 +270,8 @@ class ZTAAC(object):
 
         sensorName = "R22_S11"
         wfErr = self.dataShare.getWfAndFieldIdFromShwfsFile(
-            wfFilePath, sensorName=sensorName)[0]
+            wfFilePath, sensorName=sensorName
+        )[0]
 
         return wfErr, sensorName
 
@@ -283,10 +292,10 @@ class ZTAAC(object):
         """
 
         fieldIdx = self.dataShare.getFieldIdx(sensorNameList)
-        optSt = self.optStateEsti.estiOptState(self.dataShare, self.filterType,
-                                               wfErr, fieldIdx)
-        uk = self.optCtrl.estiUkWithGain(self.dataShare, self.filterType,
-                                         optSt)
+        optSt = self.optStateEsti.estiOptState(
+            self.dataShare, self.filterType, wfErr, fieldIdx
+        )
+        uk = self.optCtrl.estiUkWithGain(self.dataShare, self.filterType, optSt)
 
         return uk
 
@@ -323,11 +332,14 @@ class ZTAAC(object):
 
         return dof
 
-    def setZkAndDofInGroups(self, zkToUse=np.ones(19, dtype=int),
-                            m2HexPos=np.ones(5, dtype=int),
-                            camHexPos=np.ones(5, dtype=int),
-                            m1m3Bend=np.ones(20, dtype=int),
-                            m2Bend=np.ones(20, dtype=int)):
+    def setZkAndDofInGroups(
+        self,
+        zkToUse=np.ones(19, dtype=int),
+        m2HexPos=np.ones(5, dtype=int),
+        camHexPos=np.ones(5, dtype=int),
+        m1m3Bend=np.ones(20, dtype=int),
+        m2Bend=np.ones(20, dtype=int),
+    ):
         """Set the index array of Zk and DOF in groups (M2 hexapod,
         camera hexapod, M1M3 bending mode, and M2 bending mode).
 
@@ -349,11 +361,13 @@ class ZTAAC(object):
             M2 bending mode. (the default is np.ones(20, dtype=int))
         """
 
-        self.dataShare.setZkAndDofInGroups(zkToUse=zkToUse,
-                                           m2HexPos=m2HexPos,
-                                           camHexPos=camHexPos,
-                                           m1m3Bend=m1m3Bend,
-                                           m2Bend=m2Bend)
+        self.dataShare.setZkAndDofInGroups(
+            zkToUse=zkToUse,
+            m2HexPos=m2HexPos,
+            camHexPos=camHexPos,
+            m1m3Bend=m1m3Bend,
+            m2Bend=m2Bend,
+        )
 
     def rotUk(self, camRot, uk):
         """Rotate uk based on the camera rotation angle.
@@ -377,18 +391,23 @@ class ZTAAC(object):
         """
 
         dof = self._transUkToDof(uk)
-        dofOrder = [DofGroup.M2HexPos, DofGroup.CamHexPos, DofGroup.M1M3Bend,
-                    DofGroup.M2Bend]
+        dofOrder = [
+            DofGroup.M2HexPos,
+            DofGroup.CamHexPos,
+            DofGroup.M1M3Bend,
+            DofGroup.M2Bend,
+        ]
 
         rotDof = []
         for dofGroup, dofItemInOrder in zip(DofGroup, dofOrder):
-            if (dofGroup != dofItemInOrder):
+            if dofGroup != dofItemInOrder:
                 raise ValueError("Order of DofGroup and DOF are different.")
 
             dofOfGroup = self.getGroupDof(dofGroup, inputDof=dof)
             tiltXYinArcsec = self._getTiltXY(dofGroup)
-            rotDofOfGroup = camRot.rotGroupDof(dofGroup, dofOfGroup,
-                                               tiltXYinArcsec=tiltXYinArcsec)
+            rotDofOfGroup = camRot.rotGroupDof(
+                dofGroup, dofOfGroup, tiltXYinArcsec=tiltXYinArcsec
+            )
             rotDof = np.append(rotDof, rotDofOfGroup)
 
         rotUk = self._transDofToUk(rotDof)
@@ -458,10 +477,10 @@ class ZTAAC(object):
         camPosRy = stateInDof[9]
 
         if dofGroup in (DofGroup.M2HexPos, DofGroup.M2Bend):
-            tiltXYinArcsec = (m2PosRx-camPosRx, m2PosRy-camPosRy)
-        elif (dofGroup == DofGroup.CamHexPos):
+            tiltXYinArcsec = (m2PosRx - camPosRx, m2PosRy - camPosRy)
+        elif dofGroup == DofGroup.CamHexPos:
             tiltXYinArcsec = (0, 0)
-        elif (dofGroup == DofGroup.M1M3Bend):
+        elif dofGroup == DofGroup.M1M3Bend:
             tiltXYinArcsec = (camPosRx, camPosRy)
 
         return tiltXYinArcsec

@@ -7,7 +7,7 @@ from lsst.ts.ofc.ctrlIntf.FWHMToPSSN import FWHMToPSSN
 class OFCCalculationOfIota(OFCCalculation):
     """The concrete child class of OFCCalculation of IOTA."""
 
-    def __init__(self, instName, specificInstDirName):
+    def __init__(self, instName, specificInstDirName, state0Dof=None):
         """Construct an OFC calculation of IOTA.
 
         IOTA: Initial optical test assembly.
@@ -18,9 +18,14 @@ class OFCCalculationOfIota(OFCCalculation):
             Instrument name.
         specificInstDirName : str
             Specific instrument directory name.
+        state0Dof : dict, optional
+            State 0 DoF dictionary. If None (=default), the instrument's
+            default will be used. See
+            :lsst:ts:ofc:`OptCtrlDataDecorator.getState0FromDict` for format
+            details.
         """
 
-        super(OFCCalculationOfIota, self).__init__(FWHMToPSSN(), instName)
+        super(OFCCalculationOfIota, self).__init__(FWHMToPSSN(), instName, state0Dof)
 
         # Set the idx of zk and DOF
         self._setZkAndDofIdxOfIota(specificInstDirName, instName)

@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.3.0:
+
+-------------
+1.3.0
+-------------
+
+Adds parameter to specify values of state 0 DoF (M2 & Camera hexapod positions, M1M3 & M2 bending modes).
+
 .. _lsst.ts.ofc-1.2.6:
 
 -------------

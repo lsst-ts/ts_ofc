@@ -98,6 +98,63 @@ class TestZTAAC(unittest.TestCase):
         self.assertEqual(len(state0), 50)
         self.assertEqual(np.sum(np.abs(state0)), 0)
 
+    def testSetState0Failed(self):
+
+        failedDict = {
+            "M2Hexapod": {"dZ": 0, "dX": 0, "dY": 0, "rY": 0},
+            "cameraHexapod": {"dZ": 0, "dX": 0, "dY": 0, "rX": 0, "rY": 0},
+            "M1M3Bending": {
+                "mode1": 0,
+                "mode2": 0,
+                "mode3": 0,
+                "mode4": 0,
+                "mode5": 0,
+                "mode6": 0,
+                "mode7": 0,
+                "mode8": 0,
+                "mode9": 0,
+                "mode10": 0,
+                "mode11": 0,
+                "mode12": 0,
+                "mode13": 0,
+                "mode14": 0,
+                "mode15": 0,
+                "mode16": 0,
+                "mode17": 0,
+                "mode18": 0,
+                "mode19": 0,
+                "mode20": 0,
+            },
+            "M2Bending": {
+                "mode1": 0,
+                "mode2": 0,
+                "mode3": 0,
+                "mode4": 0,
+                "mode5": 0,
+                "mode6": 0,
+                "mode7": 0,
+                "mode8": 0,
+                "mode9": 0,
+                "mode10": 0,
+                "mode11": 0,
+                "mode12": 0,
+                "mode13": 0,
+                "mode14": 0,
+                "mode15": 0,
+                "mode16": 0,
+                "mode17": 0,
+                "mode18": 0,
+                "mode19": 0,
+                "mode20": 0,
+            },
+        }
+        self.assertRaisesRegex(
+            ValueError,
+            "Cannot find value for M2Hexapod\\.rX",
+            self.ztaac.setState0FromDict,
+            failedDict,
+        )
+
     def testSetAndGetGainInUse(self):
 
         self.assertEqual(self.ztaac.getGainInUse(), 0)

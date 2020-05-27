@@ -9,6 +9,7 @@ pipeline {
         // system decide.
         docker {
             image 'lsstts/aos:w_2020_21'
+            args '-u root'
         }
     }
 
@@ -75,6 +76,15 @@ pipeline {
 
     post {
         always {
+            // Change the ownership of workspace to Jenkins for the clean up
+            // This is to work around the condition that the user ID of jenkins
+            // is 1003 on TSSW Jenkins instance. In this post stage, it is the
+            // jenkins to do the following clean up instead of the root in the
+            // docker container.
+            withEnv(["HOME=${env.WORKSPACE}"]) {
+                sh 'chown -R 1003:1003 ${HOME}/'
+            }
+
             // The path of xml needed by JUnit is relative to
             // the workspace.
             junit "${env.XML_REPORT}"

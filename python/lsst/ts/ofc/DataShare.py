@@ -1,13 +1,32 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
-from lsst.ts.ofc.Utility import InstName, DofGroup, getMatchFilePath, \
-    getDirFiles
+from lsst.ts.ofc.Utility import InstName, DofGroup, getMatchFilePath, getDirFiles
 from lsst.ts.wep.ParamReader import ParamReader
 
 
 class DataShare(object):
-
     def __init__(self):
         """Initialization of data share class."""
 
@@ -23,11 +42,15 @@ class DataShare(object):
         self._idxDofFile = ParamReader()
         self._sensorNameToIdFile = ParamReader()
 
-    def config(self, configDir, instName=InstName.LSST,
-               zkAndDofIdxArraySetFileName="zkAndDofIdxArraySet.yaml",
-               mappingFileName="sensorNameToFieldIdx.yaml",
-               idxDofFileName="idxDOF.yaml",
-               sensorNameToIdFileName="sensorNameToId.yaml"):
+    def config(
+        self,
+        configDir,
+        instName=InstName.LSST,
+        zkAndDofIdxArraySetFileName="zkAndDofIdxArraySet.yaml",
+        mappingFileName="sensorNameToFieldIdx.yaml",
+        idxDofFileName="idxDOF.yaml",
+        sensorNameToIdFileName="sensorNameToId.yaml",
+    ):
         """Do the configuration of DataShare class.
 
         zk: Annular Zernike polynomial.
@@ -55,8 +78,9 @@ class DataShare(object):
         self.configDir = configDir
         self.instName = instName
 
-        zkAndDofIdxArraySetFilePath = os.path.join(configDir,
-                                                   zkAndDofIdxArraySetFileName)
+        zkAndDofIdxArraySetFilePath = os.path.join(
+            configDir, zkAndDofIdxArraySetFileName
+        )
         self._zkAndDofIdxArraySetFile.setFilePath(zkAndDofIdxArraySetFilePath)
 
         mappingFilePath = os.path.join(self.getInstDir(), mappingFileName)
@@ -65,8 +89,7 @@ class DataShare(object):
         idxDofFilePath = os.path.join(configDir, idxDofFileName)
         self._idxDofFile.setFilePath(idxDofFilePath)
 
-        sensorNameToIdFilePath = os.path.join(configDir,
-                                              sensorNameToIdFileName)
+        sensorNameToIdFilePath = os.path.join(configDir, sensorNameToIdFileName)
         self._sensorNameToIdFile.setFilePath(sensorNameToIdFilePath)
 
         senMfilePath = self._getSenMfilePath(reMatchStr=r"\AsenM\S+")
@@ -129,7 +152,9 @@ class DataShare(object):
                     except KeyError:
                         raise ValueError(f'Cannot find value for {".".join(aMember)}')
                 if type(value) == list:
-                    raise ValueError(f'{".".join(aMember)} points to struct, not element')
+                    raise ValueError(
+                        f'{".".join(aMember)} points to struct, not element'
+                    )
                 array = np.append(array, value)
 
         return array
@@ -268,7 +293,7 @@ class DataShare(object):
             Input argument as the list type.
         """
 
-        if (not isinstance(inputArg, list)):
+        if not isinstance(inputArg, list):
             inputArg = [inputArg]
 
         return inputArg
@@ -296,17 +321,19 @@ class DataShare(object):
         """
 
         # Assign the parameter name
-        if (dofGroup == DofGroup.M2HexPos):
+        if dofGroup == DofGroup.M2HexPos:
             param = "m2HexPos"
-        elif (dofGroup == DofGroup.CamHexPos):
+        elif dofGroup == DofGroup.CamHexPos:
             param = "camHexPos"
-        elif (dofGroup == DofGroup.M1M3Bend):
+        elif dofGroup == DofGroup.M1M3Bend:
             param = "m1M3Bend"
-        elif (dofGroup == DofGroup.M2Bend):
+        elif dofGroup == DofGroup.M2Bend:
             param = "m2Bend"
         else:
-            raise ValueError("'%s' is not found in the '%s'."
-                             % (dofGroup, self._idxDofFile.getFilePath()))
+            raise ValueError(
+                "'%s' is not found in the '%s'."
+                % (dofGroup, self._idxDofFile.getFilePath())
+            )
 
         # Get the values from the file
         groupInfo = self._idxDofFile.getSetting(param)
@@ -329,11 +356,14 @@ class DataShare(object):
         self.zn3Idx = np.array(zn3Idx, dtype=int)
         self.dofIdx = np.array(dofIdx, dtype=int)
 
-    def setZkAndDofInGroups(self, zkToUse=np.ones(19, dtype=int),
-                            m2HexPos=np.ones(5, dtype=int),
-                            camHexPos=np.ones(5, dtype=int),
-                            m1m3Bend=np.ones(20, dtype=int),
-                            m2Bend=np.ones(20, dtype=int)):
+    def setZkAndDofInGroups(
+        self,
+        zkToUse=np.ones(19, dtype=int),
+        m2HexPos=np.ones(5, dtype=int),
+        camHexPos=np.ones(5, dtype=int),
+        m1m3Bend=np.ones(20, dtype=int),
+        m2Bend=np.ones(20, dtype=int),
+    ):
         """Set the index array of Zk and DOF in groups (M2 hexapod,
         camera hexapod, M1M3 bending mode, and M2 bending mode).
 
@@ -363,9 +393,8 @@ class DataShare(object):
         """
 
         zn3Max = self._getZn3Max()
-        if (len(zkToUse) != zn3Max):
-            raise ValueError("The length of 'zkToUse' should be %d."
-                             % zn3Max)
+        if len(zkToUse) != zn3Max:
+            raise ValueError("The length of 'zkToUse' should be %d." % zn3Max)
 
         # Get the index of zk to use
         zn3Idx = self._getNonZeroIdx(zkToUse)
@@ -377,11 +406,11 @@ class DataShare(object):
         for dofInput, dofGroup in zip(dofInputs, DofGroup):
             startIdx, groupLeng = self.getGroupIdxAndLeng(dofGroup)
 
-            if (len(dofInput) != groupLeng):
+            if len(dofInput) != groupLeng:
                 raise ValueError("The length of DOF is incorrect.")
 
             idx = self._getNonZeroIdx(dofInput)
-            dofIdx = np.append(dofIdx, idx+startIdx)
+            dofIdx = np.append(dofIdx, idx + startIdx)
 
         self.setZkAndDofIdxArrays(zn3Idx, dofIdx)
 
@@ -397,7 +426,7 @@ class DataShare(object):
         """
 
         zn3Max = self._zkAndDofIdxArraySetFile.getSetting("znmax")
-        zn3Max = int(zn3Max)-3
+        zn3Max = int(zn3Max) - 3
 
         return zn3Max
 
@@ -427,7 +456,7 @@ class DataShare(object):
         wfErr = np.loadtxt(wfFilePath)
         fieldIdx = self.getFieldIdx(sensorNameList)
 
-        if (len(fieldIdx) != wfErr.shape[0]):
+        if len(fieldIdx) != wfErr.shape[0]:
             raise ValueError("Number of sensors does not match the file.")
 
         return wfErr, fieldIdx

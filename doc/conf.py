@@ -8,12 +8,14 @@ import lsst.ts.ofc
 
 
 _g = globals()
-_g.update(build_package_configs(
-    project_name='ts_ofc',
-    version=lsst.ts.ofc.version.__version__))
+_g.update(
+    build_package_configs(
+        project_name="ts_ofc", version=lsst.ts.ofc.version.__version__
+    )
+)
 
 # Support the sphinx extension of plantuml
-extensions.append('sphinxcontrib.plantuml')
+extensions.append("sphinxcontrib.plantuml")
 
 # Put the path to plantuml.jar
-plantuml = 'java -jar /home/lsst/plantuml.jar'
+plantuml = "java -jar /home/lsst/plantuml.jar"

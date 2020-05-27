@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import unittest
 import numpy as np
 
@@ -68,24 +89,21 @@ class TestOptStateEstiDataDecorator(unittest.TestCase):
 
         fieldIdx = [1, 2, 3]
         activeFilter = FilterType.REF
-        intrinsicZk = self.optStateEstiData.getIntrinsicZk(activeFilter,
-                                                           fieldIdx)
+        intrinsicZk = self.optStateEstiData.getIntrinsicZk(activeFilter, fieldIdx)
 
         zn3Idx = self.optStateEstiData.getZn3Idx()
         self.assertEqual(intrinsicZk.shape, (len(fieldIdx), len(zn3Idx)))
 
-        ans = -2.9368E-002 * self.optStateEstiData.getEffWave(activeFilter)
+        ans = -2.9368e-002 * self.optStateEstiData.getEffWave(activeFilter)
         self.assertEqual(intrinsicZk[1][2], ans)
 
         activeFilter = FilterType.G
-        intrinsicZk = self.optStateEstiData.getIntrinsicZk(activeFilter,
-                                                           fieldIdx)
-        ans = -2.9422E-002 * self.optStateEstiData.getEffWave(activeFilter)
+        intrinsicZk = self.optStateEstiData.getIntrinsicZk(activeFilter, fieldIdx)
+        ans = -2.9422e-002 * self.optStateEstiData.getEffWave(activeFilter)
         self.assertEqual(intrinsicZk[1][2], ans)
 
         fieldIdx = []
-        intrinsicZk = self.optStateEstiData.getIntrinsicZk(activeFilter,
-                                                           fieldIdx)
+        intrinsicZk = self.optStateEstiData.getIntrinsicZk(activeFilter, fieldIdx)
         self.assertEqual(len(intrinsicZk), 0)
 
     def testGetIntrinsicZkWithIncompleteIdx(self):
@@ -96,11 +114,10 @@ class TestOptStateEstiDataDecorator(unittest.TestCase):
 
         fieldIdx = [1, 2, 3]
         activeFilter = FilterType.REF
-        intrinsicZk = self.optStateEstiData.getIntrinsicZk(activeFilter,
-                                                           fieldIdx)
+        intrinsicZk = self.optStateEstiData.getIntrinsicZk(activeFilter, fieldIdx)
         self.assertEqual(intrinsicZk.shape, (len(fieldIdx), len(zn3Idx)))
 
-        ans = 3.8937E-006 * self.optStateEstiData.getEffWave(activeFilter)
+        ans = 3.8937e-006 * self.optStateEstiData.getEffWave(activeFilter)
         self.assertEqual(intrinsicZk[1][2], ans)
 
 

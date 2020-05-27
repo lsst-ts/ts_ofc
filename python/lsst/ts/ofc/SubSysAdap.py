@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
@@ -7,7 +28,6 @@ from lsst.ts.ofc.Utility import DofGroup, rot1dArray
 
 
 class SubSysAdap(object):
-
     def __init__(self):
         """Initialization of subsystem adaptor class."""
 
@@ -20,9 +40,13 @@ class SubSysAdap(object):
         # Rotation matrix of hexapod position
         self.rotMatHex = np.array([])
 
-    def config(self, configDir, rotMatM1M3FileName="rotMatM1M3.yaml",
-               rotMatM2FileName="rotMatM2.yaml",
-               rotMatHexpodFileName="rotMatHexapod.yaml"):
+    def config(
+        self,
+        configDir,
+        rotMatM1M3FileName="rotMatM1M3.yaml",
+        rotMatM2FileName="rotMatM2.yaml",
+        rotMatHexpodFileName="rotMatHexapod.yaml",
+    ):
         """Do the configuration of SubSysAdap class.
 
         Parameters
@@ -40,9 +64,11 @@ class SubSysAdap(object):
         """
 
         self.rotMatM1M3Act = self._getRotMatMirror(
-            configDir, DofGroup.M1M3Bend, rotMatM1M3FileName)
+            configDir, DofGroup.M1M3Bend, rotMatM1M3FileName
+        )
         self.rotMatM2Act = self._getRotMatMirror(
-            configDir, DofGroup.M2Bend, rotMatM2FileName)
+            configDir, DofGroup.M2Bend, rotMatM2FileName
+        )
         self.rotMatHex = self._getRotMatHex(configDir, rotMatHexpodFileName)
 
     def _getRotMatMirror(self, configDir, dofGroup, rotMatfileName):
@@ -159,9 +185,9 @@ class SubSysAdap(object):
 
         self._checkMirrorGroup(dofGroup)
 
-        if (dofGroup == DofGroup.M1M3Bend):
+        if dofGroup == DofGroup.M1M3Bend:
             return self.rotMatM1M3Act
-        elif (dofGroup == DofGroup.M2Bend):
+        elif dofGroup == DofGroup.M2Bend:
             return self.rotMatM2Act
 
     def _checkMirrorGroup(self, dofGroup):

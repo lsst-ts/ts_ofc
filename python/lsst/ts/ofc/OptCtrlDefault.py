@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 
 
@@ -133,12 +154,12 @@ class OptCtrlDefault(object):
             DOF.
         """
 
-        if (inputDof is None):
+        if inputDof is None:
             dof = self.stateInDof - self.state0InDof
         else:
             dof = np.array(inputDof)
 
-        return dof[np.arange(startIdx, startIdx+groupLeng)]
+        return dof[np.arange(startIdx, startIdx + groupLeng)]
 
     def setGain(self, gain):
         """Set the gain value.
@@ -154,7 +175,7 @@ class OptCtrlDefault(object):
             Gain is not in the range of [0, 1].
         """
 
-        if (0 <= gain <= 1):
+        if 0 <= gain <= 1:
             self.gain = gain
         else:
             raise ValueError("Gain is not in the range of [0, 1].")
@@ -198,7 +219,7 @@ class OptCtrlDefault(object):
         """
 
         qWgt = optCtrlDataDecorator.getQwgt()
-        fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1/np.array(pssn) - 1)
+        fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1 / np.array(pssn) - 1)
         fwhmGq = np.sum(qWgt[fieldIdx] * fwhm)
 
         if np.isnan(fwhmGq) or np.isinf(fwhmGq):
@@ -226,8 +247,7 @@ class OptCtrlDefault(object):
             Calculated uk in the basis of DOF.
         """
 
-        return self.gain * self.estiUkWithoutGain(optCtrlData, filterType,
-                                                  optSt)
+        return self.gain * self.estiUkWithoutGain(optCtrlData, filterType, optSt)
 
     def estiUkWithoutGain(self, optCtrlData, filterType, optSt):
         """Estimate uk in the basis of degree of freedom (DOF) without gain

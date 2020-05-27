@@ -8,7 +8,7 @@ pipeline {
         // It is recommended by SQUARE team do not add the label and let the
         // system decide.
         docker {
-            image 'lsstts/aos:w_2020_15'
+            image 'lsstts/aos:w_2020_21'
             args '-u root'
         }
     }
@@ -18,16 +18,14 @@ pipeline {
     }
 
     environment {
-        // Development tool set
-        DEV_TOOL="/opt/rh/devtoolset-8/enable"
         // Position of LSST stack directory
-        LSST_STACK="/opt/lsst/software/stack"
+        LSST_STACK = "/opt/lsst/software/stack"
         // Pipeline Sims Version
-        SIMS_VERSION="sims_w_2020_15"
+        SIMS_VERSION = "sims_w_2020_21"
         // XML report path
-        XML_REPORT="jenkinsReport/report.xml"
+        XML_REPORT = "jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
-        MODULE_NAME="lsst.ts.ofc"
+        MODULE_NAME = "lsst.ts.ofc"
     }
 
     stages {
@@ -38,7 +36,6 @@ pipeline {
                 // to install the packages.
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
-                        source ${env.DEV_TOOL}
                         source ${env.LSST_STACK}/loadLSST.bash
                         git clone --branch master https://github.com/lsst-dm/phosim_utils.git
                         cd phosim_utils/
@@ -63,7 +60,6 @@ pipeline {
                 // Pytest needs to export the junit report.
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
-                        source ${env.DEV_TOOL}
                         source ${env.LSST_STACK}/loadLSST.bash
                         cd phosim_utils/
                         setup -k -r . -t ${env.SIMS_VERSION}
@@ -81,7 +77,10 @@ pipeline {
     post {
         always {
             // Change the ownership of workspace to Jenkins for the clean up
-            // This is a "work around" method
+            // This is to work around the condition that the user ID of jenkins
+            // is 1003 on TSSW Jenkins instance. In this post stage, it is the
+            // jenkins to do the following clean up instead of the root in the
+            // docker container.
             withEnv(["HOME=${env.WORKSPACE}"]) {
                 sh 'chown -R 1003:1003 ${HOME}/'
             }

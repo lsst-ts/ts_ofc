@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import unittest
 
 from lsst.ts.ofc.ctrlIntf.M2HexapodCorrection import M2HexapodCorrection
@@ -15,7 +36,8 @@ class TestM2HexapodCorrection(unittest.TestCase):
         self.v = 0.5
         self.w = 0.6
         self.hexapodCorrection = M2HexapodCorrection(
-            self.x, self.y, self.z, self.u, self.v, w=self.w)
+            self.x, self.y, self.z, self.u, self.v, w=self.w
+        )
 
     def testGetCorrection(self):
 
@@ -37,8 +59,14 @@ class TestM2HexapodCorrection(unittest.TestCase):
         w = 0.7
         self.hexapodCorrection.setCorrection(x, y, z, u, v, w=w)
 
-        xInHex, yInHex, zInHex, uInHex, vInHex, wInHex = \
-            self.hexapodCorrection.getCorrection()
+        (
+            xInHex,
+            yInHex,
+            zInHex,
+            uInHex,
+            vInHex,
+            wInHex,
+        ) = self.hexapodCorrection.getCorrection()
         self.assertEqual(xInHex, x)
         self.assertEqual(yInHex, y)
         self.assertEqual(zInHex, z)

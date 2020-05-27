@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 
 from lsst.ts.wep.Utility import FilterType
@@ -27,9 +48,15 @@ class OFCCalculation(object):
     There will be different implementations of this for different
     types of CCDs (normal, full array mode, comcam, cmos, shwfs).
     """
-    def __init__(self, fwhmToPssn, instName, state0Dof=None,
-                 m1m3BendModeFileName="M1M3_1um_156_force.yaml",
-                 m2BendModeFileName="M2_1um_72_force.yaml"):
+
+    def __init__(
+        self,
+        fwhmToPssn,
+        instName,
+        state0Dof=None,
+        m1m3BendModeFileName="M1M3_1um_156_force.yaml",
+        m2BendModeFileName="M2_1um_72_force.yaml",
+    ):
         """Construct an OFC calculation.
 
         This should be unique to an OFC algorithm / CCD.
@@ -56,8 +83,7 @@ class OFCCalculation(object):
         """
 
         self.fwhmToPssn = fwhmToPssn
-        self.pssnData = {"sensorId": np.array([], dtype=int),
-                         "pssn": np.array([])}
+        self.pssnData = {"sensorId": np.array([], dtype=int), "pssn": np.array([])}
 
         self.useGainByPssn = True
 
@@ -67,9 +93,11 @@ class OFCCalculation(object):
         self.ztaac = self._configZTAAC(configDir, instName, state0Dof)
 
         self.m1m3BendModeToForce = self._configBendingModeToForce(
-            configDir, DofGroup.M1M3Bend, m1m3BendModeFileName)
+            configDir, DofGroup.M1M3Bend, m1m3BendModeFileName
+        )
         self.m2BendModeToForce = self._configBendingModeToForce(
-            configDir, DofGroup.M2Bend, m2BendModeFileName)
+            configDir, DofGroup.M2Bend, m2BendModeFileName
+        )
 
         self.subSysAdap = self._configSubSysAdap(configDir)
 
@@ -121,8 +149,7 @@ class OFCCalculation(object):
 
         return ztaac
 
-    def _configBendingModeToForce(self, configDir, dofGroup,
-                                  bendingModeFileName):
+    def _configBendingModeToForce(self, configDir, dofGroup, bendingModeFileName):
         """Configurate the bending mode to force.
 
         DOF: Degree of freedom.
@@ -346,8 +373,7 @@ class OFCCalculation(object):
         m1m3Correction = self._getMirrorActForceCorr(DofGroup.M1M3Bend)
         m2Correction = self._getMirrorActForceCorr(DofGroup.M2Bend)
 
-        return m2HexapodCorrection, camHexapodCorrection, m1m3Correction, \
-            m2Correction
+        return m2HexapodCorrection, camHexapodCorrection, m1m3Correction, m2Correction
 
     def _getHexCorr(self, dofGroup):
         """Get the hexapod correction.
@@ -371,9 +397,9 @@ class OFCCalculation(object):
         transHexDof = self.subSysAdap.transHexaPosToSubSys(hexDof)
         x, y, z, rx, ry, rz = transHexDof
 
-        if (dofGroup == DofGroup.M2HexPos):
+        if dofGroup == DofGroup.M2HexPos:
             hexCorr = M2HexapodCorrection(x, y, z, rx, ry, w=rz)
-        elif (dofGroup == DofGroup.CamHexPos):
+        elif dofGroup == DofGroup.CamHexPos:
             hexCorr = CameraHexapodCorrection(x, y, z, rx, ry, w=rz)
 
         return hexCorr
@@ -395,8 +421,7 @@ class OFCCalculation(object):
         """
 
         if dofGroup not in (DofGroup.M2HexPos, DofGroup.CamHexPos):
-            raise ValueError("The input DOF group (%s) is not hexapod."
-                             % dofGroup)
+            raise ValueError("The input DOF group (%s) is not hexapod." % dofGroup)
 
     def _getMirrorActForceCorr(self, dofGroup):
         """Get the mirror actuator forces correction.
@@ -418,27 +443,26 @@ class OFCCalculation(object):
         mirrorDof = self.ztaac.getGroupDof(dofGroup)
 
         # Transform the DOF to actuator forces
-        if (dofGroup == DofGroup.M1M3Bend):
+        if dofGroup == DofGroup.M1M3Bend:
             actForce = self.m1m3BendModeToForce.calcActForce(mirrorDof)
-        elif (dofGroup == DofGroup.M2Bend):
+        elif dofGroup == DofGroup.M2Bend:
             actForce = self.m2BendModeToForce.calcActForce(mirrorDof)
 
         # Transform the actuator forces to the subsystem's coordinate
         # from ZEMAX coordinate
-        transActForce = self.subSysAdap.transActForceToSubSys(dofGroup,
-                                                              actForce)
+        transActForce = self.subSysAdap.transActForceToSubSys(dofGroup, actForce)
 
         # Truncate the M2 actuator force
         # We do this is just because we use the M1M3 bending mode file (156
         # actuators) to mimic the M2 bending mode file (72 actuators) at this
         # moment.
-        if (dofGroup == DofGroup.M2Bend):
-            transActForce = transActForce[0: M2Correction.NUM_OF_ACT]
+        if dofGroup == DofGroup.M2Bend:
+            transActForce = transActForce[0 : M2Correction.NUM_OF_ACT]
 
         # Instantiate the correction object
-        if (dofGroup == DofGroup.M1M3Bend):
+        if dofGroup == DofGroup.M1M3Bend:
             mirrorCorr = M1M3Correction(transActForce)
-        elif (dofGroup == DofGroup.M2Bend):
+        elif dofGroup == DofGroup.M2Bend:
             mirrorCorr = M2Correction(transActForce)
 
         return mirrorCorr
@@ -455,7 +479,7 @@ class OFCCalculation(object):
             -1.).
         """
 
-        if (gainByUser == -1):
+        if gainByUser == -1:
             self.useGainByPssn = True
         else:
             try:
@@ -503,7 +527,7 @@ class OFCCalculation(object):
         """
 
         # Set the gain value
-        if (self.useGainByPssn):
+        if self.useGainByPssn:
             self._setZtaacGainByPSSN()
 
         # Collect the wavefront error and sensor name

@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
@@ -95,8 +116,12 @@ class TestOFCCalculation(unittest.TestCase):
         self.ofcCalculation.ztaac.aggState(dof)
         self.ofcCalculation._setStateCorrectionFromLastVisit(dof)
 
-        m2HexapodCorrection, hexapodCorrection, m1m3Correction, m2Correction = \
-            self.ofcCalculation.resetOfcState()
+        (
+            m2HexapodCorrection,
+            hexapodCorrection,
+            m1m3Correction,
+            m2Correction,
+        ) = self.ofcCalculation.resetOfcState()
 
         self.assertTrue(isinstance(m2HexapodCorrection, M2HexapodCorrection))
         self.assertTrue(isinstance(hexapodCorrection, CameraHexapodCorrection))
@@ -132,8 +157,7 @@ class TestOFCCalculation(unittest.TestCase):
     def testSetGainByUserWithBadValue(self):
 
         gainByUser = 1.3
-        self.assertRaises(ValueError, self.ofcCalculation.setGainByUser,
-                          gainByUser)
+        self.assertRaises(ValueError, self.ofcCalculation.setGainByUser, gainByUser)
 
     def testSetGainByUserWithDefaultValue(self):
 
@@ -157,8 +181,12 @@ class TestOFCCalculation(unittest.TestCase):
 
         listOfWfErr = self._getListOfSensorWavefrontError()
 
-        m2HexapodCorrection, hexapodCorrection, m1m3Correction, m2Correction = \
-            self.ofcCalculation.calculateCorrections(listOfWfErr)
+        (
+            m2HexapodCorrection,
+            hexapodCorrection,
+            m1m3Correction,
+            m2Correction,
+        ) = self.ofcCalculation.calculateCorrections(listOfWfErr)
 
         self.assertTrue(isinstance(m2HexapodCorrection, M2HexapodCorrection))
         self.assertTrue(isinstance(hexapodCorrection, CameraHexapodCorrection))
@@ -190,20 +218,19 @@ class TestOFCCalculation(unittest.TestCase):
 
         wfFilePath = os.path.join(self.testDataDir, "lsst_wfs_error_iter0.z4c")
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
-        wfErr = self.ofcCalculation.ztaac.getWfFromFile(wfFilePath,
-                                                        sensorNameList)
+        wfErr = self.ofcCalculation.ztaac.getWfFromFile(wfFilePath, sensorNameList)
 
         return wfErr, sensorNameList
 
     def testGetStateCorrectionFromLastVisit(self):
 
-        ansStateCorrection = \
-            self._setStateCorrectionFromLastVisitWithSpecificDofIdx()
+        ansStateCorrection = self._setStateCorrectionFromLastVisitWithSpecificDofIdx()
         stateCorrection = self.ofcCalculation.getStateCorrectionFromLastVisit()
 
         self.assertTrue(isinstance(stateCorrection, np.ndarray))
-        self.assertEqual(len(stateCorrection),
-                         self.ofcCalculation.ztaac.optCtrl.getNumOfState0())
+        self.assertEqual(
+            len(stateCorrection), self.ofcCalculation.ztaac.optCtrl.getNumOfState0()
+        )
 
         delta = np.sum(np.abs(stateCorrection - ansStateCorrection))
         self.assertEqual(delta, 0)
@@ -215,8 +242,8 @@ class TestOFCCalculation(unittest.TestCase):
         m1m3Bend = np.zeros(20, dtype=int)
         m2Bend = np.zeros(20, dtype=int)
         self.ofcCalculation.ztaac.setZkAndDofInGroups(
-            m2HexPos=m2HexPos, camHexPos=camHexPos, m1m3Bend=m1m3Bend,
-            m2Bend=m2Bend)
+            m2HexPos=m2HexPos, camHexPos=camHexPos, m1m3Bend=m1m3Bend, m2Bend=m2Bend
+        )
 
         calcDof = np.arange(1, 6)
         self.ofcCalculation._setStateCorrectionFromLastVisit(calcDof)

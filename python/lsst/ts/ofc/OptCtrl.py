@@ -1,10 +1,30 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 
 from lsst.ts.ofc.OptCtrlDefault import OptCtrlDefault
 
 
 class OptCtrl(OptCtrlDefault):
-
     def estiUkWithoutGain(self, optCtrlData, filterType, optSt):
         """Estimate uk by referencing to "0", "x0", or "x00" based on the
         configuration file without gain compensation..
@@ -60,7 +80,7 @@ class OptCtrl(OptCtrlDefault):
         effWave = optCtrlData.getEffWave(filterType)
         zn3Idx = optCtrlData.getZn3Idx()
 
-        ccMat = (2*np.pi/effWave)**2 * pssnAlpha[zn3Idx]
+        ccMat = (2 * np.pi / effWave) ** 2 * pssnAlpha[zn3Idx]
         ccMat = np.diag(ccMat)
 
         return ccMat
@@ -148,7 +168,7 @@ class OptCtrl(OptCtrlDefault):
             Matrix H used in the cost function.
         """
 
-        matH = np.diag(authority[dofIdx]**2)
+        matH = np.diag(authority[dofIdx] ** 2)
 
         return matH
 
@@ -203,7 +223,7 @@ class OptCtrl(OptCtrlDefault):
 
         # Because the unit is rms^2, the square of rho read from
         # the *.ctrl file is needed.
-        matF = np.linalg.inv(rho**2 * matH + qMat)
+        matF = np.linalg.inv(rho ** 2 * matH + qMat)
 
         return matF
 
@@ -233,11 +253,11 @@ class OptCtrl(OptCtrlDefault):
         """
 
         xRef = optCtrlData.getXref()
-        if (xRef == "x0"):
+        if xRef == "x0":
             return self._calcUkRefX0(matF, qx)
-        elif (xRef == "0"):
+        elif xRef == "0":
             return self._calcUkRef0(optCtrlData, matF, qx)
-        elif (xRef == "x00"):
+        elif xRef == "x00":
             return self._calcUkRefX00(optCtrlData, matF, qx)
         else:
             raise ValueError("No Xref is assigned.")
@@ -296,7 +316,7 @@ class OptCtrl(OptCtrlDefault):
 
         penality = optCtrlData.getPenality()
         rho = penality["Motion"]
-        qx += rho**2 * matH.dot(stateInDof)
+        qx += rho ** 2 * matH.dot(stateInDof)
 
         return self._calcUkRefX0(matF, qx)
 
@@ -335,7 +355,7 @@ class OptCtrl(OptCtrlDefault):
         penality = optCtrlData.getPenality()
         rho = penality["Motion"]
 
-        qx += rho**2 * matH.dot(stateDiff)
+        qx += rho ** 2 * matH.dot(stateDiff)
 
         return self._calcUkRefX0(matF, qx)
 

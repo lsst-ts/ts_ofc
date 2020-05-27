@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 import unittest
 
@@ -19,8 +40,9 @@ class TestBendModeToForce(unittest.TestCase):
 
     def _configM1M3(self):
 
-        self.bendModeToForce.config(self.configDir, DofGroup.M1M3Bend,
-                                    "M1M3_1um_156_force.yaml")
+        self.bendModeToForce.config(
+            self.configDir, DofGroup.M1M3Bend, "M1M3_1um_156_force.yaml"
+        )
 
     def testConfig(self):
 
@@ -59,8 +81,9 @@ class TestBendModeToForce(unittest.TestCase):
 
     def _configM2(self):
 
-        self.bendModeToForce.config(self.configDir, DofGroup.M2Bend,
-                                    "M2_1um_72_force.yaml")
+        self.bendModeToForce.config(
+            self.configDir, DofGroup.M2Bend, "M2_1um_72_force.yaml"
+        )
 
     def testEstiBendingMode(self):
 
@@ -74,17 +97,17 @@ class TestBendModeToForce(unittest.TestCase):
 
     def testGetMirrorDirName(self):
 
-        self.assertEqual(BendModeToForce.getMirrorDirName(DofGroup.M1M3Bend),
-                         "M1M3")
-        self.assertEqual(BendModeToForce.getMirrorDirName(DofGroup.M2Bend),
-                         "M2")
-        self.assertRaises(ValueError, BendModeToForce.getMirrorDirName,
-                          DofGroup.M2HexPos)
+        self.assertEqual(BendModeToForce.getMirrorDirName(DofGroup.M1M3Bend), "M1M3")
+        self.assertEqual(BendModeToForce.getMirrorDirName(DofGroup.M2Bend), "M2")
+        self.assertRaises(
+            ValueError, BendModeToForce.getMirrorDirName, DofGroup.M2HexPos
+        )
 
     def testCheckDofGroupIsMirrorWithError(self):
 
-        self.assertRaises(ValueError, BendModeToForce.checkDofGroupIsMirror,
-                          DofGroup.CamHexPos)
+        self.assertRaises(
+            ValueError, BendModeToForce.checkDofGroupIsMirror, DofGroup.CamHexPos
+        )
 
 
 if __name__ == "__main__":

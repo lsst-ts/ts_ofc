@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
@@ -21,8 +42,9 @@ class TestIteration(unittest.TestCase):
         self.ofc.setRotAng(0.0)
         self.ofc.setGainByPSSN()
 
-        iterDataDir = os.path.join(getModulePath(), "tests", "testData",
-                                   "iteration", "comcam")
+        iterDataDir = os.path.join(
+            getModulePath(), "tests", "testData", "iteration", "comcam"
+        )
         self.iterDataReader = IterDataReader(iterDataDir)
 
     def testIteration(self):
@@ -37,20 +59,22 @@ class TestIteration(unittest.TestCase):
 
             # Simulate to get the FWHM data from DM
             fwhmValues = self.iterDataReader.getFwhm(iterNum, numOfFwhm)
-            listOfFWHMSensorData = self._getListOfFWHMSensorData(fwhmIdList,
-                                                                 fwhmValues)
+            listOfFWHMSensorData = self._getListOfFWHMSensorData(fwhmIdList, fwhmValues)
 
             # Set the FWHM data
             self.ofc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
             # Simulate to get the WF sensor data from WEP
             wfErrValues = self.iterDataReader.getWfsErr(iterNum)
-            listOfWfErr = self._getListOfSensorWavefrontError(wfIdList,
-                                                              wfErrValues)
+            listOfWfErr = self._getListOfSensorWavefrontError(wfIdList, wfErrValues)
 
             # Calculate the subsystem correction
-            m2HexapodCorrection, hexapodCorrection, m1m3Correction, m2Correction = \
-                self.ofc.calculateCorrections(listOfWfErr)
+            (
+                m2HexapodCorrection,
+                hexapodCorrection,
+                m1m3Correction,
+                m2Correction,
+            ) = self.ofc.calculateCorrections(listOfWfErr)
 
             # Assert the correction by the length only
             self.assertEqual(len(m2HexapodCorrection.getCorrection()), 6)

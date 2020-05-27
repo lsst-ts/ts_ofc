@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
@@ -32,8 +53,7 @@ class BendModeToForce(object):
         """
 
         mirrorDirName = self.getMirrorDirName(dofGroup)
-        bendModeFilePath = os.path.join(configDir, mirrorDirName,
-                                        bendingModeFileName)
+        bendModeFilePath = os.path.join(configDir, mirrorDirName, bendingModeFileName)
         bendingModeFile = ParamReader(filePath=bendModeFilePath)
 
         self.rotMat = self._getMirRotMat(configDir, dofGroup, bendingModeFile)
@@ -57,9 +77,9 @@ class BendModeToForce(object):
 
         BendModeToForce.checkDofGroupIsMirror(dofGroup)
 
-        if (dofGroup == DofGroup.M1M3Bend):
+        if dofGroup == DofGroup.M1M3Bend:
             mirrorDirName = "M1M3"
-        elif (dofGroup == DofGroup.M2Bend):
+        elif dofGroup == DofGroup.M2Bend:
             mirrorDirName = "M2"
 
         return mirrorDirName
@@ -82,11 +102,11 @@ class BendModeToForce(object):
         """
 
         if dofGroup not in (DofGroup.M1M3Bend, DofGroup.M2Bend):
-            raise ValueError("The input DOF group (%s) is not mirror."
-                             % dofGroup)
+            raise ValueError("The input DOF group (%s) is not mirror." % dofGroup)
 
-    def _getMirRotMat(self, configDir, dofGroup, bendingModeFile,
-                      idxDofFileName="idxDOF.yaml"):
+    def _getMirRotMat(
+        self, configDir, dofGroup, bendingModeFile, idxDofFileName="idxDOF.yaml"
+    ):
         """Get the mirror rotation matrix.
 
         DOF: Degree of freedom.
@@ -142,9 +162,9 @@ class BendModeToForce(object):
 
         BendModeToForce.checkDofGroupIsMirror(dofGroup)
 
-        if (dofGroup == DofGroup.M1M3Bend):
+        if dofGroup == DofGroup.M1M3Bend:
             groupName = "m1M3Bend"
-        elif (dofGroup == DofGroup.M2Bend):
+        elif dofGroup == DofGroup.M2Bend:
             groupName = "m2Bend"
 
         numOfBendingMode = idxDofFile.getSetting(groupName).get("idxLength")

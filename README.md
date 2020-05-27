@@ -6,11 +6,11 @@ This module is used to calculate the aggregated degree of freedom (DOF) for the 
 
 - CentOS 7
 - python: 3.7.6
-- scientific pipeline (newinstall.sh from master branch)
 
 ## Required LSST Packages
 
-- [ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: 3c661a4)
+- [ts_wep](https://github.com/lsst-ts/ts_wep)
+- [black](https://github.com/psf/black) (optional)
 - [documenteer](https://github.com/lsst-sqre/documenteer) (optional)
 - [plantuml](http://plantuml.com) (optional)
 - [sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)
@@ -24,6 +24,14 @@ cd $ts_ofc_directory
 setup -k -r .
 scons
 ```
+
+## Code Format
+
+This code is automatically formatted by `black` using a git pre-commit hook.
+To enable this:
+
+1. Install the `black` Python package.
+2. Run `git config core.hooksPath .githooks` once in this repository.
 
 ## Extension of Algorithm
 

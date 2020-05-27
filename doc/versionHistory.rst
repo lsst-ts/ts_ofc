@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.3.1:
+
+-------------
+1.3.1
+-------------
+
+Reformat the code by black. Add the black check to .githooks. Ignore flake8 check of E203 ans W503 for the black. Use the sims_w_2020_21. Fix the hexapod rotation matrix.
+
 .. _lsst.ts.ofc-1.3.0:
 
 -------------

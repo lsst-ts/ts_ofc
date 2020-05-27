@@ -92,7 +92,7 @@ class TestSubSysAdap(unittest.TestCase):
         hexaPos = np.array([1, 2, 3, 1, 1, 1])
         transHexPos = self.subSysAdap.transHexaPosToZemax(hexaPos)
 
-        ansHexPos = [-3, -1, 2, -3600, 3600]
+        ansHexPos = [-3, -1, 2, -3600, -3600]
         self.assertEqual(transHexPos.tolist(), ansHexPos)
 
     def testTransHexaPosToSubSys(self):
@@ -100,7 +100,7 @@ class TestSubSysAdap(unittest.TestCase):
         hexaPos = np.array([1, 2, 3, 3600, 3600])
         transHexPos = self.subSysAdap.transHexaPosToSubSys(hexaPos)
 
-        ansHexPos = [-2, 3, -1, -1, 1, 0]
+        ansHexPos = [-2, 3, -1, -1, -1, 0]
         self.assertEqual(transHexPos.tolist(), ansHexPos)
 
 

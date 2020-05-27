@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import unittest
 import numpy as np
@@ -69,21 +90,22 @@ class TestDataShare(unittest.TestCase):
 
     def testGetGroupIdxAndLeng(self):
 
-        dofGroupList = [DofGroup.M2HexPos, DofGroup.CamHexPos,
-                        DofGroup.M1M3Bend, DofGroup.M2Bend]
+        dofGroupList = [
+            DofGroup.M2HexPos,
+            DofGroup.CamHexPos,
+            DofGroup.M1M3Bend,
+            DofGroup.M2Bend,
+        ]
         startIdxList = [0, 5, 10, 30]
         groupLengList = [5, 5, 20, 20]
-        for startIdx, groupLeng, dofGroup in zip(startIdxList,
-                                                 groupLengList, dofGroupList):
-            dofStartIdx, dofGroupLeng = self.dataShare.getGroupIdxAndLeng(
-                dofGroup)
-            self.assertEqual((dofStartIdx, dofGroupLeng),
-                             (startIdx, groupLeng))
+        for startIdx, groupLeng, dofGroup in zip(
+            startIdxList, groupLengList, dofGroupList
+        ):
+            dofStartIdx, dofGroupLeng = self.dataShare.getGroupIdxAndLeng(dofGroup)
+            self.assertEqual((dofStartIdx, dofGroupLeng), (startIdx, groupLeng))
 
-        self.assertRaises(ValueError, self.dataShare.getGroupIdxAndLeng,
-                          "NoThisGroup")
-        self.assertRaises(ValueError, self.dataShare.getGroupIdxAndLeng,
-                          InstName.LSST)
+        self.assertRaises(ValueError, self.dataShare.getGroupIdxAndLeng, "NoThisGroup")
+        self.assertRaises(ValueError, self.dataShare.getGroupIdxAndLeng, InstName.LSST)
         self.assertRaises(ValueError, self.dataShare.getGroupIdxAndLeng, "")
 
     def testSetZkAndDofIdxArrays(self):
@@ -92,8 +114,8 @@ class TestDataShare(unittest.TestCase):
         dofIdx = np.arange(1, 40, 3)
         self.dataShare.setZkAndDofIdxArrays(zn3Idx, dofIdx)
 
-        self.assertEqual(np.sum(self.dataShare.getZn3Idx()-zn3Idx), 0)
-        self.assertEqual(np.sum(self.dataShare.getDofIdx()-dofIdx), 0)
+        self.assertEqual(np.sum(self.dataShare.getZn3Idx() - zn3Idx), 0)
+        self.assertEqual(np.sum(self.dataShare.getDofIdx() - dofIdx), 0)
 
         senM = self.dataShare.getSenM()
         self.assertEqual(senM.shape, (35, 6, 13))
@@ -107,8 +129,7 @@ class TestDataShare(unittest.TestCase):
 
         camHexPos = np.zeros(5, dtype=int)
 
-        self.dataShare.setZkAndDofInGroups(zkToUse=zkToUse,
-                                           camHexPos=camHexPos)
+        self.dataShare.setZkAndDofInGroups(zkToUse=zkToUse, camHexPos=camHexPos)
 
         zkToUseInDataShare = self.dataShare.getZn3Idx()
         for idx in idxToBeZero:
@@ -122,34 +143,44 @@ class TestDataShare(unittest.TestCase):
         self.assertEqual(self.dataShare.getSenM().shape, (35, 14, 45))
 
         incorrectZkToUse = np.ones(20, dtype=int)
-        self.assertRaises(ValueError, self.dataShare.setZkAndDofInGroups,
-                          incorrectZkToUse)
+        self.assertRaises(
+            ValueError, self.dataShare.setZkAndDofInGroups, incorrectZkToUse
+        )
 
         incorrectCamHexPos = np.zeros(4, dtype=int)
-        self.assertRaises(ValueError, self.dataShare.setZkAndDofInGroups,
-                          zkToUse, incorrectCamHexPos)
+        self.assertRaises(
+            ValueError, self.dataShare.setZkAndDofInGroups, zkToUse, incorrectCamHexPos
+        )
 
     def testGetWfAndFieldIdFromFile(self):
 
-        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                  "lsst_wfs_error_iter0.z4c")
+        wfFilePath = os.path.join(
+            getModulePath(), "tests", "testData", "lsst_wfs_error_iter0.z4c"
+        )
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
         wfErr, fieldIdx = self.dataShare.getWfAndFieldIdFromFile(
-            wfFilePath, sensorNameList)
+            wfFilePath, sensorNameList
+        )
         self.assertEqual(wfErr.shape, (4, 19))
         self.assertEqual(fieldIdx, [31, 32, 33, 34])
 
         incorrectSensorNameList = ["R44_S00", "R04_S20", "R00_S22"]
-        self.assertRaises(ValueError, self.dataShare.getWfAndFieldIdFromFile,
-                          wfFilePath, incorrectSensorNameList)
+        self.assertRaises(
+            ValueError,
+            self.dataShare.getWfAndFieldIdFromFile,
+            wfFilePath,
+            incorrectSensorNameList,
+        )
 
     def testGetWfAndFieldIdFromShwfsFile(self):
 
-        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                  "shwfs_wfs_error.txt")
+        wfFilePath = os.path.join(
+            getModulePath(), "tests", "testData", "shwfs_wfs_error.txt"
+        )
         sensorName = "R22_S11"
         wfErr, fieldIdx = self.dataShare.getWfAndFieldIdFromShwfsFile(
-            wfFilePath, sensorName=sensorName)
+            wfFilePath, sensorName=sensorName
+        )
 
         self.assertEqual(len(wfErr), 19)
         self.assertEqual(fieldIdx, [0])

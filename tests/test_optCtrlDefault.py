@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 import unittest
 
@@ -72,8 +93,7 @@ class TestOptCtrlDefault(unittest.TestCase):
 
         delta = np.sum(np.abs(state0InOpCtrl - stateInOpCtrl))
         self.assertEqual(delta, 0)
-        self.assertNotEqual(id(self.optCtrl.state0InDof),
-                            id(self.optCtrl.stateInDof))
+        self.assertNotEqual(id(self.optCtrl.state0InDof), id(self.optCtrl.stateInDof))
 
     def testGetNumOfState0(self):
 
@@ -140,7 +160,7 @@ class TestOptCtrlDefault(unittest.TestCase):
 
         numOfFieldIdx = 31
         fieldIdx = np.arange(numOfFieldIdx)
-        pssn = np.ones(numOfFieldIdx)*0.9
+        pssn = np.ones(numOfFieldIdx) * 0.9
 
         fwhmGq = self.optCtrl.calcEffGQFWHM(self.optCtrlData, pssn, fieldIdx)
         self.assertEqual(fwhmGq, 0.2172)
@@ -152,8 +172,9 @@ class TestOptCtrlDefault(unittest.TestCase):
         pssn = np.ones(numOfFieldIdx)
         pssn[20] = 1.2
 
-        self.assertRaises(ValueError, self.optCtrl.calcEffGQFWHM,
-                          self.optCtrlData, pssn, fieldIdx)
+        self.assertRaises(
+            ValueError, self.optCtrl.calcEffGQFWHM, self.optCtrlData, pssn, fieldIdx
+        )
 
     def testCalcEffGQFWHMwithPssnEqualsZero(self):
 
@@ -162,20 +183,21 @@ class TestOptCtrlDefault(unittest.TestCase):
         pssn = np.ones(numOfFieldIdx)
         pssn[20] = 0
 
-        self.assertRaises(ValueError, self.optCtrl.calcEffGQFWHM,
-                          self.optCtrlData, pssn, fieldIdx)
+        self.assertRaises(
+            ValueError, self.optCtrl.calcEffGQFWHM, self.optCtrlData, pssn, fieldIdx
+        )
 
     def testEstiUkWithGain(self):
 
-        self.assertRaises(NotImplementedError,
-                          self.optCtrl.estiUkWithGain,
-                          None, None, None)
+        self.assertRaises(
+            NotImplementedError, self.optCtrl.estiUkWithGain, None, None, None
+        )
 
     def testEstiUkWithoutGain(self):
 
-        self.assertRaises(NotImplementedError,
-                          self.optCtrl.estiUkWithoutGain,
-                          None, None, None)
+        self.assertRaises(
+            NotImplementedError, self.optCtrl.estiUkWithoutGain, None, None, None
+        )
 
 
 if __name__ == "__main__":

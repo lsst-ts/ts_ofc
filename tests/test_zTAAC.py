@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
@@ -34,8 +55,9 @@ class TestZTAAC(unittest.TestCase):
         optCtrl = OptCtrl()
 
         self.ztaac = ZTAAC(optStateEsti, optCtrl, mixedData)
-        self.ztaac.config(filterType=FilterType.REF, defaultGain=0.7,
-                          fwhmThresholdInArcsec=0.2)
+        self.ztaac.config(
+            filterType=FilterType.REF, defaultGain=0.7, fwhmThresholdInArcsec=0.2
+        )
 
     def testConfig(self):
 
@@ -50,10 +72,8 @@ class TestZTAAC(unittest.TestCase):
     def testMapSensorIdToName(self):
 
         sensorIdList = [1, 2, 3, 4]
-        sensorNameList, numOfsensor = self.ztaac.mapSensorIdToName(
-            sensorIdList)
-        self.assertEqual(sensorNameList,
-                         ["R00_S21", "R00_S22", "R01_S00", "R01_S01"])
+        sensorNameList, numOfsensor = self.ztaac.mapSensorIdToName(sensorIdList)
+        self.assertEqual(sensorNameList, ["R00_S21", "R00_S22", "R01_S00", "R01_S01"])
         self.assertEqual(numOfsensor, 4)
 
     def testMapSensorNameToId(self):
@@ -84,11 +104,13 @@ class TestZTAAC(unittest.TestCase):
         self.ztaac.setState0(state0)
         self.ztaac.setStateToState0()
 
-        delta = np.sum(np.abs(self.ztaac.optCtrl.state0InDof -
-                              self.ztaac.optCtrl.stateInDof))
+        delta = np.sum(
+            np.abs(self.ztaac.optCtrl.state0InDof - self.ztaac.optCtrl.stateInDof)
+        )
         self.assertEqual(delta, 0)
-        self.assertNotEqual(id(self.ztaac.optCtrl.state0InDof),
-                            id(self.ztaac.optCtrl.stateInDof))
+        self.assertNotEqual(
+            id(self.ztaac.optCtrl.state0InDof), id(self.ztaac.optCtrl.stateInDof)
+        )
 
     def testSetState0FromFile(self):
 
@@ -178,12 +200,40 @@ class TestZTAAC(unittest.TestCase):
 
     def _setGainByPSSN(self, pssn):
 
-        sensorIdList = [100, 103, 104, 105, 97, 96, 95, 140, 150, 109,
-                        44, 46, 93, 180, 120, 118, 18, 45, 82, 183,
-                        122, 116, 24, 40, 81, 179, 161, 70, 5, 33,
-                        123]
-        sensorNameList = self.ztaac.mapSensorIdToName(
-            sensorIdList)[0]
+        sensorIdList = [
+            100,
+            103,
+            104,
+            105,
+            97,
+            96,
+            95,
+            140,
+            150,
+            109,
+            44,
+            46,
+            93,
+            180,
+            120,
+            118,
+            18,
+            45,
+            82,
+            183,
+            122,
+            116,
+            24,
+            40,
+            81,
+            179,
+            161,
+            70,
+            5,
+            33,
+            123,
+        ]
+        sensorNameList = self.ztaac.mapSensorIdToName(sensorIdList)[0]
 
         self.ztaac.setGainByPSSN(pssn, sensorNameList)
 
@@ -195,8 +245,9 @@ class TestZTAAC(unittest.TestCase):
 
     def _getWfErrAndSensorNameListFromLsstFile(self):
 
-        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                  "lsst_wfs_error_iter0.z4c")
+        wfFilePath = os.path.join(
+            getModulePath(), "tests", "testData", "lsst_wfs_error_iter0.z4c"
+        )
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
         wfErr = self.ztaac.getWfFromFile(wfFilePath, sensorNameList)
 
@@ -204,19 +255,29 @@ class TestZTAAC(unittest.TestCase):
 
     def _getWfErrAndSensorNameListFromComCamFile(self):
 
-        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                  "comcam_wfs_error_iter0.z4c")
-        sensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10",
-                          "R22_S11", "R22_S12", "R22_S20", "R22_S21",
-                          "R22_S22"]
+        wfFilePath = os.path.join(
+            getModulePath(), "tests", "testData", "comcam_wfs_error_iter0.z4c"
+        )
+        sensorNameList = [
+            "R22_S00",
+            "R22_S01",
+            "R22_S02",
+            "R22_S10",
+            "R22_S11",
+            "R22_S12",
+            "R22_S20",
+            "R22_S21",
+            "R22_S22",
+        ]
         wfErr = self.ztaac.getWfFromFile(wfFilePath, sensorNameList)
 
         return wfErr, sensorNameList
 
     def testGetWfFromShwfsFile(self):
 
-        wfFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                  "shwfs_wfs_error.txt")
+        wfFilePath = os.path.join(
+            getModulePath(), "tests", "testData", "shwfs_wfs_error.txt"
+        )
         wfErr, sensorName = self.ztaac.getWfFromShwfsFile(wfFilePath)
 
         self.assertEqual(len(wfErr), 19)
@@ -253,8 +314,9 @@ class TestZTAAC(unittest.TestCase):
         optCtrl = OptCtrl()
 
         self.ztaac = ZTAAC(optStateEsti, optCtrl, mixedData)
-        self.ztaac.config(filterType=FilterType.REF, defaultGain=0.7,
-                          fwhmThresholdInArcsec=0.2)
+        self.ztaac.config(
+            filterType=FilterType.REF, defaultGain=0.7, fwhmThresholdInArcsec=0.2
+        )
 
         self._setStateAndState0FromFile()
 
@@ -298,8 +360,9 @@ class TestZTAAC(unittest.TestCase):
         m2Bend = np.zeros(20, dtype=int)
         m2Bend[[0, 3]] = 1
 
-        self.ztaac.setZkAndDofInGroups(m2HexPos=m2HexPos, camHexPos=camHexPos,
-                                       m1m3Bend=m1m3Bend, m2Bend=m2Bend)
+        self.ztaac.setZkAndDofInGroups(
+            m2HexPos=m2HexPos, camHexPos=camHexPos, m1m3Bend=m1m3Bend, m2Bend=m2Bend
+        )
 
         calcDof = np.arange(1, 9)
         self.ztaac.aggState(calcDof)
@@ -339,7 +402,7 @@ class TestZTAAC(unittest.TestCase):
 
     def testGetGroupDofWithInputDof(self):
 
-        calcDof = np.arange(3, len(self.ztaac.dataShare.getDofIdx())+3)
+        calcDof = np.arange(3, len(self.ztaac.dataShare.getDofIdx()) + 3)
 
         dof = self.ztaac.getGroupDof(DofGroup.CamHexPos, inputDof=calcDof)
         ans = np.arange(8, 13)
@@ -354,8 +417,7 @@ class TestZTAAC(unittest.TestCase):
         camHexPos = np.ones(5, dtype=int)
         camHexPos[3] = 0
 
-        self.ztaac.setZkAndDofInGroups(zkToUse=zkToUse,
-                                       camHexPos=camHexPos)
+        self.ztaac.setZkAndDofInGroups(zkToUse=zkToUse, camHexPos=camHexPos)
 
         self.assertNotIn(2, self.ztaac.dataShare.getZn3Idx())
         self.assertNotIn(8, self.ztaac.dataShare.getDofIdx())

@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import logging
@@ -284,7 +305,9 @@ class OptCtrlDataDecorator(Decorator):
             state0InDofFileName = "state0inDof.yaml"
 
         filePath = os.path.join(self.getInstDir(), state0InDofFileName)
-        logging.getLogger("lsst.ts.ofc").debug(f"Reading 0 state configuration from {filePath}")
+        logging.getLogger("lsst.ts.ofc").debug(
+            f"Reading 0 state configuration from {filePath}"
+        )
         return self.getState0FromDict(ParamReader(filePath=filePath).getContent())
 
     def getState0FromDict(self, state0InDofDict):

@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
@@ -24,19 +45,21 @@ class TestOptStateEsti(unittest.TestCase):
 
         self.optStateEsti = OptStateEsti()
 
-        wfsFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "lsst_wfs_error_iter0.z4c")
+        wfsFilePath = os.path.join(
+            getModulePath(), "tests", "testData", "lsst_wfs_error_iter0.z4c"
+        )
         sensorNameList = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
         wfErr, fieldIdx = self.optStateEstiData.getWfAndFieldIdFromFile(
-            wfsFilePath, sensorNameList)
+            wfsFilePath, sensorNameList
+        )
         self.wfErr = wfErr
         self.fieldIdx = fieldIdx
 
     def testEstiOptState(self):
 
-        optState = self.optStateEsti.estiOptState(self.optStateEstiData,
-                                                  FilterType.REF, self.wfErr,
-                                                  self.fieldIdx)
+        optState = self.optStateEsti.estiOptState(
+            self.optStateEstiData, FilterType.REF, self.wfErr, self.fieldIdx
+        )
         dofIdx = self.optStateEstiData.getDofIdx()
 
         self.assertEqual(len(optState), len(dofIdx))
@@ -50,9 +73,9 @@ class TestOptStateEsti(unittest.TestCase):
         dofIdx = np.arange(10)
         self.optStateEstiData.setZkAndDofIdxArrays(zn3Idx, dofIdx)
 
-        optState = self.optStateEsti.estiOptState(self.optStateEstiData,
-                                                  FilterType.REF, self.wfErr,
-                                                  self.fieldIdx)
+        optState = self.optStateEsti.estiOptState(
+            self.optStateEstiData, FilterType.REF, self.wfErr, self.fieldIdx
+        )
         self.assertEqual(len(optState), len(dofIdx))
         self.assertAlmostEqual(optState[0], -645.7540849494324)
         self.assertAlmostEqual(optState[1], -10221.082801186029)
@@ -64,9 +87,14 @@ class TestOptStateEsti(unittest.TestCase):
         dofIdx = np.arange(20)
         self.optStateEstiData.setZkAndDofIdxArrays(zn3Idx, dofIdx)
 
-        self.assertRaises(RuntimeError, self.optStateEsti.estiOptState,
-                          self.optStateEstiData, FilterType.REF, self.wfErr,
-                          self.fieldIdx)
+        self.assertRaises(
+            RuntimeError,
+            self.optStateEsti.estiOptState,
+            self.optStateEstiData,
+            FilterType.REF,
+            self.wfErr,
+            self.fieldIdx,
+        )
 
 
 if __name__ == "__main__":

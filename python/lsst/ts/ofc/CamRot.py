@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 from scipy.linalg import block_diag
 
@@ -5,7 +26,6 @@ from lsst.ts.ofc.Utility import DofGroup
 
 
 class CamRot(object):
-
     def __init__(self, rotAngInDeg=0):
         """Initialization of camera rotation class.
 
@@ -31,7 +51,7 @@ class CamRot(object):
             Camera rotation angle should be in [-90, 90].
         """
 
-        if (np.abs(rotAngInDeg) <= 90):
+        if np.abs(rotAngInDeg) <= 90:
             self.rotAngInDeg = rotAngInDeg
         else:
             raise ValueError("Camera rotation angle should be in [-90, 90].")
@@ -67,15 +87,13 @@ class CamRot(object):
         """
 
         # 1 arcsec = 1/3600 deg
-        tiltXYinDeg = tuple(ti/3600.0 for ti in tiltXYinArcsec)
+        tiltXYinDeg = tuple(ti / 3600.0 for ti in tiltXYinArcsec)
 
         stateInDof = np.array(stateInDof, dtype=float)
         if dofGroup in (DofGroup.M2HexPos, DofGroup.CamHexPos):
-            rotatedStateInDof = self._rotHexPos(dofGroup, stateInDof,
-                                                tiltXYinDeg)
+            rotatedStateInDof = self._rotHexPos(dofGroup, stateInDof, tiltXYinDeg)
         elif dofGroup in (DofGroup.M1M3Bend, DofGroup.M2Bend):
-            rotatedStateInDof = self._rotBendingMode(dofGroup, stateInDof,
-                                                     tiltXYinDeg)
+            rotatedStateInDof = self._rotBendingMode(dofGroup, stateInDof, tiltXYinDeg)
 
         return rotatedStateInDof
 
@@ -100,10 +118,9 @@ class CamRot(object):
             Rotated position.
         """
 
-        if (dofGroup == DofGroup.M2HexPos):
-            rotAngInDeg = self._mapRotAngByTiltXY(self.rotAngInDeg,
-                                                  tiltXYinDeg)
-        elif (dofGroup == DofGroup.CamHexPos):
+        if dofGroup == DofGroup.M2HexPos:
+            rotAngInDeg = self._mapRotAngByTiltXY(self.rotAngInDeg, tiltXYinDeg)
+        elif dofGroup == DofGroup.CamHexPos:
             rotAngInDeg = self.rotAngInDeg
 
         rotMat = self._getHexRotMat(rotAngInDeg)
@@ -223,12 +240,35 @@ class CamRot(object):
 
         rotMat = self._calcRotMat(rotAngInDeg)
 
-        if (dofGroup == DofGroup.M1M3Bend):
-            return block_diag(rotMat, 1, rotMat, rotMat, rotMat, rotMat,
-                              1, rotMat, rotMat, rotMat, 1, 1)
-        elif (dofGroup == DofGroup.M2Bend):
-            return block_diag(rotMat, rotMat, 1, rotMat, rotMat, rotMat,
-                              rotMat, rotMat, rotMat, rotMat, 1)
+        if dofGroup == DofGroup.M1M3Bend:
+            return block_diag(
+                rotMat,
+                1,
+                rotMat,
+                rotMat,
+                rotMat,
+                rotMat,
+                1,
+                rotMat,
+                rotMat,
+                rotMat,
+                1,
+                1,
+            )
+        elif dofGroup == DofGroup.M2Bend:
+            return block_diag(
+                rotMat,
+                rotMat,
+                1,
+                rotMat,
+                rotMat,
+                rotMat,
+                rotMat,
+                rotMat,
+                rotMat,
+                rotMat,
+                1,
+            )
 
 
 if __name__ == "__main__":

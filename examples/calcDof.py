@@ -1,3 +1,24 @@
+# This file is part of ts_ofc.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
@@ -41,8 +62,7 @@ def setup():
     ztaac = ZTAAC(optStateEsti, optCtrl, mixedData)
 
     # Do the configuration of ZTAAC object.
-    ztaac.config(filterType=FilterType.REF, defaultGain=0.7,
-                 fwhmThresholdInArcsec=0.2)
+    ztaac.config(filterType=FilterType.REF, defaultGain=0.7, fwhmThresholdInArcsec=0.2)
 
     # Set the state 0 from file. This is only used in the simulation.
     # In the real control, the state 0 should come from the subsystem
@@ -61,8 +81,7 @@ def setup():
     camRot.setRotAng(0)
 
     # Read the test iteration data by the IM closed-loop simulation.
-    iterDataDir = os.path.join(getModulePath(), "tests", "testData",
-                               "iteration")
+    iterDataDir = os.path.join(getModulePath(), "tests", "testData", "iteration")
     iterDataReader = IterDataReader(iterDataDir)
 
     return ztaac, camRot, iterDataReader
@@ -124,7 +143,7 @@ def main():
         # only the aggregated totatl state (state - state0) is needed.
         dof += ztaac.getState0()
 
-        print("The DOF applied in the next iteration: %s" % str(iterNum+1))
+        print("The DOF applied in the next iteration: %s" % str(iterNum + 1))
         print(dof)
 
 

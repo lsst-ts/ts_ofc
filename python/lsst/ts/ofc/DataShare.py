@@ -40,7 +40,6 @@ class DataShare(object):
         self._senMfile = ParamReader()
         self._mappingFile = ParamReader()
         self._idxDofFile = ParamReader()
-        self._sensorNameToIdFile = ParamReader()
 
     def config(
         self,
@@ -49,7 +48,6 @@ class DataShare(object):
         zkAndDofIdxArraySetFileName="zkAndDofIdxArraySet.yaml",
         mappingFileName="sensorNameToFieldIdx.yaml",
         idxDofFileName="idxDOF.yaml",
-        sensorNameToIdFileName="sensorNameToId.yaml",
     ):
         """Do the configuration of DataShare class.
 
@@ -70,9 +68,6 @@ class DataShare(object):
             field.  (the default is "sensorNameToFieldIdx.yaml".)
         idxDofFileName : str, optional
             Index of DOF file name. (the default is "idxDOF.yaml".)
-        sensorNameToIdFileName : str, optional
-            Configuration file name to map sensor Id to name. (the default
-            is "sensorNameToId.yaml".)
         """
 
         self.configDir = configDir
@@ -88,9 +83,6 @@ class DataShare(object):
 
         idxDofFilePath = os.path.join(configDir, idxDofFileName)
         self._idxDofFile.setFilePath(idxDofFilePath)
-
-        sensorNameToIdFilePath = os.path.join(configDir, sensorNameToIdFileName)
-        self._sensorNameToIdFile.setFilePath(sensorNameToIdFilePath)
 
         senMfilePath = self._getSenMfilePath(reMatchStr=r"\AsenM\S+")
         self._senMfile.setFilePath(senMfilePath)

@@ -63,9 +63,9 @@ class TestOptStateEsti(unittest.TestCase):
         dofIdx = self.optStateEstiData.getDofIdx()
 
         self.assertEqual(len(optState), len(dofIdx))
-        self.assertAlmostEqual(optState[0], 29.82660072, places=7)
-        self.assertAlmostEqual(optState[1], 0.05548614, places=7)
-        self.assertAlmostEqual(optState[2], -0.03946648, places=7)
+        self.assertAlmostEqual(optState[0], 29.99315863, places=7)
+        self.assertAlmostEqual(optState[1], 0.05606898, places=7)
+        self.assertAlmostEqual(optState[2], -0.04200292, places=7)
 
     def testEstiOptStateWithDifferentZkIdxAndDofIdx(self):
 

@@ -74,7 +74,7 @@ class TestSubSysAdap(unittest.TestCase):
         actForce = np.ones(72)
         transActForce = self.subSysAdap.transActForceToZemax(DofGroup.M2Bend, actForce)
 
-        ansActForce = -actForce
+        ansActForce = actForce.copy()
         delta = np.sum(np.abs(transActForce - ansActForce))
         self.assertEqual(delta, 0)
 
@@ -83,7 +83,7 @@ class TestSubSysAdap(unittest.TestCase):
         actForce = np.ones(72)
         transActForce = self.subSysAdap.transActForceToSubSys(DofGroup.M2Bend, actForce)
 
-        ansActForce = -actForce
+        ansActForce = actForce.copy()
         delta = np.sum(np.abs(transActForce - ansActForce))
         self.assertEqual(delta, 0)
 

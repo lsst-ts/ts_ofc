@@ -35,12 +35,8 @@ To enable this:
 
 ## Extension of Algorithm
 
-- **Estimate the optical state**: Inherit from the OptStateEstiDefault class, and realize the estiOptState() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
-- **Calculate the DOF offset**: Inherit from the OptCtrlDefault class, and realize the estiUkWithoutGain() function. Inherit from the Decorator class if new parameter data is needed in the new algorithm.
-
-## Example Script
-
-- **calcDof.py**: Calculate DOF with 5 iterations.
+- **Estimate the optical state**: Inherit from the **OptStateEstiDefault** class, and realize the **estiOptState()** function. Inherit from the **Decorator** class if new parameter data is needed in the new algorithm.
+- **Calculate the DOF offset**: Inherit from the **OptCtrlDefault** class, and realize the **estiUkWithoutGain()** function. Inherit from the **Decorator** class if new parameter data is needed in the new algorithm.
 
 ## Build the Document
 

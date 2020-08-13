@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.3.2:
+
+-------------
+1.3.2
+-------------
+
+Update the sensitivity matrix and M2 force file. This unifies the corrdinate system of M1M3 and M2 in FEA model. Test the sims_w_2020_28.
+
 .. _lsst.ts.ofc-1.3.1:
 
 -------------

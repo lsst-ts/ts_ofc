@@ -4,9 +4,8 @@
 # ZEMAX is used to generate/ evaluate the bending mode.
 # Mirror's coordinate is used in the mirror's control system.
 
-# The coordinate in FEA is the same as the MATLAB tool provided by Harris.
-# It is different from the M2 control system.
+# For the Harris's MATLAB and LabVIEW tools:
 # The (x, y, z)-axis in MATLAB is (-y, -x, -z) in LabVIEW
 
-# +z in Bo's FEA (ZEMAX) is -z in M2 hardware.
-act: -1.0
+# +z in Bo's FEA (ZEMAX) is +z in M2 hardware (LabVIEW).
+act: 1.0

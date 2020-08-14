@@ -195,10 +195,10 @@ class TestOFCCalculation(unittest.TestCase):
 
         uk = self.ofcCalculation.getStateCorrectionFromLastVisit()
 
-        self.assertAlmostEqual(uk[0], -9.45590577, places=7)
-        self.assertAlmostEqual(uk[1], -2.53901017, places=7)
-        self.assertAlmostEqual(uk[5], -39.87900273, places=7)
-        self.assertAlmostEqual(uk[7], 3.24063367, places=7)
+        self.assertAlmostEqual(uk[0], -9.44847541, places=7)
+        self.assertAlmostEqual(uk[1], -2.53792714, places=7)
+        self.assertAlmostEqual(uk[5], -39.91899739, places=7)
+        self.assertAlmostEqual(uk[7], 3.25321204, places=7)
 
     def _getListOfSensorWavefrontError(self):
 

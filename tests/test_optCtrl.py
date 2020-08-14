@@ -74,9 +74,9 @@ class TestOptCtrl(unittest.TestCase):
         uk = self.optCtrl.estiUkWithoutGain(self.mixedData, self.filterType, self.optSt)
 
         self.assertEqual(len(uk), len(self.mixedData.getDofIdx()))
-        self.assertAlmostEqual(uk[0], -9.45590577, places=7)
-        self.assertAlmostEqual(uk[1], -2.53901017, places=7)
-        self.assertAlmostEqual(uk[2], -0.53020684, places=7)
+        self.assertAlmostEqual(uk[0], -9.44847541, places=7)
+        self.assertAlmostEqual(uk[1], -2.53792714, places=7)
+        self.assertAlmostEqual(uk[2], -0.53851520, places=7)
 
     def testEstiUkWithoutGainWith0(self):
 
@@ -84,9 +84,9 @@ class TestOptCtrl(unittest.TestCase):
         uk = self.optCtrl.estiUkWithoutGain(self.mixedData, self.filterType, self.optSt)
 
         self.assertEqual(len(uk), len(self.mixedData.getDofIdx()))
-        self.assertAlmostEqual(uk[0], -14.43967495, places=7)
-        self.assertAlmostEqual(uk[1], -24.74416213, places=7)
-        self.assertAlmostEqual(uk[2], 97.38850800, places=7)
+        self.assertAlmostEqual(uk[0], -113.62056585, places=7)
+        self.assertAlmostEqual(uk[1], -89.94878290, places=7)
+        self.assertAlmostEqual(uk[2], 30.05926538, places=7)
 
     def testEstiUkWithoutGainWithX00(self):
 
@@ -94,9 +94,9 @@ class TestOptCtrl(unittest.TestCase):
         uk = self.optCtrl.estiUkWithoutGain(self.mixedData, self.filterType, self.optSt)
 
         self.assertEqual(len(uk), len(self.mixedData.getDofIdx()))
-        self.assertAlmostEqual(uk[0], -9.45590577, places=7)
-        self.assertAlmostEqual(uk[1], -2.53901017, places=7)
-        self.assertAlmostEqual(uk[2], -0.53020684, places=7)
+        self.assertAlmostEqual(uk[0], -9.44847541, places=7)
+        self.assertAlmostEqual(uk[1], -2.53792714, places=7)
+        self.assertAlmostEqual(uk[2], -0.53851520, places=7)
 
     def testEstiUkWithoutGainAndXref(self):
 

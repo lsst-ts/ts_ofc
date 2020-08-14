@@ -71,7 +71,7 @@ class TestIteration(unittest.TestCase):
         pssn = self.iterDataReader.getPssn(iterNum, numOfPssn)
 
         self.assertEqual(len(pssn), 9)
-        self.assertAlmostEqual(pssn[3], 0.92950413, places=7)
+        self.assertAlmostEqual(pssn[3], 0.95717611, places=7)
 
     def testGetFwhm(self):
 
@@ -80,7 +80,7 @@ class TestIteration(unittest.TestCase):
         fwhm = self.iterDataReader.getFwhm(iterNum, numOfFwhm)
 
         self.assertEqual(len(fwhm), 9)
-        self.assertAlmostEqual(fwhm[3], 0.17944742, places=7)
+        self.assertAlmostEqual(fwhm[3], 0.13782505, places=7)
 
     def testGetDof(self):
 
@@ -88,7 +88,7 @@ class TestIteration(unittest.TestCase):
         dof = self.iterDataReader.getDof(iterNum)
 
         self.assertEqual(len(dof), 50)
-        self.assertAlmostEqual(dof[3], -1.26663684, places=7)
+        self.assertAlmostEqual(dof[3], -0.50684631, places=7)
 
     def testGetSensorIdListWfs(self):
 

@@ -77,7 +77,7 @@ class TestBendModeToForce(unittest.TestCase):
         actForce = self._calcActForce()[0]
 
         self.assertEqual(len(actForce), 72)
-        self.assertAlmostEqual(actForce[0], -0.28011368, places=7)
+        self.assertAlmostEqual(actForce[0], 0.28011368, places=7)
 
     def _configM2(self):
 

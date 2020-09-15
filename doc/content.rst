@@ -50,6 +50,7 @@ This module provides the interface classes to the main telescope active optics s
 * **OFCCalculationOfIota**: OFC calculation of IOTA class. This is a child class of OFCCalculation class.
 * **OFCCalculationOfSh**: OFC calculation of Shack-Hartmann camera class. This is the concrete child class of OFCCalculationOfIota class.
 * **OFCCalculationOfCmos**: OFC calculation of CMOS class. This is the concrete child class of OFCCalculationOfIota class.
+* **OFCCalculationOfLsstFam**: OFC calculation of LSST full-array mode (FAM) class. This is the concrete child class of OFCCalculation class.
 * **CameraHexapodCorrection**: Camera hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.
 * **M2HexapodCorrection**: M2 hexapod correction class. This class contains the position correction to let the MTAOS to apply to subsystem.
 * **M1M3Correction**: M1M3 correction class. This class contains the actuator force correction to let the MTAOS to apply to subsystem.

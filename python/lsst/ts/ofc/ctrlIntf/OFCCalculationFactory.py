@@ -24,6 +24,7 @@ from lsst.ts.ofc.ctrlIntf.OFCCalculationOfLsst import OFCCalculationOfLsst
 from lsst.ts.ofc.ctrlIntf.OFCCalculationOfComCam import OFCCalculationOfComCam
 from lsst.ts.ofc.ctrlIntf.OFCCalculationOfSh import OFCCalculationOfSh
 from lsst.ts.ofc.ctrlIntf.OFCCalculationOfCmos import OFCCalculationOfCmos
+from lsst.ts.ofc.ctrlIntf.OFCCalculationOfLsstFam import OFCCalculationOfLsstFam
 
 
 class OFCCalculationFactory(object):
@@ -51,7 +52,7 @@ class OFCCalculationFactory(object):
         Returns
         -------
         OFCCalculationOfLsst, OFCCalculationOfComCam, OFCCalculationOfSh, or
-        OFCCalculationOfCmos
+        OFCCalculationOfCmos, OFCCalculationOfLsstFam
             Concrete child class of OFCCalculation class.
 
         Raises
@@ -68,9 +69,7 @@ class OFCCalculationFactory(object):
             return OFCCalculationOfSh(state0Dof)
         elif instName == InstName.CMOS:
             return OFCCalculationOfCmos(state0Dof)
+        elif instName == InstName.LSSTFAM:
+            return OFCCalculationOfLsstFam(state0Dof)
         else:
             raise ValueError("This instrument is not supported.")
-
-
-if __name__ == "__main__":
-    pass

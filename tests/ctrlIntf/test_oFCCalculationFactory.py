@@ -27,6 +27,7 @@ from lsst.ts.ofc.ctrlIntf.OFCCalculationOfLsst import OFCCalculationOfLsst
 from lsst.ts.ofc.ctrlIntf.OFCCalculationOfComCam import OFCCalculationOfComCam
 from lsst.ts.ofc.ctrlIntf.OFCCalculationOfSh import OFCCalculationOfSh
 from lsst.ts.ofc.ctrlIntf.OFCCalculationOfCmos import OFCCalculationOfCmos
+from lsst.ts.ofc.ctrlIntf.OFCCalculationOfLsstFam import OFCCalculationOfLsstFam
 
 
 class TestOFCCalculationFactory(unittest.TestCase):
@@ -85,27 +86,25 @@ class TestOFCCalculationFactory(unittest.TestCase):
     def testGetCalculatorOfLsst(self):
 
         calculator = OFCCalculationFactory.getCalculator(InstName.LSST)
-
         self.assertTrue(isinstance(calculator, OFCCalculationOfLsst))
 
     def testGetCalculatorOfLsstDoF(self):
 
-        calculator = OFCCalculationFactory.getCalculator(InstName.LSST, self.state0Dof)
-
+        calculator = OFCCalculationFactory.getCalculator(
+            InstName.LSST, state0Dof=self.state0Dof
+        )
         self.assertTrue(isinstance(calculator, OFCCalculationOfLsst))
 
     def testGetCalculatorOfComCam(self):
 
         calculator = OFCCalculationFactory.getCalculator(InstName.COMCAM)
-
         self.assertTrue(isinstance(calculator, OFCCalculationOfComCam))
 
     def testGetCalculatorOfComCamDof(self):
 
         calculator = OFCCalculationFactory.getCalculator(
-            InstName.COMCAM, self.state0Dof
+            InstName.COMCAM, state0Dof=self.state0Dof
         )
-
         self.assertTrue(isinstance(calculator, OFCCalculationOfComCam))
 
     def testGetCalculatorOfSh(self):
@@ -115,7 +114,9 @@ class TestOFCCalculationFactory(unittest.TestCase):
 
     def testGetCalculatorOfShDoF(self):
 
-        calculator = OFCCalculationFactory.getCalculator(InstName.SH, self.state0Dof)
+        calculator = OFCCalculationFactory.getCalculator(
+            InstName.SH, state0Dof=self.state0Dof
+        )
         self.assertTrue(isinstance(calculator, OFCCalculationOfSh))
 
     def testGetCalculatorOfCmos(self):
@@ -125,8 +126,22 @@ class TestOFCCalculationFactory(unittest.TestCase):
 
     def testGetCalculatorOfCmosDoF(self):
 
-        calculator = OFCCalculationFactory.getCalculator(InstName.CMOS, self.state0Dof)
+        calculator = OFCCalculationFactory.getCalculator(
+            InstName.CMOS, state0Dof=self.state0Dof
+        )
         self.assertTrue(isinstance(calculator, OFCCalculationOfCmos))
+
+    def testGetCalculatorOfLsstFam(self):
+
+        calculator = OFCCalculationFactory.getCalculator(InstName.LSSTFAM)
+        self.assertTrue(isinstance(calculator, OFCCalculationOfLsstFam))
+
+    def testGetCalculatorOfLsstFamDof(self):
+
+        calculator = OFCCalculationFactory.getCalculator(
+            InstName.LSSTFAM, state0Dof=self.state0Dof
+        )
+        self.assertTrue(isinstance(calculator, OFCCalculationOfLsstFam))
 
     def testGetCalculatorOfWrongInst(self):
 

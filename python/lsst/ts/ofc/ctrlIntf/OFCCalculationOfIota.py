@@ -46,7 +46,7 @@ class OFCCalculationOfIota(OFCCalculation):
             details.
         """
 
-        super(OFCCalculationOfIota, self).__init__(FWHMToPSSN(), instName, state0Dof)
+        super().__init__(FWHMToPSSN(), instName, state0Dof)
 
         # Set the idx of zk and DOF
         self._setZkAndDofIdxOfIota(specificInstDirName, instName)
@@ -78,7 +78,3 @@ class OFCCalculationOfIota(OFCCalculation):
             instName,
             zkAndDofIdxArraySetFileName=specificZkAndDofIdxArraySetFileName,
         )
-
-
-if __name__ == "__main__":
-    pass

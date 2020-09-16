@@ -51,8 +51,7 @@ class OFCCalculationFactory(object):
 
         Returns
         -------
-        OFCCalculationOfLsst, OFCCalculationOfComCam, OFCCalculationOfSh, or
-        OFCCalculationOfCmos, OFCCalculationOfLsstFam
+        OFCCalculation child (e.g. OFCCalculationOfComCam)
             Concrete child class of OFCCalculation class.
 
         Raises

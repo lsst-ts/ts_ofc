@@ -40,10 +40,4 @@ class OFCCalculationOfComCam(OFCCalculation):
 
         ComCam: Commissioning camera.
         """
-        super(OFCCalculationOfComCam, self).__init__(
-            FWHMToPSSN(), InstName.COMCAM, state0Dof
-        )
-
-
-if __name__ == "__main__":
-    pass
+        super().__init__(FWHMToPSSN(), InstName.COMCAM, state0Dof)

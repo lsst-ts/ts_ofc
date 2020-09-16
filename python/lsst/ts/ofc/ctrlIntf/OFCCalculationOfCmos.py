@@ -41,8 +41,4 @@ class OFCCalculationOfCmos(OFCCalculationOfIota):
         """
 
         # Use the data in ComCam
-        super(OFCCalculationOfCmos, self).__init__(InstName.COMCAM, "cmos", state0Dof)
-
-
-if __name__ == "__main__":
-    pass
+        super().__init__(InstName.COMCAM, "cmos", state0Dof)

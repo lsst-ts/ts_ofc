@@ -41,8 +41,4 @@ class OFCCalculationOfSh(OFCCalculationOfIota):
         """
 
         # Use the data in ComCam
-        super(OFCCalculationOfSh, self).__init__(InstName.COMCAM, "sh", state0Dof)
-
-
-if __name__ == "__main__":
-    pass
+        super().__init__(InstName.COMCAM, "sh", state0Dof)

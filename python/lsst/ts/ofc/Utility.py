@@ -21,23 +21,24 @@
 
 import os
 import re
-from enum import Enum
+from enum import IntEnum, auto
 
 from lsst.utils import getPackageDir
 
 
-class InstName(Enum):
+class InstName(IntEnum):
     LSST = 1
-    COMCAM = 2
-    SH = 3
-    CMOS = 4
+    COMCAM = auto()
+    SH = auto()
+    CMOS = auto()
+    LSSTFAM = auto()
 
 
-class DofGroup(Enum):
+class DofGroup(IntEnum):
     M2HexPos = 1
-    CamHexPos = 2
-    M1M3Bend = 3
-    M2Bend = 4
+    CamHexPos = auto()
+    M1M3Bend = auto()
+    M2Bend = auto()
 
 
 def getDirFiles(dirPath):
@@ -144,7 +145,3 @@ def getConfigDir():
     """
 
     return os.path.join(getModulePath(), "policy")
-
-
-if __name__ == "__main__":
-    pass

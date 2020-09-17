@@ -8,10 +8,12 @@ OFCCalculation ..> M2Correction
 OFCCalculation <|-- OFCCalculationOfLsst
 OFCCalculation <|-- OFCCalculationOfComCam
 OFCCalculation <|-- OFCCalculationOfIota
+OFCCalculation <|-- OFCCalculationOfLsstFam
 OFCCalculationOfIota <|-- OFCCalculationOfSh
 OFCCalculationOfIota <|-- OFCCalculationOfCmos
 OFCCalculationFactory ..> OFCCalculationOfLsst
 OFCCalculationFactory ..> OFCCalculationOfComCam
 OFCCalculationFactory ..> OFCCalculationOfSh
 OFCCalculationFactory ..> OFCCalculationOfCmos
+OFCCalculationFactory ..> OFCCalculationOfLsstFam
 @enduml

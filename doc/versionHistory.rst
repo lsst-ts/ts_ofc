@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.3.3:
+
+-------------
+1.3.3
+-------------
+
+Use the sims_w_2020_36. Support the LSST full-array mode (FAM) by adding the **OFCCalculationOfLsstFam** class.
+
 .. _lsst.ts.ofc-1.3.2:
 
 -------------

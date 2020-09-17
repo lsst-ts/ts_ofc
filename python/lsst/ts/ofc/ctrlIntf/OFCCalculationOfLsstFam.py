@@ -20,14 +20,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from lsst.ts.ofc.Utility import InstName
-from lsst.ts.ofc.ctrlIntf.OFCCalculationOfIota import OFCCalculationOfIota
+from lsst.ts.ofc.ctrlIntf.OFCCalculation import OFCCalculation
+from lsst.ts.ofc.ctrlIntf.FWHMToPSSN import FWHMToPSSN
 
 
-class OFCCalculationOfCmos(OFCCalculationOfIota):
-    """The concrete child class of OFCCalculation of the CMOS"""
+class OFCCalculationOfLsstFam(OFCCalculation):
+    """The concrete child class of OFCCalculation of the LSST."""
 
     def __init__(self, state0Dof=None):
-        """Construct an OFC calculation of CMOS camera.
+        """Construct an OFC calculation of LSST full-array mode (FAM).
 
         Parameters
         ----------
@@ -36,9 +37,6 @@ class OFCCalculationOfCmos(OFCCalculationOfIota):
             default will be used. See
             :lsst:ts:ofc:`OptCtrlDataDecorator.getState0FromDict` for format
             details.
-
-        CMOS: Complementary metal–oxide–semiconductor.
         """
 
-        # Use the data in ComCam
-        super().__init__(InstName.COMCAM, "cmos", state0Dof)
+        super().__init__(FWHMToPSSN(), InstName.LSSTFAM, state0Dof)

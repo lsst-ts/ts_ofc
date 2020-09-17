@@ -42,7 +42,7 @@ class OptStateEstiDataDecorator(Decorator):
             Decorated object.
         """
 
-        super(OptStateEstiDataDecorator, self).__init__(decoratedObj)
+        super().__init__(decoratedObj)
 
         self._wavelengthTable = ParamReader()
         self._intrincZkFileName = ""
@@ -155,7 +155,3 @@ class OptStateEstiDataDecorator(Decorator):
         intrinsicZk = intrinsicZk * self.getEffWave(filterType)
 
         return intrinsicZk
-
-
-if __name__ == "__main__":
-    pass

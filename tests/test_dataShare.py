@@ -105,7 +105,6 @@ class TestDataShare(unittest.TestCase):
             self.assertEqual((dofStartIdx, dofGroupLeng), (startIdx, groupLeng))
 
         self.assertRaises(ValueError, self.dataShare.getGroupIdxAndLeng, "NoThisGroup")
-        self.assertRaises(ValueError, self.dataShare.getGroupIdxAndLeng, InstName.LSST)
         self.assertRaises(ValueError, self.dataShare.getGroupIdxAndLeng, "")
 
     def testSetZkAndDofIdxArrays(self):

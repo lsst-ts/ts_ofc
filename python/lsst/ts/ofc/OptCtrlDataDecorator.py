@@ -39,7 +39,7 @@ class OptCtrlDataDecorator(Decorator):
             Decorated object.
         """
 
-        super(OptCtrlDataDecorator, self).__init__(decoratedObj)
+        super().__init__(decoratedObj)
 
         self.xRef = ""
 
@@ -419,7 +419,3 @@ class OptCtrlDataDecorator(Decorator):
         """
 
         return self.xRef
-
-
-if __name__ == "__main__":
-    pass

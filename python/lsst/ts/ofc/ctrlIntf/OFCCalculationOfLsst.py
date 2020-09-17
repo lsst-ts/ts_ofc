@@ -39,10 +39,4 @@ class OFCCalculationOfLsst(OFCCalculation):
             details.
         """
 
-        super(OFCCalculationOfLsst, self).__init__(
-            FWHMToPSSN(), InstName.LSST, state0Dof
-        )
-
-
-if __name__ == "__main__":
-    pass
+        super().__init__(FWHMToPSSN(), InstName.LSST, state0Dof)

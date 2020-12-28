@@ -6,13 +6,21 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.3.5:
+
+-------------
+1.3.5
+-------------
+
+* Use the latest **ts_wep** that removes the dependency of ``sims`` package.
+
 .. _lsst.ts.ofc-1.3.4:
 
 -------------
 1.3.4
 -------------
 
-Use the sims_w_2020_38.
+* Use the ``sims_w_2020_38``.
 
 .. _lsst.ts.ofc-1.3.3:
 
@@ -20,7 +28,8 @@ Use the sims_w_2020_38.
 1.3.3
 -------------
 
-Use the sims_w_2020_36. Support the LSST full-array mode (FAM) by adding the **OFCCalculationOfLsstFam** class.
+* Use the ``sims_w_2020_36``.
+* Support the LSST full-array mode (FAM) by adding the **OFCCalculationOfLsstFam** class.
 
 .. _lsst.ts.ofc-1.3.2:
 
@@ -28,7 +37,9 @@ Use the sims_w_2020_36. Support the LSST full-array mode (FAM) by adding the **O
 1.3.2
 -------------
 
-Update the sensitivity matrix and M2 force file. This unifies the corrdinate system of M1M3 and M2 in FEA model. Test the sims_w_2020_28.
+* Update the sensitivity matrix and M2 force file.
+* This unifies the corrdinate system of M1M3 and M2 in FEA model.
+* Test the ``sims_w_2020_28``.
 
 .. _lsst.ts.ofc-1.3.1:
 
@@ -36,7 +47,11 @@ Update the sensitivity matrix and M2 force file. This unifies the corrdinate sys
 1.3.1
 -------------
 
-Reformat the code by black. Add the black check to .githooks. Ignore flake8 check of E203 ans W503 for the black. Use the sims_w_2020_21. Fix the hexapod rotation matrix.
+* Reformat the code by ``black``.
+* Add the ``black`` check to ``.githooks``.
+* Ignore ``flake8`` check of E203 ans W503 for the ``black``.
+* Use the ``sims_w_2020_21``.
+* Fix the hexapod rotation matrix.
 
 .. _lsst.ts.ofc-1.3.0:
 
@@ -44,7 +59,7 @@ Reformat the code by black. Add the black check to .githooks. Ignore flake8 chec
 1.3.0
 -------------
 
-Adds parameter to specify values of state 0 DoF (M2 & Camera hexapod positions, M1M3 & M2 bending modes).
+* Adds parameter to specify values of state 0 DoF (M2 & Camera hexapod positions, M1M3 & M2 bending modes).
 
 .. _lsst.ts.ofc-1.2.6:
 
@@ -52,7 +67,12 @@ Adds parameter to specify values of state 0 DoF (M2 & Camera hexapod positions, 
 1.2.6
 -------------
 
-Use sims_w_2020_15. Update the bending mode files. Update optiPSSN.yaml for the new penality values. Update OptCtrlDataDecorator class to use BendModeToForce to get the bending mode. Update the rotation matrix of mirror in CamRot class. Remove the bending mode transformation in SubSysAdap class.
+* Use ``sims_w_2020_15``.
+* Update the bending mode files.
+* Update **optiPSSN.yaml** for the new penality values.
+* Update **OptCtrlDataDecorator** class to use **BendModeToForce** to get the bending mode.
+* Update the rotation matrix of mirror in **CamRot** class.
+* Remove the bending mode transformation in **SubSysAdap** class.
 
 .. _lsst.ts.ofc-1.2.5:
 
@@ -60,7 +80,7 @@ Use sims_w_2020_15. Update the bending mode files. Update optiPSSN.yaml for the 
 1.2.5
 -------------
 
-Use sims_w_2020_14.
+* Use ``sims_w_2020_14``.
 
 .. _lsst.ts.ofc-1.2.4:
 
@@ -68,7 +88,7 @@ Use sims_w_2020_14.
 1.2.4
 -------------
 
-Use sims_w_2020_04.
+* Use ``sims_w_2020_04``.
 
 .. _lsst.ts.ofc-1.2.3:
 
@@ -76,7 +96,7 @@ Use sims_w_2020_04.
 1.2.3
 -------------
 
-Use sims_w_2019_50.
+* Use ``sims_w_2019_50``.
 
 .. _lsst.ts.ofc-1.2.2:
 
@@ -84,7 +104,7 @@ Use sims_w_2019_50.
 1.2.2
 -------------
 
-Use sims_w_2019_38.
+* Use ``sims_w_2019_38``.
 
 .. _lsst.ts.ofc-1.2.1:
 
@@ -92,7 +112,9 @@ Use sims_w_2019_38.
 1.2.1
 -------------
 
-Use sims_w_2019_31 and the latest ts_wep version. Remove the conda package installation in Jenkinsfile. Update the permission of workspace after the unit test.
+* Use ``sims_w_2019_31`` and the latest **ts_wep** version.
+* Remove the ``conda`` package installation in **Jenkinsfile**.
+* Update the permission of workspace after the unit test.
 
 .. _lsst.ts.ofc-1.2.0:
 
@@ -100,7 +122,8 @@ Use sims_w_2019_31 and the latest ts_wep version. Remove the conda package insta
 1.2.0
 -------------
 
-Use sims_w_2019_29 and the latest ts_wep version. Add the getZtaac() in OFCCalculation class.
+* Use ``sims_w_2019_29`` and the latest **ts_wep** version.
+* Add the ``getZtaac()`` in **OFCCalculation** class.
 
 .. _lsst.ts.ofc-1.1.9:
 
@@ -108,7 +131,9 @@ Use sims_w_2019_29 and the latest ts_wep version. Add the getZtaac() in OFCCalcu
 1.1.9
 -------------
 
-Use sims_w_2019_24. Add the dependency of ts_wep in the table file. Move the SensorWavefronError class to ts_wep.
+* Use ``sims_w_2019_24``.
+* Add the dependency of **ts_wep** in the table file.
+* Move the **SensorWavefronError** class to **ts_wep**.
 
 .. _lsst.ts.ofc-1.1.8:
 
@@ -116,7 +141,7 @@ Use sims_w_2019_24. Add the dependency of ts_wep in the table file. Move the Sen
 1.1.8
 -------------
 
-Use sims_w_2019_20.
+* Use ``sims_w_2019_20``.
 
 .. _lsst.ts.ofc-1.1.7:
 
@@ -124,7 +149,8 @@ Use sims_w_2019_20.
 1.1.7
 -------------
 
-Depend on the ts_wep and support the documenteer. Use sims_w_2019_18.
+* Depend on the **ts_wep** and support the ``documenteer``.
+* Use ``sims_w_2019_18``.
 
 .. _lsst.ts.ofc-1.2.4:
 
@@ -132,7 +158,8 @@ Depend on the ts_wep and support the documenteer. Use sims_w_2019_18.
 1.1.6
 -------------
 
-Add the unit tests of control interface classes and fix the minor errors. Add the Shack-Hartmann and CMOS cameras.
+* Add the unit tests of control interface classes and fix the minor errors.
+* Add the Shack-Hartmann and CMOS cameras.
 
 .. _lsst.ts.ofc-1.1.5:
 
@@ -140,7 +167,7 @@ Add the unit tests of control interface classes and fix the minor errors. Add th
 1.1.5
 -------------
 
-Add the classes to translate the Zemax coordinate to subsystem's coordinate and vice versa.
+* Add the classes to translate the Zemax coordinate to subsystem's coordinate and vice versa.
 
 .. _lsst.ts.ofc-1.1.4:
 
@@ -148,7 +175,7 @@ Add the classes to translate the Zemax coordinate to subsystem's coordinate and 
 1.1.4
 -------------
 
-Use the eups as the package manager and yaml configuration file format.
+* Use the ``eups`` as the package manager and ``yaml`` configuration file format.
 
 .. _lsst.ts.ofc-1.1.3:
 
@@ -156,7 +183,7 @@ Use the eups as the package manager and yaml configuration file format.
 1.1.3
 -------------
 
-Add the get functions of state in OFCCalculation class.
+* Add the get functions of state in **OFCCalculation** class.
 
 .. _lsst.ts.ofc-1.1.2:
 
@@ -164,7 +191,8 @@ Add the get functions of state in OFCCalculation class.
 1.1.2
 -------------
 
-Fix the interface class of M2HexapodCorrection. Rename the HexapodCorrection class to CameraHexapodCorrection.
+* Fix the interface class of **M2HexapodCorrection**.
+* Rename the **HexapodCorrection** class to **CameraHexapodCorrection**.
 
 .. _lsst.ts.ofc-1.1.1:
 
@@ -172,7 +200,7 @@ Fix the interface class of M2HexapodCorrection. Rename the HexapodCorrection cla
 1.1.1
 -------------
 
-Add the interface to MTAOS in ctrlIntf module.
+* Add the interface to **MTAOS** in ``ctrlIntf`` module.
 
 .. _lsst.ts.ofc-1.0.1:
 
@@ -180,7 +208,7 @@ Add the interface to MTAOS in ctrlIntf module.
 1.0.1
 -------------
 
-Reuse the FilterType Enum from ts_tcs_wep.
+* Reuse the **FilterType** Enum from **ts_tcs_wep**.
 
 .. _lsst.ts.ofc-1.0.0:
 
@@ -188,4 +216,4 @@ Reuse the FilterType Enum from ts_tcs_wep.
 1.0.0
 -------------
 
-Finish the OFC with the support of algorithm study in Python.
+* Finish the OFC with the support of algorithm study in Python.

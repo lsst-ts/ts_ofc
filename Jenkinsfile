@@ -20,7 +20,7 @@ pipeline {
     environment {
         // Position of LSST stack directory
         LSST_STACK = "/opt/lsst/software/stack"
-        // Pipeline Sims Version
+        // Pipeline stack Version
         STACK_VERSION = "current"
         // XML report path
         XML_REPORT = "jenkinsReport/report.xml"
@@ -29,7 +29,19 @@ pipeline {
     }
 
     stages {
-        stage ('Install Requirements') {
+
+        stage ('Cloning Repos') {
+            steps {
+                dir(env.WORKSPACE + '/phosim_utils') {
+                    git branch: 'master', url: 'https://github.com/lsst-dm/phosim_utils.git'
+                }
+                dir(env.WORKSPACE + '/ts_wep') {
+                    git branch: 'master', url: 'https://github.com/lsst-ts/ts_wep.git'
+                }
+            }
+        }
+
+        stage ('Building the Dependencies') {
             steps {
                 // When using the docker container, we need to change
                 // the HOME path to WORKSPACE to have the authority
@@ -38,14 +50,11 @@ pipeline {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
 
-                        git clone --branch master https://github.com/lsst-dm/phosim_utils.git
                         cd phosim_utils/
                         setup -k -r . -t ${env.STACK_VERSION}
                         scons
 
-                        cd ..
-                        git clone --branch tickets/DM-27899 https://github.com/lsst-ts/ts_wep.git
-                        cd ts_wep/
+                        cd ../ts_wep/
                         setup -k -r .
                         scons python
                     """
@@ -53,7 +62,7 @@ pipeline {
             }
         }
 
-        stage('Unit Tests and Coverage Analysis') {
+        stage ('Unit Tests and Coverage Analysis') {
             steps {
                 // Direct the HOME to WORKSPACE for pip to get the
                 // installed library.

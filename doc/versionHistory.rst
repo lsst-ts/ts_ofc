@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.3.6:
+
+-------------
+1.3.6
+-------------
+
+* Unify the line ending to LF.
+
 .. _lsst.ts.ofc-1.3.5:
 
 -------------

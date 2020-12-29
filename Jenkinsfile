@@ -8,7 +8,7 @@ pipeline {
         // It is recommended by SQUARE team do not add the label and let the
         // system decide.
         docker {
-            image 'lsstts/aos:w_2020_38'
+            image 'lsstsqre/centos:w_latest'
             args '-u root'
         }
     }
@@ -20,8 +20,8 @@ pipeline {
     environment {
         // Position of LSST stack directory
         LSST_STACK = "/opt/lsst/software/stack"
-        // Pipeline Sims Version
-        SIMS_VERSION = "sims_w_2020_38"
+        // Pipeline stack Version
+        STACK_VERSION = "current"
         // XML report path
         XML_REPORT = "jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
@@ -29,7 +29,19 @@ pipeline {
     }
 
     stages {
-        stage ('Install Requirements') {
+
+        stage ('Cloning Repos') {
+            steps {
+                dir(env.WORKSPACE + '/phosim_utils') {
+                    git branch: 'master', url: 'https://github.com/lsst-dm/phosim_utils.git'
+                }
+                dir(env.WORKSPACE + '/ts_wep') {
+                    git branch: 'master', url: 'https://github.com/lsst-ts/ts_wep.git'
+                }
+            }
+        }
+
+        stage ('Building the Dependencies') {
             steps {
                 // When using the docker container, we need to change
                 // the HOME path to WORKSPACE to have the authority
@@ -37,13 +49,12 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
-                        git clone --branch master https://github.com/lsst-dm/phosim_utils.git
+
                         cd phosim_utils/
-                        setup -k -r . -t ${env.SIMS_VERSION}
+                        setup -k -r . -t ${env.STACK_VERSION}
                         scons
-                        cd ..
-                        git clone --branch master https://github.com/lsst-ts/ts_wep.git
-                        cd ts_wep/
+
+                        cd ../ts_wep/
                         setup -k -r .
                         scons python
                     """
@@ -51,7 +62,7 @@ pipeline {
             }
         }
 
-        stage('Unit Tests and Coverage Analysis') {
+        stage ('Unit Tests and Coverage Analysis') {
             steps {
                 // Direct the HOME to WORKSPACE for pip to get the
                 // installed library.
@@ -61,10 +72,13 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
+
                         cd phosim_utils/
-                        setup -k -r . -t ${env.SIMS_VERSION}
+                        setup -k -r . -t ${env.STACK_VERSION}
+
                         cd ../ts_wep/
                         setup -k -r .
+
                         cd ..
                         setup -k -r .
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT} tests/

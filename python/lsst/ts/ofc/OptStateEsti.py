@@ -95,7 +95,9 @@ class OptStateEsti(OptStateEstiDefault):
         # Check the dimension of pinv A
         numOfZkEq, numOfDof = matA.shape
         if numOfZkEq < numOfDof:
-            raise RuntimeError("Equation number < variable number.")
+            raise RuntimeError(
+                f"Equation number ({numOfZkEq}) < variable number ({numOfDof})."
+            )
 
         return matA
 

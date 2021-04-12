@@ -8,9 +8,13 @@ pipeline {
         // It is recommended by SQUARE team do not add the label and let the
         // system decide.
         docker {
-            image 'lsstsqre/centos:w_latest'
-            args '-u root'
+          image 'lsstts/develop-env:develop'
+          args "-u root --entrypoint=''"
         }
+    }
+
+    options {
+      disableConcurrentBuilds()
     }
 
     triggers {
@@ -20,12 +24,19 @@ pipeline {
     environment {
         // Position of LSST stack directory
         LSST_STACK = "/opt/lsst/software/stack"
+        // PlantUML url
+        PLANTUML_URL = "https://managedway.dl.sourceforge.net/project/plantuml/plantuml.jar"
         // Pipeline stack Version
         STACK_VERSION = "current"
         // XML report path
         XML_REPORT = "jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
         MODULE_NAME = "lsst.ts.ofc"
+        // Authority to publish the document online
+        user_ci = credentials('lsst-io')
+        LTD_USERNAME = "${user_ci_USR}"
+        LTD_PASSWORD = "${user_ci_PSW}"
+        DOCUMENT_NAME = "ts-ofc"
     }
 
     stages {
@@ -90,15 +101,6 @@ pipeline {
 
     post {
         always {
-            // Change the ownership of workspace to Jenkins for the clean up
-            // This is to work around the condition that the user ID of jenkins
-            // is 1003 on TSSW Jenkins instance. In this post stage, it is the
-            // jenkins to do the following clean up instead of the root in the
-            // docker container.
-            withEnv(["HOME=${env.WORKSPACE}"]) {
-                sh 'chown -R 1003:1003 ${HOME}/'
-            }
-
             // The path of xml needed by JUnit is relative to
             // the workspace.
             junit "${env.XML_REPORT}"
@@ -112,6 +114,47 @@ pipeline {
                 reportFiles: 'index.html',
                 reportName: "Coverage Report"
             ])
+
+            script{
+              withEnv(["HOME=${env.WORKSPACE}"]) {
+                def RESULT = sh returnStatus: true, script: """
+                  source ${env.LSST_STACK}/loadLSST.bash
+
+                  curl -O ${env.PLANTUML_URL}
+
+                  pip install sphinxcontrib-plantuml
+
+                  cd phosim_utils/
+                  setup -k -r . -t ${env.STACK_VERSION}
+
+                  cd ../ts_wep/
+                  setup -k -r .
+
+                  cd ..
+                  setup -k -r .
+
+                  package-docs build
+
+                  pip install ltd-conveyor
+
+                  ltd upload --product ${env.DOCUMENT_NAME} --git-ref \${GIT_BRANCH} --dir doc/_build/html
+                    """
+
+                if ( RESULT != 0 ) {
+                    unstable("Failed to push documentation.")
+                }
+              }
+            }
+
+            // Change the ownership of workspace to Jenkins for the clean up
+            // This is to work around the condition that the user ID of jenkins
+            // is 1003 on TSSW Jenkins instance. In this post stage, it is the
+            // jenkins to do the following clean up instead of the root in the
+            // docker container.
+            withEnv(["HOME=${env.WORKSPACE}"]) {
+                sh 'chown -R 1003:1003 ${HOME}/'
+            }
+
         }
 
         cleanup {

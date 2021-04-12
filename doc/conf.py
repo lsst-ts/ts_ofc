@@ -3,19 +3,20 @@
 This configuration only affects single-package Sphinx documentation builds.
 """
 
-from documenteer.sphinxconfig.stackconf import build_package_configs
+import os.path
+from documenteer.conf.pipelinespkg import *
 import lsst.ts.ofc
 
+project = "ts_ofc"
+html_theme_options["logotext"] = project
+html_title = project
+html_short_title = project
+doxylink = {}
 
-_g = globals()
-_g.update(
-    build_package_configs(
-        project_name="ts_ofc", version=lsst.ts.ofc.version.__version__
-    )
-)
 
 # Support the sphinx extension of plantuml
 extensions.append("sphinxcontrib.plantuml")
 
 # Put the path to plantuml.jar
-plantuml = "java -jar /home/lsst/plantuml.jar"
+plantuml_path = os.path.expanduser("~/plantuml.jar")
+plantuml = f"java -jar {plantuml_path}"

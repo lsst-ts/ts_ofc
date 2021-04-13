@@ -28,6 +28,12 @@ Important classes:
 * `BendModeToForce` transforms the bending mode to actuator forces and vice versa.
 * `SubSysAdap` transforms the degree of freedom or actuator forces from ZEMAX coordinate to subsystem's coordinate and vice versa.
 
+.. uml:: uml/ctrlIntfClass.uml
+    :caption: ctrlIntf module diagram.
+
+.. uml:: uml/ofcClass.uml
+    :caption: OFC module diagram.
+
 Important enums:
 
 * `InstName` defines the type of instrument.

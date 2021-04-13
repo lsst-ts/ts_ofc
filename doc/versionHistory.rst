@@ -6,6 +6,17 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-1.3.7:
+
+-------------
+1.3.7
+-------------
+
+* Build and upload documentation as part of the CI job.
+* Use develop-env image for the CI job, due to the need of java to build the documentation.
+* Disable concurrent builds.
+* Improve error message in `OptStateEsti._getMatA`
+
 .. _lsst.ts.ofc-1.3.6:
 
 -------------
@@ -160,7 +171,7 @@ Version History
 * Depend on the **ts_wep** and support the ``documenteer``.
 * Use ``sims_w_2019_18``.
 
-.. _lsst.ts.ofc-1.2.4:
+.. _lsst.ts.ofc-1.1.6:
 
 -------------
 1.1.6

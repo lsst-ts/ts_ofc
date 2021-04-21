@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -19,26 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from lsst.ts.ofc.Utility import InstName
-from lsst.ts.ofc.ctrlIntf.OFCCalculationOfIota import OFCCalculationOfIota
+__all__ = ["CorrectionType"]
+
+from enum import IntEnum, auto
 
 
-class OFCCalculationOfSh(OFCCalculationOfIota):
-    """The concrete child class of OFCCalculation of the Shack-Hartmann"""
-
-    def __init__(self, state0Dof=None):
-        """Construct an OFC calculation of S.H. camera.
-
-        Parameters
-        ----------
-        state0Dof : dict, optional
-            State 0 DoF dictionary. If None (=default), the instrument's
-            default will be used. See
-            :lsst:ts:ofc:`OptCtrlDataDecorator.getState0FromDict` for format
-            details.
-
-        S.H.: Shack-Hartmann.
-        """
-
-        # Use the data in ComCam
-        super().__init__(InstName.COMCAM, "sh", state0Dof)
+class CorrectionType(IntEnum):
+    POSITION = 1
+    FORCE = auto()
+    UNKNOWN = auto()

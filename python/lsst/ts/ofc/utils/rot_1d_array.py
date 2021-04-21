@@ -1,6 +1,6 @@
-# This file is part of ts_ofc.
+# This file is part of ts_ofc
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -17,26 +17,26 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import unittest
-
-from lsst.ts.ofc.OptStateEstiDefault import OptStateEstiDefault
+__all__ = ["rot_1d_array"]
 
 
-class TestOptStateEstiDefault(unittest.TestCase):
-    """Test the OptStateEstiDefault class."""
+def rot_1d_array(array, rot_mat):
+    """Rotate 1D array from one basis to another.
 
-    def setUp(self):
-        self.optStateEsti = OptStateEstiDefault()
+    Parameters
+    ----------
+    array : `numpy.ndarray`
+        1D array.
+    rot_mat : `numpy.ndarray`
+        Rotation matrix.
+    Returns
+    -------
+    `numpy.ndarray`
+        Rotated array in another basis compared with the original one.
+    """
 
-    def testEstiOptState(self):
-        self.assertRaises(
-            NotImplementedError, self.optStateEsti.estiOptState, None, None, None, None
-        )
+    array2d = array.reshape(-1, 1)
+    rot_array = rot_mat.dot(array2d)
 
-
-if __name__ == "__main__":
-
-    # Run the unit test
-    unittest.main()
+    return rot_array.ravel()

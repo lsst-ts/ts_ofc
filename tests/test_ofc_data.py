@@ -19,35 +19,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import unittest
 
-class Decorator(object):
-    def __init__(self, decoratedObj):
-        """Initialization of decorator class.
+from lsst.ts.ofc import OFCData
 
-        Parameters
-        ----------
-        decoratedObj : obj
-            Decorated object.
-        """
+STD_TIMEOUT = 30
 
-        self.__decoratedObj = decoratedObj
 
-    def __getattr__(self, attributeName):
-        """Use the functions and attributes hold by the object.
+class TestOFCData(unittest.TestCase):
+    """Test the OFCData class when not using asyncio."""
 
-        Parameters
-        ----------
-        attributeName : str
-          Name of attribute or function.
+    def test_comcam(self):
 
-        Returns
-        -------
-        obj
-          Returned values.
-        """
+        ofc_data = OFCData("comcam")
 
-        return getattr(self.__decoratedObj, attributeName)
+        self.assertEqual(ofc_data.name, "comcam")
+
+    def test_lsst(self):
+
+        ofc_data = OFCData("lsst")
+        self.assertEqual(ofc_data.name, "lsst")
+
+    def test_lsstfam(self):
+
+        ofc_data = OFCData("lsstfam")
+
+        self.assertEqual(ofc_data.name, "lsstfam")
 
 
 if __name__ == "__main__":
-    pass
+
+    # Run the unit test
+    unittest.main()

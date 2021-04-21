@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-# This file is part of ts_ofc.
+# This file is part of ts_ofc
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -18,17 +17,17 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-try:
-    from .version import *
-except ModuleNotFoundError:
-    pass
+__all__ = ["get_pkg_root", "get_config_dir"]
 
-from .camrot import *
-from .bend_mode_to_force import *
-from .ofc_data import *
-from .state_estimator import *
-from .ofc_controller import *
-from .correction import *
-from .ofc import *
+import pathlib
+
+
+def get_pkg_root():
+    """Return the root directory of this package."""
+    return pathlib.Path(__file__).resolve().parents[5]
+
+
+def get_config_dir():
+    """Return the path to the ``policy`` dir within this package."""
+    return get_pkg_root() / "policy"

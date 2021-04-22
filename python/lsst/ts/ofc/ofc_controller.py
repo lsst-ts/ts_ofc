@@ -128,50 +128,13 @@ class OFCController:
 
         self.dof_state[dof_idx] += dof
 
-    def getGroupDof(self, startIdx, groupLeng, inputDof=None):
-        """Get the degree of freedom (DOF) of specific group based on the
-        start index and length.
-
-        If there is no input DOF, the output will be the aggregated DOF
-        (state - state0). Otherwise, the output is based on the input DOF.
-
-        The default output units are:
-        1. M2 hexapod position (dz in um, dx in um, dy in um, rx in arcsec,
-        ry in arcsec).
-        2. Cam hexapod position (dz in um, dx in um, dy in um, rx in arcsec,
-        ry in arcsec).
-        3. M1M3 20 bending mode in um.
-        4. M2 20 bending mode in um.
-
-        Parameters
-        ----------
-        startIdx : int
-            Start index of group.
-        groupLeng : int
-            Index length of group.
-        inputDof : numpy.ndarray or list, optional
-            Input DOF. (the default is None.)
-
-        Returns
-        -------
-        numpy.ndarray
-            DOF.
-        """
-
-        if inputDof is None:
-            dof = self.stateInDof - self.state0InDof
-        else:
-            dof = np.array(inputDof)
-
-        return dof[np.arange(startIdx, startIdx + groupLeng)]
-
     @property
     def gain(self):
         """Get the gain value.
 
         Returns
         -------
-        float
+        gain : `float`
             Gain value in the feedback.
         """
 

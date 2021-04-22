@@ -178,12 +178,12 @@ class OFCData:
         self.name = name
 
         self.eff_wavelength = {
-            "u": 0.365,
-            "g": 0.480,
-            "r": 0.622,
-            "i": 0.754,
-            "z": 0.868,
-            "y": 0.973,
+            "U": 0.365,
+            "G": 0.480,
+            "R": 0.622,
+            "I": 0.754,
+            "Z": 0.868,
+            "Y": 0.973,
             "": 0.5,
         }
 
@@ -370,6 +370,44 @@ class OFCData:
             ):
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]
+
+    def get_intrinsic_zk(self, filter_name, field_idx=None):
+        """Return reformated instrisic zernike coefficients.
+
+        Parameters
+        ----------
+        filter_name : `string`
+            Name of the filter to get intrinsic zernike coefficients. Must be
+            in the `intrinsic_zk` dictionary.
+        field_idx : `np.ndarray`, optional
+            Array with the field indexes to get instrisic data from. If not
+            given, return all available data.
+
+        Raises
+        ------
+        RuntimeError :
+            If filter_name not valid.
+        """
+        if filter_name not in self.intrinsic_zk:
+            raise RuntimeError(
+                f"Invalid filter name {filter_name}. Must be one of {self.intrinsic_zk.keys()}."
+            )
+
+        _field_idx = (
+            field_idx
+            if field_idx is not None
+            else np.arange(self.intrinsic_zk[filter_name].shape[0])
+        )
+
+        return (
+            self.intrinsic_zk[filter_name][
+                np.ix_(
+                    _field_idx,
+                    self.zn3_idx + self.zn3_idx_in_intrinsic_zn_file,
+                )
+            ]
+            * self.eff_wavelength[filter_name]
+        )
 
     async def close(self):
         """Close method.

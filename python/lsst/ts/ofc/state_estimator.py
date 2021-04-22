@@ -105,15 +105,7 @@ class StateEstimator:
         pinv_a = np.linalg.pinv(mat_a, rcond=self.RCOND)
 
         a = np.array(wfe)[:, self.ofc_data.zn3_idx]
-        b = (
-            self.ofc_data.intrinsic_zk[filter_name][
-                np.ix_(
-                    field_idx,
-                    self.ofc_data.zn3_idx + self.ofc_data.zn3_idx_in_intrinsic_zn_file,
-                )
-            ]
-            * self.ofc_data.eff_wavelength[filter_name]
-        )
+        b = self.ofc_data.get_intrinsic_zk(filter_name, field_idx)
         c = self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]
 
         y = a - b - c

@@ -29,7 +29,6 @@ from . import (
     CamRot,
     Correction,
     OFCController,
-    OFCData,
     StateEstimator,
     BendModeToForce,
 )
@@ -45,12 +44,8 @@ class OFC:
 
     Parameters
     ----------
-    name : `string`
-        Name of the instrument/configuration. This must map to a directory
-        inside `data_path`.
-    config_dir : `string` or `None`
-        Path to configuration directory. If `None` (default) use data provided
-        with the module. If a `string` is provided it must map to a valid path.
+    ofc_data : `OFCData`
+        Data container.
     log : `logging.Logger` or `None`
         Optional logging class to be used for logging operations. If `None`,
         creates a new logger.
@@ -63,7 +58,7 @@ class OFC:
 
     """
 
-    def __init__(self, name, config_dir=None, log=None):
+    def __init__(self, ofc_data, log=None):
 
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
@@ -72,7 +67,7 @@ class OFC:
 
         self.pssn_data = dict(sensor_id=None, pssn=None)
 
-        self.ofc_data = OFCData(name=name, config_dir=config_dir, log=log)
+        self.ofc_data = ofc_data
 
         self.state_estimator = StateEstimator(self.ofc_data)
 
@@ -166,10 +161,26 @@ class OFC:
 
         dof[self.ofc_data.dof_idx] = uk
 
-        m2_pos_rx = self.ofc_controller.dof_state[self.ofc_data.dof_idx[3]]
-        m2_pos_ry = self.ofc_controller.dof_state[self.ofc_data.dof_idx[4]]
-        cam_pos_rx = self.ofc_controller.dof_state[self.ofc_data.dof_idx[8]]
-        cam_pos_ry = self.ofc_controller.dof_state[self.ofc_data.dof_idx[9]]
+        m2_pos_rx = (
+            self.ofc_controller.dof_state[self.ofc_data.dof_idx[3]]
+            if len(self.ofc_data.dof_idx) > 3
+            else 0.0
+        )
+        m2_pos_ry = (
+            self.ofc_controller.dof_state[self.ofc_data.dof_idx[4]]
+            if len(self.ofc_data.dof_idx) > 4
+            else 0.0
+        )
+        cam_pos_rx = (
+            self.ofc_controller.dof_state[self.ofc_data.dof_idx[8]]
+            if len(self.ofc_data.dof_idx) > 8
+            else 0.0
+        )
+        cam_pos_ry = (
+            self.ofc_controller.dof_state[self.ofc_data.dof_idx[9]]
+            if len(self.ofc_data.dof_idx) > 9
+            else 0.0
+        )
 
         rot_dof = np.array([])
 

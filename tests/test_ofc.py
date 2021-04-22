@@ -22,7 +22,7 @@
 import numpy as np
 import unittest
 
-from lsst.ts.ofc import OFC, Correction
+from lsst.ts.ofc import OFC, OFCData, Correction
 from lsst.ts.ofc.utils import get_pkg_root, CorrectionType
 
 
@@ -31,7 +31,8 @@ class TestOFCCalculation(unittest.TestCase):
 
     def setUp(self):
 
-        self.ofc = OFC("lsst")
+        self.ofc_data = OFCData("lsst")
+        self.ofc = OFC(self.ofc_data)
         self.test_data_path = (
             get_pkg_root() / "tests" / "testData" / "lsst_wfs_error_iter0.z4c"
         )
@@ -263,6 +264,81 @@ class TestOFCCalculation(unittest.TestCase):
 
         delta = np.sum(np.abs(state_correction - rearanged_dof))
         self.assertEqual(delta, 0)
+
+    def test_intrinsic_corr_is_zero(self):
+        """Check that if we send intrinsic correction to the ofc we get zero
+        for all corrections.
+        """
+
+        for filter_name in self.ofc.ofc_data.intrinsic_zk:
+            with self.subTest(filter_name=filter_name):
+                wfe = self.ofc.ofc_data.get_intrinsic_zk(filter_name)
+                field_idx = np.arange(wfe.shape[0])
+                (
+                    m2_hex_corr,
+                    cam_hex_corr,
+                    m1m3_corr,
+                    m2_corr,
+                ) = self.ofc.calculate_corrections(
+                    wfe=wfe,
+                    field_idx=field_idx,
+                    filter_name=filter_name,
+                    gain=1.0,
+                    rot=0.0,
+                )
+                self.assertTrue(
+                    np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr()))
+                )
+                self.assertTrue(
+                    np.allclose(cam_hex_corr(), np.zeros_like(cam_hex_corr()))
+                )
+                self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
+                self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
+
+    def test_truncate_dof(self):
+        new_dof_mask = dict(
+            m2HexPos=np.zeros(5, dtype=bool),
+            camHexPos=np.ones(5, dtype=bool),
+            M1M3Bend=np.zeros(20, dtype=bool),
+            M2Bend=np.zeros(20, dtype=bool),
+        )
+
+        self.ofc.ofc_data.dof_idx = new_dof_mask
+
+        self.assertEqual(len(self.ofc.ofc_data.dof_idx), 5)
+
+        filter_name = ""
+
+        wfe = self.ofc.ofc_data.get_intrinsic_zk(filter_name)
+
+        wfe[:, 0:1] += 0.1  # add 0.1 um of defocus
+
+        field_idx = np.arange(wfe.shape[0])
+        (
+            m2_hex_corr,
+            cam_hex_corr,
+            m1m3_corr,
+            m2_corr,
+        ) = self.ofc.calculate_corrections(
+            wfe=wfe,
+            field_idx=field_idx,
+            filter_name=filter_name,
+            gain=1.0,
+            rot=0.0,
+        )
+
+        x, y, z, u, v, w = cam_hex_corr()
+
+        self.assertAlmostEqual(x, 0.00011914744971686098)
+        self.assertAlmostEqual(y, -5.2710512039956525e-05)
+        self.assertAlmostEqual(z, -6.271489529009416)
+        self.assertAlmostEqual(u, 0.0)
+        self.assertAlmostEqual(v, 0.0)
+        self.assertAlmostEqual(w, 0.0)
+
+        self.assertTrue(np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr())))
+        self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
+        self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
 
 if __name__ == "__main__":

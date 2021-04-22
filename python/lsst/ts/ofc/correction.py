@@ -71,7 +71,7 @@ class Correction:
             self.correction_type = CorrectionType.UNKNOWN
 
     def __repr__(self):
-        return f"{self.correction_type!s}::{self.corrections.round(3)}"
+        return f"{self.correction_type!s}::{self.correction.round(3)}"
 
     def __call__(self):
         """Calling a correction object will return the correction."""

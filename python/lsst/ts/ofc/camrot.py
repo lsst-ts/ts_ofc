@@ -73,7 +73,7 @@ class CamRot:
         hex_pos : `numpy.ndarray`
             Hexapod position: (z, x, y, rx, ry). x, y, and z are in um. rx and
             ry are in arcsec.
-        tilt_xy : tuple
+        tilt_xy : `tuple`
             Tilt angle in degree. This is the delta value of M2 hexapod
             compared with camera hexapod (M2-camera).
 
@@ -128,12 +128,12 @@ class CamRot:
 
         Parameters
         ----------
-        rotAngInDeg : float
+        rot : `float`
             Rotation angle in degree.
 
         Returns
         -------
-        numpy.ndarray
+        `numpy.ndarray`
             Hexapod rotation matrix.
         """
 
@@ -172,14 +172,14 @@ class CamRot:
 
         Parameters
         ----------
-        component : enum 'DofGroup'
+        component : `string`
             DOF group.
-        rot : float
+        rot : `float`
             Rotation angle in degree.
 
         Returns
         -------
-        numpy.ndarray
+        `numpy.ndarray`
             Mirror rotation matrix.
         """
 
@@ -221,7 +221,13 @@ class CamRot:
 
     @staticmethod
     def rot_mat(rot):
-        """"""
+        """Return rotation matrix.
+
+        Parameters
+        ----------
+        rot : `float`
+            Rotation angle in degrees.
+        """
         rot_rad = np.deg2rad(rot)
         c, s = np.cos(rot_rad), np.sin(rot_rad)
         return np.array(((c, -s), (s, c)))

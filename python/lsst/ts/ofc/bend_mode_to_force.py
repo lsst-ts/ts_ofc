@@ -27,7 +27,15 @@ from .utils import rot_1d_array
 
 
 class BendModeToForce:
-    """Transform Bend mode to forces."""
+    """Transform Bend mode to forces.
+
+    Parameters
+    ----------
+    component : `string`
+        Name of the component. Must be in the `ofc_data.bend_mode` dictionary.
+    ofc_data : `OFCData`
+        Data container class.
+    """
 
     RCOND = 1e-4
 

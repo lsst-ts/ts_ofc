@@ -169,14 +169,14 @@ class OFCController:
 
         Parameters
         ----------
-        pssn : numpy.ndarray or list
+        pssn : `numpy.ndarray` or `list`
             Normalized point source sensitivity (PSSN).
-        fieldIdx : numpy.ndarray[int] or list[int]
+        fieldIdx : `numpy.ndarray` or `list` of `int`
             Field index array.
 
         Returns
         -------
-        float
+        `float`
             Effective FWHM in arcsec by Gaussain quadrature.
 
         Raises
@@ -250,7 +250,9 @@ class OFCController:
 
     def calc_uk_x0(self, mat_f, qx, **kwargs):
         """Calculate uk by referencing to "x0".
+
         The offset will only trace the previous one.
+
         uk = -F' * QX.
 
         Parameters
@@ -269,7 +271,9 @@ class OFCController:
 
     def calc_uk_0(self, mat_f, qx, mat_h):
         """Calculate uk by referencing to "0".
+
         The offset will trace the real value and target for 0.
+
         uk = -F' * (QX + rho**2 * H * S).
 
         Parameters
@@ -281,7 +285,7 @@ class OFCController:
 
         Returns
         -------
-        `numpy.ndarray`
+        uk : `numpy.ndarray`
             Calculated uk in the basis of degree of freedom (DOF).
         """
         state = self.dof_state.reshape(-1, 1)

@@ -275,7 +275,10 @@ class OFCController:
         `numpy.ndarray`
             Calculated uk in the basis of degree of freedom (DOF).
         """
-        state_diff = self.dof_state - self.dof_state0
+        state_diff = (
+            self.dof_state[self.ofc_data.dof_idx]
+            - self.dof_state0[self.ofc_data.dof_idx]
+        )
         state_diff = state_diff.reshape(-1, 1)
 
         _qx = qx + self.ofc_data.motion_penalty ** 2 * mat_h.dot(state_diff)
@@ -389,7 +392,13 @@ class OFCController:
         _dof_state = dof_state.reshape(-1, 1)
 
         n_imqw = self.ofc_data.normalized_image_quality_weight
-        sen_m = self.ofc_data.sensitivity_matrix
+        sen_m = self.ofc_data.sensitivity_matrix[
+            np.ix_(
+                np.arange(self.ofc_data.sensitivity_matrix.shape[0]),
+                np.arange(self.ofc_data.sensitivity_matrix.shape[1]),
+                self.ofc_data.dof_idx,
+            )
+        ]
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
 

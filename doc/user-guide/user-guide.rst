@@ -19,7 +19,7 @@ The class receives an instance of ``OFCData``, which is a data container class h
 One caveat with using the ``OFCData`` is that it needs to read some data from disk.
 These operations can take quite a bit of time and may block the process for a significant period of time.
 Because this class is supposed to be used by the ``MTAOS`` CSC we need to be able to support loading it
-without blocking the event loop.
+without blocking the asyncio event loop.
 This is handled by the ``OFCData`` class in the background, but the user must be aware that the class is not done loading after it is instantiated.
 In order to wait for the class to be ready users must ``await`` for the ``start_task`` to complete, similar to what we do with ``salobj.Remote``.
 

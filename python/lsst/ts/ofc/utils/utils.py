@@ -18,16 +18,50 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["get_pkg_root", "get_config_dir"]
+__all__ = ["get_pkg_root", "get_config_dir", "rot_1d_array"]
 
 import pathlib
 
 
 def get_pkg_root():
-    """Return the root directory of this package."""
+    """Return the root directory of this package.
+
+    Returns
+    -------
+    `pathlib.PosixPath`
+        Path to the package root.
+    """
     return pathlib.Path(__file__).resolve().parents[5]
 
 
 def get_config_dir():
-    """Return the path to the ``policy`` dir within this package."""
+    """Return the path to the ``policy`` dir within this package.
+
+    Returns
+    -------
+    `pathlib.PosixPath`
+        Path to the package config directory.
+    """
     return get_pkg_root() / "policy"
+
+
+def rot_1d_array(array, rot_mat):
+    """Rotate 1D array from one basis to another.
+
+    Parameters
+    ----------
+    array : `numpy.ndarray`
+        1D array.
+    rot_mat : `numpy.ndarray`
+        Rotation matrix.
+
+    Returns
+    -------
+    `numpy.ndarray`
+        Rotated array in another basis compared with the original one.
+    """
+
+    array2d = array.reshape(-1, 1)
+    rot_array = rot_mat.dot(array2d)
+
+    return rot_array.ravel()

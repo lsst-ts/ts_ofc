@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -46,6 +46,9 @@ class StateEstimator:
         Logger class used for logging operations.
     ofc_data : `OFCData`
         OFC data container.
+    RCOND : `float`
+        Cutoff for small singular values, used when computing pseudo-inverse
+        matrix.
     """
 
     RCOND = 1e-4
@@ -104,11 +107,11 @@ class StateEstimator:
 
         pinv_a = np.linalg.pinv(mat_a, rcond=self.RCOND)
 
-        a = np.array(wfe)[:, self.ofc_data.zn3_idx]
-        b = self.ofc_data.get_intrinsic_zk(filter_name, field_idx)
-        c = self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]
-
-        y = a - b - c
+        y = (
+            np.array(wfe)[:, self.ofc_data.zn3_idx]
+            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx)
+            - self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]
+        )
 
         y = y.reshape(-1, 1)
 

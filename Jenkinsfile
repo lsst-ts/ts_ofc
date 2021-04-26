@@ -43,11 +43,11 @@ pipeline {
                 // 'PATH' can only be updated in a single shell block.
                 // We can not update PATH in 'environment' block.
                 // Pytest needs to export the junit report.
-                withEnv(["WHOME=${env.WORKSPACE}"]) {
+                withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
 
-                        cd ${WHOME}
+                        cd ${WORK_HOME}
                         setup -k -r .
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT}
                     """
@@ -73,7 +73,7 @@ pipeline {
             ])
 
             script{
-              withEnv(["WHOME=${env.WORKSPACE}"]) {
+              withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
                 def RESULT = sh returnStatus: true, script: """
                   source ${env.LSST_STACK}/loadLSST.bash
 
@@ -81,7 +81,7 @@ pipeline {
 
                   pip install sphinxcontrib-plantuml
 
-                  cd ${WHOME}
+                  cd ${WORK_HOME}
 
                   setup -k -r .
 
@@ -103,8 +103,8 @@ pipeline {
             // is 1003 on TSSW Jenkins instance. In this post stage, it is the
             // jenkins to do the following clean up instead of the root in the
             // docker container.
-            withEnv(["WHOME=${env.WORKSPACE}"]) {
-                sh 'chown -R 1003:1003 ${WHOME}/'
+            withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
+                sh 'chown -R 1003:1003 ${WORK_HOME}/'
             }
 
         }

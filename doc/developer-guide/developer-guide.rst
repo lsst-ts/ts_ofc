@@ -25,7 +25,7 @@ Important classes:
 * ``OFCController`` calculates the DOF offset by minimizing the cost function.
 * ``OFC`` is the main class of the system, responsible for managing the conversion of wavefront errors into corrections.
 
-.. uml:: uml/ofc.uml
+.. uml:: ../uml/ofc_class.uml
     :caption: OFC Class diagram.
 
 

@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -46,16 +46,40 @@ class OFC:
     ----------
     ofc_data : `OFCData`
         Data container.
-    log : `logging.Logger` or `None`
-        Optional logging class to be used for logging operations. If `None`,
-        creates a new logger.
+    log : `logging.Logger` or `None`, optional
+        Optional logging class to be used for logging operations. If `None`
+        (default), creates a new logger.
+
+    Attributes
+    ----------
+    cam_rot : `CamRot`
+        Camera rotator class.
+    default_gain : `float`
+        Default gain, used when setting gain in `set_pssn_gain()` when fwhm is
+        above `fwhm_threshold`.
+    dof_order : `tuple`
+        Order of the degrees of freedom.
+    fwhm_threshold : `float`
+        Full width half maximum threshold when estimating gain with
+        `set_pssn_gain()`.
+    log : `logging.Logger`
+        Logger class used for logging operations.
+    lv_dof : `np.ndarray`
+        Last visit degrees of freedom.
+    ofc_controller : `OFCController`
+        Instance of `OFCController` class.
+    ofc_data : `OFCData`
+        OFC data container.
+    pssn_data : `dict`
+        Normalized point source sensitivity data.
+    state_estimator : `StateEstimator`
+        Instance of `StateEstimator`.
 
     Notes
     -----
 
     FWHM: Full width at half maximum.
     PSSN: Normalized point source sensitivity.
-
     """
 
     def __init__(self, ofc_data, log=None):
@@ -90,16 +114,20 @@ class OFC:
         Parameters
         ----------
         wfe : `np.ndarray`
-            An array of arrays with wavefront erros.
+            An array of arrays (e.g. 2-d array) with wavefront erros. Each
+            element contains an array of wavefront errors (in um) for a
+            particular detector/field.
         field_idx : `np.array`
             Array with field indexes.
         filter_name : `string`
-            Name of the filter used in the observations.
+            Name of the filter used in the observations. This must be a valid
+            entry in the `ofc_data.intrinsic_zk` and `ofc_data.eff_wavelength`
+            dictionaries.
         gain : `float`
             User provided gain. If < 0, calculate gain based on point source
             sensitivity normalized (PSSN).
         rot : `float`
-            Camera rotator angle during the observations.
+            Camera rotator angle (in degrees) during the observations.
 
         Returns
         -------
@@ -109,8 +137,8 @@ class OFC:
 
         Raises
         ------
-        RuntimeError :
-            If size of `wfe` is different than `field_idx`
+        RuntimeError
+            If size of `wfe` is different than `field_idx`.
         """
 
         if len(wfe) != len(field_idx):
@@ -155,12 +183,13 @@ class OFC:
         -------
         rot_uk : `np.array`
             Rotated uk.
-
         """
         dof = np.zeros_like(self.ofc_controller.dof_state0)
 
         dof[self.ofc_data.dof_idx] = uk
 
+        # Get the m2 and cam tilt positions. If the user truncates the dof
+        # such that these values are not in the dof_state, make them zero.
         m2_pos_rx = (
             self.ofc_controller.dof_state[self.ofc_data.dof_idx[3]]
             if len(self.ofc_data.dof_idx) > 3
@@ -272,13 +301,15 @@ class OFC:
         Parameters
         ----------
         fwhm : `np.ndarray`
-            Array of arrays which contains the FWHM data.
+            Array of arrays (e.g. 2-d array) which contains the FWHM data.
+            Each element contains an array of fwhm (in arcsec) measurements for
+            a  particular sensor.
         sensor_id : `np.array` of `int`
             Array with the sensor id.
 
         Raises
         ------
-        RuntimeError :
+        RuntimeError
             If size of `fwhm` and `sensor_id` are different.
         """
 
@@ -290,8 +321,8 @@ class OFC:
         self.pssn_data["sensor_id"] = sensor_id.copy()
         self.pssn_data["pssn"] = np.zeros(len(fwhm))
 
-        for i, fw in enumerate(fwhm):
-            self.pssn_data["pssn"][i] = np.average(
+        for s_id, fw in enumerate(fwhm):
+            self.pssn_data["pssn"][s_id] = np.average(
                 self.ofc_controller.fwhm_to_pssn(fwhm)
             )
 
@@ -321,7 +352,13 @@ class OFC:
 
     def set_pssn_gain(self):
         """Set the gain value based on the PSSN, which comes from the FWHM by
-        DM team.."""
+        DM team.
+
+        Raises
+        ------
+        RuntimeError
+            If `pssn_data` is not properly set.
+        """
 
         if self.pssn_data["pssn"] is None or self.pssn_data["sensor_id"] is None:
             raise RuntimeError(

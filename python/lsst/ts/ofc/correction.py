@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -27,13 +27,23 @@ from .utils import CorrectionType
 
 
 class Correction:
-    r"""Container for corrections.
+    """Container for corrections.
 
     Parameters
     ----------
     *args :
         Sequence of values for the corrections. Must be possible to cast floats
         from the inputs.
+
+    Attributes
+    ----------
+    correction : `np.ndarray`
+        Array with the corrections.
+    correction_type : `enum`
+        The correction type.
+    size_to_correction_type : `dict`
+        Dictionary that maps the size of the correction to the type of
+        correction.
 
     Notes
     -----
@@ -47,13 +57,11 @@ class Correction:
         >>> cam_hexapod = Correction(0., 0., 0., 0., 0., 0.)
         >>> m1m3 = Correction(np.zeros(156))
 
-    To get the corrections back uses can simply call the object.
+    To get the corrections back users can simply call the object.
 
         >>> cam_hexapod()
             array([0., 0., 0., 0., 0., 0.])
     """
-
-    valid_sizes = {6, 72, 156}
 
     size_to_correction_type = {
         6: CorrectionType.POSITION,
@@ -65,7 +73,7 @@ class Correction:
 
         self.correction = np.copy(np.array(args, dtype=float).flatten())
 
-        if len(self.correction) in self.valid_sizes:
+        if len(self.correction) in self.size_to_correction_type:
             self.correction_type = self.size_to_correction_type[len(self.correction)]
         else:
             self.correction_type = CorrectionType.UNKNOWN

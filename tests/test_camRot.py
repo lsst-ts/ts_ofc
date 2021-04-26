@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -88,6 +88,16 @@ class TestCamRot(unittest.TestCase):
         self.assertAlmostEqual(rot_dof_state[0], 0.70710678, places=7)
         self.assertEqual(rot_dof_state[4], 2)
         self.assertEqual(len(rot_dof_state), num_bend_mode)
+
+    def test_bad_component_name(self):
+
+        dof_state = np.zeros(20)
+
+        with self.assertRaises(RuntimeError):
+            self.cam_rot.rot_comp_dof("NoValidComp", dof_state)
+
+        with self.assertRaises(RuntimeError):
+            self.cam_rot.rot_comp_dof("BothHexPosBend", dof_state)
 
 
 if __name__ == "__main__":

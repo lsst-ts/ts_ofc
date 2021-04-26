@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -40,7 +40,7 @@ class OFCData:
     """Optical Feedback Control Data.
 
     This container class provides a unified interface to all the data used by
-    the OFC and its ancillary classes. It provides untiliy to load, inspect and
+    the OFC and its ancillary classes. It provides utiliy to load, inspect and
     update the different configuration files used by these classes.
 
     Parameters
@@ -55,11 +55,6 @@ class OFCData:
         Optional logging class to be used for logging operations. If `None`,
         creates a new logger.
 
-    Raises
-    ------
-    RuntimeError:
-        If input `config_dir` does not exists.
-
     Attributes
     ----------
     alpha : `np.array` of `float`
@@ -69,7 +64,7 @@ class OFCData:
     control_strategy : `string`
         Name of the control strategy.
     delta : `np.array` of `float`
-        Delsta coefficient for the normalized point-source sensitivity (PSSN).
+        Delta coefficient for the normalized point-source sensitivity (PSSN).
     dof_idx : `dict` of `string`
         Index of Degree of Freedom (DOF).
     eff_wavelength : `dict` of `string`
@@ -124,6 +119,10 @@ class OFCData:
     znmax : `int`
         Max number of zernikes used (to be filtered with `zn3_idx`).
 
+    Raises
+    ------
+    RuntimeError
+        If input `config_dir` does not exists.
     """
 
     def __init__(self, name, config_dir=None, log=None):
@@ -177,6 +176,8 @@ class OFCData:
         self._configure_task = None
         self.name = name
 
+        # Filter name and associated effective wavelength in um.
+
         self.eff_wavelength = {
             "U": 0.365,
             "G": 0.480,
@@ -192,6 +193,26 @@ class OFCData:
 
         # Rotation matrix between ZEMAX coordinate and optical coordinate
         # systems defined in LTS-136.
+        #
+        # In ZEMAX coordinate, the hexapod position is (z', x', y', rx', ry').
+        # +z' is defined from M2 to M1M3.
+        # +y' is defined as pointing toward zenith when the telescope is
+        # pointed toward the horizon (elevation angle is 0 degree).
+        # +x' follows by the right hand rule.
+        # x', y', and z' are in um. rx' and ry' are in the arcsec.
+        #
+        # In optical coordinate system, the hexapod position is (x, y, z, rx,
+        # ry, rz).
+        # +z is defined from M1M3 to M2. +y is defined as pointing toward
+        # zenith when the telescope is pointed toward the horizon (elevation
+        # angle is 0 degree).
+        # +x follows by the right hand rule.
+        # x, y, and z are in um. rx, ry, and rz are in the degree.
+        #
+        # For the rotation matrix below, row is (z', x', y', rx', ry') and
+        # column is (x, y, z, rx, ry, rz).
+        #
+        # 1 degree = 3600 arcsec
         rot_mat_hexapod = np.array(
             [
                 [0.0, 0.0, -1.0, 0.0, 0.0, 0.0],
@@ -379,14 +400,14 @@ class OFCData:
         filter_name : `string`
             Name of the filter to get intrinsic zernike coefficients. Must be
             in the `intrinsic_zk` dictionary.
-        field_idx : `np.ndarray`, optional
-            Array with the field indexes to get instrisic data from. If not
-            given, return all available data.
+        field_idx : `np.ndarray` or `None`, optional
+            Array with the field indexes to get instrisic data from (default
+            `None`). If not given, return all available data.
 
         Raises
         ------
         RuntimeError :
-            If filter_name not valid.
+            If `filter_name` not valid.
         """
         if filter_name not in self.intrinsic_zk:
             raise RuntimeError(
@@ -433,6 +454,17 @@ class OFCData:
         ----------
         value : `string`
             Name of the instrument.
+
+        Raises
+        ------
+        RuntimeError
+            If instrument configuration directory does not exists.
+            If y2 configuration files does not exists in the configuration
+            directory.
+            If intrinsic zernike coefficients files does not exists in the
+            configuration directory.
+            If image quality weight file not exists in the configuration
+            directory.
         """
 
         self.log.debug("Reading bend mode data.")

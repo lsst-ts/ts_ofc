@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -35,6 +35,26 @@ class BendModeToForce:
         Name of the component. Must be in the `ofc_data.bend_mode` dictionary.
     ofc_data : `OFCData`
         Data container class.
+
+    Attributes
+    ----------
+    component : `string`
+        Name of the component in the `ofc_data.bend_mode` dictionary.
+    ofc_data : `OFCData`
+        OFC data container class.
+    RCOND : `float`
+        Cutoff for small singular values, used when computing pseudo-inverse
+        matrix.
+    rot_mat : `np.ndarray`
+        Rotation matrix.
+
+    Raises
+    ------
+    RuntimeError
+        If the `component` attribute string is not a valid entry in the
+        `ofc_data.bend_mode` dictionary.
+        If the component name does not map into a valid entry in the
+        `ofc_data.comp_dof_idx` dictionary.
     """
 
     RCOND = 1e-4
@@ -64,8 +84,11 @@ class BendModeToForce:
                 f"Must be one of {bend_comp}."
             )
         n_bending_modes = self.ofc_data.comp_dof_idx[dof_idx_name]["idxLength"]
+
         # Rotation matrix to rotate the basis from bending mode to actuator
         # forces
+        # The first three terms (actuator ID in ZEMAX, x position in m,
+        # y position in m) are not needed.
         usecols = np.arange(3, 3 + n_bending_modes)
 
         self.rot_mat = np.array(self.ofc_data.bend_mode[component]["force"]["data"])[
@@ -84,7 +107,7 @@ class BendModeToForce:
         Returns
         -------
         `numpy.ndarray`
-            Actuator forces in N
+            Actuator forces in N.
         """
 
         return rot_1d_array(dof, self.rot_mat)

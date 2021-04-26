@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -26,7 +26,13 @@ from scipy.linalg import block_diag
 
 
 class CamRot:
-    """Handle camera rotation."""
+    """Handle camera rotation.
+
+    Attributes
+    ----------
+    rot : `float`
+        Camera rotator angle in degrees.
+    """
 
     def __init__(self):
         self.rot = 0.0
@@ -37,25 +43,56 @@ class CamRot:
         Parameters
         ----------
         component : `string`
-            Name of the component in the `OFCDate.comp_dof_idx` dictionary.
+            Name of the component in the `OFCDate.comp_dof_idx` dictionary
+            (see Notes sections for more information).
         dof_state : `numpy.ndarray`
             State in degree of freedom (DOF).
         tilt_xy : `tuple`, optional
             Tilt angle in arcsec. This is the delta value of M2 hexapod
-            compared with camera hexapod (M2-camera).
+            compared with camera hexapod (M2-camera). Default value is
+            (0., 0.).
 
         Returns
         -------
         rot_dof_state : `numpy.ndarray`
             Rotated DOF state.
+
+        Raises
+        ------
+        RuntimeError
+            If the input parameter string `component` does not contain the
+            substring "HexPos" or "Bend".
+
+        Notes
+        -----
+
+        The component parameter must express whether the input rotation is for
+        a hexapod type component (e.g. position based) or bend mode component.
+        Hexapods must have "HexPos" appended to their name whereas bend mode
+        components must have "Bend".
+
+        For exemple, the following will cause the input data to be processed as
+        hexapod:
+
+            >> cam_rot.rot_comp_dof("m2HexPos", ...)
+            >> cam_rot.rot_comp_dof("camHexPos", ...)
+
+        and the following as bend mode:
+
+            >> cam_rot.rot_comp_dof("M1M3Bend", ...)
+            >> cam_rot.rot_comp_dof("M2Bend", ...)
         """
 
         # 1 arcsec = 1/3600 deg
-        tilt_xy_deg = tuple(ti / 3600.0 for ti in tilt_xy)
+        tilt_xy_deg = tuple(tilt / 3600.0 for tilt in tilt_xy)
 
-        if component in {"m2HexPos", "camHexPos"}:
+        if "HexPos" in component and "Bend" in component:
+            raise RuntimeError(
+                f"Unrecognized component {component}. Must only have substring 'HexPos' or 'Bend', not both."
+            )
+        if "HexPos" in component:
             rot_dof_state = self.rot_hex_pos(component, dof_state, tilt_xy_deg)
-        elif component in {"M1M3Bend", "M2Bend"}:
+        elif "Bend" in component:
             rot_dof_state = self.rot_bending_mode(component, dof_state, tilt_xy_deg)
         else:
             raise RuntimeError(f"Unrecognized component {component}.")
@@ -181,6 +218,11 @@ class CamRot:
         -------
         `numpy.ndarray`
             Mirror rotation matrix.
+
+        Raises
+        ------
+        RuntimeError
+            If component name is not a valid input; M1M3Bend or M2Bend.
         """
 
         rot_mat = self.rot_mat(rot)

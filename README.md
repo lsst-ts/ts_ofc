@@ -1,15 +1,14 @@
 # Optical Feedback Control (OFC)
 
-This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors.
+This module is used to calculate the aggregated degree of freedom (DOF) for the hexapods and mirrors.
 
 ## Supported OS + Packages
 
 - CentOS 7
-- python: 3.7.8
+- python: >3.8
 
 ## Required LSST Packages
 
-- [ts_wep](https://github.com/lsst-ts/ts_wep)
 - [black](https://github.com/psf/black) (optional)
 - [documenteer](https://github.com/lsst-sqre/documenteer) (optional)
 - [plantuml](http://plantuml.com) (optional)
@@ -32,11 +31,6 @@ To enable this:
 
 1. Install the `black` Python package.
 2. Run `git config core.hooksPath .githooks` once in this repository.
-
-## Extension of Algorithm
-
-- **Estimate the optical state**: Inherit from the **OptStateEstiDefault** class, and realize the **estiOptState()** function. Inherit from the **Decorator** class if new parameter data is needed in the new algorithm.
-- **Calculate the DOF offset**: Inherit from the **OptCtrlDefault** class, and realize the **estiUkWithoutGain()** function. Inherit from the **Decorator** class if new parameter data is needed in the new algorithm.
 
 ## Build the Document
 

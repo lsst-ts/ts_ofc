@@ -43,7 +43,7 @@ Controller and State Estimator
 ------------------------------
 
 The core classes where previously called `OptCtrl` and `OptStateEsti`.
-They where renamed `OFCController` and `StateEstimator`.
+They were renamed `OFCController` and `StateEstimator`.
 
 
 .. _lsst.ts.ofc-1.3.7:

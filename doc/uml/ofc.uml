@@ -1,6 +1,0 @@
-@startuml
-class OFC
-OFCData
-StateEstimator ..> OFCData
-OFCController ..> OFCData
-@enduml

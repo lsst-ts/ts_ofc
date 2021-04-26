@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -261,6 +261,9 @@ class OFCController:
             Matrix F.
         qx : `numpy.ndarray`
             qx array.
+        kwargs : `dict`
+            Additional keyword arguments. This is mainly added to provide
+            similar interaface to other `calc_uk_*` methods.
 
         Returns
         -------
@@ -282,6 +285,8 @@ class OFCController:
             Matrix F.
         qx : `numpy.ndarray`
             qx array.
+        mat_h : `numpy.ndarray`
+            The H matrix (see equation above).
 
         Returns
         -------
@@ -331,6 +336,11 @@ class OFCController:
         -------
         uk : `numpy.ndarray`
             Calculated uk in the basis of DOF.
+
+        Raises
+        ------
+        RuntimeError
+            If `xref` strategy is not valid.
         """
         if self.ofc_data.xref not in self.ofc_data.xref_list:
             raise RuntimeError(

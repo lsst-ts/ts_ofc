@@ -17,10 +17,6 @@ pipeline {
       disableConcurrentBuilds()
     }
 
-    triggers {
-        pollSCM('H * * * *')
-    }
-
     environment {
         // Position of LSST stack directory
         LSST_STACK = "/opt/lsst/software/stack"
@@ -40,39 +36,6 @@ pipeline {
     }
 
     stages {
-
-        stage ('Cloning Repos') {
-            steps {
-                dir(env.WORKSPACE + '/phosim_utils') {
-                    git branch: 'master', url: 'https://github.com/lsst-dm/phosim_utils.git'
-                }
-                dir(env.WORKSPACE + '/ts_wep') {
-                    git branch: 'master', url: 'https://github.com/lsst-ts/ts_wep.git'
-                }
-            }
-        }
-
-        stage ('Building the Dependencies') {
-            steps {
-                // When using the docker container, we need to change
-                // the HOME path to WORKSPACE to have the authority
-                // to install the packages.
-                withEnv(["HOME=${env.WORKSPACE}"]) {
-                    sh """
-                        source ${env.LSST_STACK}/loadLSST.bash
-
-                        cd phosim_utils/
-                        setup -k -r . -t ${env.STACK_VERSION}
-                        scons
-
-                        cd ../ts_wep/
-                        setup -k -r .
-                        scons python
-                    """
-                }
-            }
-        }
-
         stage ('Unit Tests and Coverage Analysis') {
             steps {
                 // Direct the HOME to WORKSPACE for pip to get the
@@ -80,19 +43,13 @@ pipeline {
                 // 'PATH' can only be updated in a single shell block.
                 // We can not update PATH in 'environment' block.
                 // Pytest needs to export the junit report.
-                withEnv(["HOME=${env.WORKSPACE}"]) {
+                withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
 
-                        cd phosim_utils/
-                        setup -k -r . -t ${env.STACK_VERSION}
-
-                        cd ../ts_wep/
+                        cd ${WORK_HOME}
                         setup -k -r .
-
-                        cd ..
-                        setup -k -r .
-                        pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT} tests/
+                        pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT}
                     """
                 }
             }
@@ -116,7 +73,7 @@ pipeline {
             ])
 
             script{
-              withEnv(["HOME=${env.WORKSPACE}"]) {
+              withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
                 def RESULT = sh returnStatus: true, script: """
                   source ${env.LSST_STACK}/loadLSST.bash
 
@@ -124,13 +81,8 @@ pipeline {
 
                   pip install sphinxcontrib-plantuml
 
-                  cd phosim_utils/
-                  setup -k -r . -t ${env.STACK_VERSION}
+                  cd ${WORK_HOME}
 
-                  cd ../ts_wep/
-                  setup -k -r .
-
-                  cd ..
                   setup -k -r .
 
                   package-docs build
@@ -151,8 +103,8 @@ pipeline {
             // is 1003 on TSSW Jenkins instance. In this post stage, it is the
             // jenkins to do the following clean up instead of the root in the
             // docker container.
-            withEnv(["HOME=${env.WORKSPACE}"]) {
-                sh 'chown -R 1003:1003 ${HOME}/'
+            withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
+                sh 'chown -R 1003:1003 ${WORK_HOME}/'
             }
 
         }

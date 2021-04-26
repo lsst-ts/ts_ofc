@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for the LSST Telescope and Site Systems.
+# Developed for Vera Rubin Observatory.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -22,8 +22,7 @@
 import numpy as np
 import unittest
 
-from lsst.ts.ofc.CamRot import CamRot
-from lsst.ts.ofc.Utility import DofGroup
+from lsst.ts.ofc import CamRot
 
 
 class TestCamRot(unittest.TestCase):
@@ -31,82 +30,74 @@ class TestCamRot(unittest.TestCase):
 
     def setUp(self):
 
-        self.camRot = CamRot()
+        self.cam_rot = CamRot()
 
-    def testSetAndGetRotAng(self):
+    def test_rot_comp_dof_m2hex(self):
 
-        rotAngInDeg = 45
-        self.camRot.setRotAng(rotAngInDeg)
-        self.assertEqual(self.camRot.getRotAng(), rotAngInDeg)
+        self.cam_rot.rot = 45
 
-    def testSetRotAngWithWrongValue(self):
+        component = "m2HexPos"
+        dof_state = [1, 2, 2, 4, 4]
+        tilt_xy = (1224, 0)
+        rot_dof_state = self.cam_rot.rot_comp_dof(component, dof_state, tilt_xy)
 
-        self.assertRaises(ValueError, self.camRot.setRotAng, -91)
-        self.assertRaises(ValueError, self.camRot.setRotAng, 91)
+        self.assertAlmostEqual(rot_dof_state[1], 0.00841705, places=7)
 
-    def testRotGroupDofOfM2Hex(self):
+    def test_rot_comp_dof_camhex(self):
 
-        self.camRot.setRotAng(45)
-        dofGroup = DofGroup.M2HexPos
-        stateInDof = [1, 2, 2, 4, 4]
-        tiltXYinArcsec = (1224, 0)
-        rotatedStateInDof = self.camRot.rotGroupDof(
-            dofGroup, stateInDof, tiltXYinArcsec
-        )
-
-        self.assertAlmostEqual(rotatedStateInDof[1], 0.00841705, places=7)
-
-    def testRotGroupDofOfCamHex(self):
-
-        self.camRot.setRotAng(90)
-        dofGroup = DofGroup.CamHexPos
-        stateInDof = [1, 2, 3, 4, 5]
-        tiltXYinArcsec = (0, 0)
-        rotatedStateInDof = self.camRot.rotGroupDof(
-            dofGroup, stateInDof, tiltXYinArcsec
-        )
+        self.cam_rot.rot = 90
+        component = "camHexPos"
+        dof_state = [1, 2, 3, 4, 5]
+        tilt_xy = (0, 0)
+        rot_dof_state = self.cam_rot.rot_comp_dof(component, dof_state, tilt_xy)
 
         ans = [1, -3, 2, -5, 4]
-        delta = np.sum(np.abs(rotatedStateInDof - ans))
+        delta = np.sum(np.abs(rot_dof_state - ans))
         self.assertEqual(delta, 0)
 
-    def testRotGroupDofOfM1M3Bend(self):
+    def test_rot_comp_dof_m1m3bend(self):
 
-        self.camRot.setRotAng(45)
-        dofGroup = DofGroup.M1M3Bend
+        self.cam_rot.rot = 45
+        component = "M1M3Bend"
 
-        numOfBendMode = 20
-        stateInDof = np.zeros(numOfBendMode)
-        stateInDof[0] = 1
-        stateInDof[2] = 2
-        tiltXYinArcsec = (0, 0)
+        num_bend_mode = 20
+        dof_state = np.zeros(num_bend_mode)
+        dof_state[0] = 1
+        dof_state[2] = 2
+        tilt_xy = (0, 0)
 
-        rotatedStateInDof = self.camRot.rotGroupDof(
-            dofGroup, stateInDof, tiltXYinArcsec
-        )
+        rot_dof_state = self.cam_rot.rot_comp_dof(component, dof_state, tilt_xy)
 
-        self.assertAlmostEqual(rotatedStateInDof[0], 0.70710678, places=7)
-        self.assertEqual(rotatedStateInDof[2], 2)
-        self.assertEqual(len(rotatedStateInDof), numOfBendMode)
+        self.assertAlmostEqual(rot_dof_state[0], 0.70710678, places=7)
+        self.assertEqual(rot_dof_state[2], 2)
+        self.assertEqual(len(rot_dof_state), num_bend_mode)
 
-    def testRotGroupDofOfM2Bend(self):
+    def test_rot_comp_dof_m2bend(self):
 
-        self.camRot.setRotAng(45)
-        dofGroup = DofGroup.M2Bend
+        self.cam_rot.rot = 45
+        component = "M2Bend"
 
-        numOfBendMode = 20
-        stateInDof = np.zeros(numOfBendMode)
-        stateInDof[0] = 1
-        stateInDof[4] = 2
-        tiltXYinArcsec = (0, 0)
+        num_bend_mode = 20
+        dof_state = np.zeros(num_bend_mode)
+        dof_state[0] = 1
+        dof_state[4] = 2
+        tilt_xy = (0, 0)
 
-        rotatedStateInDof = self.camRot.rotGroupDof(
-            dofGroup, stateInDof, tiltXYinArcsec
-        )
+        rot_dof_state = self.cam_rot.rot_comp_dof(component, dof_state, tilt_xy)
 
-        self.assertAlmostEqual(rotatedStateInDof[0], 0.70710678, places=7)
-        self.assertEqual(rotatedStateInDof[4], 2)
-        self.assertEqual(len(rotatedStateInDof), numOfBendMode)
+        self.assertAlmostEqual(rot_dof_state[0], 0.70710678, places=7)
+        self.assertEqual(rot_dof_state[4], 2)
+        self.assertEqual(len(rot_dof_state), num_bend_mode)
+
+    def test_bad_component_name(self):
+
+        dof_state = np.zeros(20)
+
+        with self.assertRaises(RuntimeError):
+            self.cam_rot.rot_comp_dof("NoValidComp", dof_state)
+
+        with self.assertRaises(RuntimeError):
+            self.cam_rot.rot_comp_dof("BothHexPosBend", dof_state)
 
 
 if __name__ == "__main__":

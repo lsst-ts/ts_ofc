@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of ts_ofc.
 #
 # Developed for Vera Rubin Observatory.
@@ -20,15 +19,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-try:
-    from .version import *
-except ModuleNotFoundError:
-    pass
+import unittest
 
-from .camrot import *
-from .bend_mode_to_force import *
-from .ofc_data import *
-from .state_estimator import *
-from .ofc_controller import *
-from .correction import *
-from .ofc import *
+from lsst.ts.ofc import OFCData
+
+STD_TIMEOUT = 30
+
+
+class TestOFCData(unittest.TestCase):
+    """Test the OFCData class when not using asyncio."""
+
+    def test_comcam(self):
+
+        ofc_data = OFCData("comcam")
+
+        self.assertEqual(ofc_data.name, "comcam")
+
+    def test_lsst(self):
+
+        ofc_data = OFCData("lsst")
+        self.assertEqual(ofc_data.name, "lsst")
+
+    def test_lsstfam(self):
+
+        ofc_data = OFCData("lsstfam")
+
+        self.assertEqual(ofc_data.name, "lsstfam")
+
+
+if __name__ == "__main__":
+
+    # Run the unit test
+    unittest.main()

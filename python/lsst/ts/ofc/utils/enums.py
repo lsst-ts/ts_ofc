@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of ts_ofc.
 #
 # Developed for Vera Rubin Observatory.
@@ -20,15 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-try:
-    from .version import *
-except ModuleNotFoundError:
-    pass
+__all__ = ["CorrectionType"]
 
-from .camrot import *
-from .bend_mode_to_force import *
-from .ofc_data import *
-from .state_estimator import *
-from .ofc_controller import *
-from .correction import *
-from .ofc import *
+from enum import IntEnum, auto
+
+
+class CorrectionType(IntEnum):
+    POSITION = 1
+    FORCE = auto()
+    UNKNOWN = auto()

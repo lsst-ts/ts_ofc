@@ -8,7 +8,7 @@ The first step is to evaluate the optical state (:math:`\vec{x}_{k}`) at time :m
 The second step is to evaluate :math:`\vec{u}`.
 The final step is to decide the feedback amplitude based on :math:`g`.
 
-The optical state is defined in the following:
+The optical state is defined as:
 
 .. math:: 
 
@@ -129,8 +129,16 @@ Consider the correction of wavefront error between center and corcer, we rewrite
     &= - \left( \frac{2\pi}{\lambda(\ell)} \right)^{2} \textbf{F} \sum_{i}w_{i} \textbf{M}_{i}^{T}\text{diag}(\vec\alpha)_{i}^{2} \vec{m}_{x, i}.
     \end{align*}
 
-Consider three different reference points "x0, "0", and "x00". "x0" means the offset will only trace the previous one; "0" means the offset will trace the real value and target for 0; "x00" means the offset will only trace the relative changes of offset without regarding the real value.
-Assume the telescope's state is :math:`\vec{s}_{0}` in the time :math:`k=0` and :math:`\vec{s}` in time :math:`k`, and we can intentionally shift :math:`\vec{m}_{x}` to be:
+Consider three different reference points "x0, "0", and "x00". 
+
+x0
+    means the offset will only trace the previous one; 
+0
+    means the offset will trace the real value and target for 0;
+x00
+    means the offset will only trace the relative changes of offset without regarding the real value.
+
+    Assume the telescope's state is :math:`\vec{s}_{0}` in the time :math:`k=0` and :math:`\vec{s}` in time :math:`k`, and we can intentionally shift :math:`\vec{m}_{x}` to be:
 
 .. math::
 

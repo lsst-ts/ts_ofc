@@ -60,13 +60,13 @@ class TestStateEstimator(unittest.TestCase):
     def test_dof_state_trim_zn_dof(self):
 
         self.estimator.ofc_data.zn3_idx = np.arange(5)
-        new_dof_mask = dict(
+        new_comp_dof_idx = dict(
             m2HexPos=np.ones(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
             M1M3Bend=np.zeros(20, dtype=bool),
             M2Bend=np.zeros(20, dtype=bool),
         )
-        self.estimator.ofc_data.dof_idx = new_dof_mask
+        self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         state = self.estimator.dof_state("", self.wfe, self.field_idx)
 
@@ -80,14 +80,16 @@ class TestStateEstimator(unittest.TestCase):
     def test_dof_state_not_enough_zk(self):
 
         self.estimator.ofc_data.zn3_idx = np.arange(4)
-        new_dof_mask = dict(
+
+        new_comp_dof_idx = dict(
             m2HexPos=np.ones(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
             M1M3Bend=np.zeros(20, dtype=bool),
             M2Bend=np.zeros(20, dtype=bool),
         )
-        new_dof_mask["M1M3Bend"][:10] = True
-        self.estimator.ofc_data.dof_idx = new_dof_mask
+        new_comp_dof_idx["M1M3Bend"][:10] = True
+
+        self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         with self.assertRaises(RuntimeError):
             self.estimator.dof_state("", self.wfe, self.field_idx)

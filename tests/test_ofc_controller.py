@@ -84,12 +84,10 @@ class TestOFCController(unittest.TestCase):
         self.assertAlmostEqual(uk[1], -2.53792714, places=7)
         self.assertAlmostEqual(uk[2], -0.53851520, places=7)
 
-    def test_uk_bad_xref(self):
+    def test_all_xref_ok(self):
 
-        self.ofc_data.xref = None
-
-        with self.assertRaises(RuntimeError):
-            self.ofc_controller.uk(self.filter_name, self.state)
+        for xref in self.ofc_data.xref_list:
+            self.assertTrue(hasattr(self.ofc_controller, f"calc_uk_{xref}"))
 
     def test_bad_gain(self):
 

@@ -129,6 +129,17 @@ class OFCController:
         self.dof_state[dof_idx] += dof
 
     @property
+    def aggregated_state(self):
+        """Returns the aggregated state.
+
+        Returns
+        -------
+        `np.ndarray`
+            Aggregated state.
+        """
+        return self.dof_state[self.ofc_data.dof_idx]
+
+    @property
     def gain(self):
         """Get the gain value.
 

@@ -242,14 +242,14 @@ class TestOFC(unittest.TestCase):
 
     def test_get_state_correction_from_last_visit(self):
 
-        new_dof_mask = dict(
+        new_comp_dof_idx = dict(
             m2HexPos=np.zeros(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
             M1M3Bend=np.zeros(20, dtype=bool),
             M2Bend=np.zeros(20, dtype=bool),
         )
 
-        self.ofc.ofc_data.dof_idx = new_dof_mask
+        self.ofc.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         calc_dof = np.arange(1, 6)
         self.ofc.set_last_visit_dof(calc_dof)
@@ -296,14 +296,14 @@ class TestOFC(unittest.TestCase):
                 self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
     def test_truncate_dof(self):
-        new_dof_mask = dict(
+        new_comp_dof_idx = dict(
             m2HexPos=np.zeros(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
             M1M3Bend=np.zeros(20, dtype=bool),
             M2Bend=np.zeros(20, dtype=bool),
         )
 
-        self.ofc.ofc_data.dof_idx = new_dof_mask
+        self.ofc.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         self.assertEqual(len(self.ofc.ofc_data.dof_idx), 5)
 

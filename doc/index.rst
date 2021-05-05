@@ -27,6 +27,12 @@ The process contains:
   2. estimate the offset of DOF used in the next iteration/visit, and
   3. rotate the DOF based on the camera rotation angle.
 
+.. toctree::
+    :glob:
+    :maxdepth: 1
+    
+    *
+
 .. _user-documentation:
 
 User Documentation
@@ -39,7 +45,8 @@ User-level documentation, found in the link below, is aimed at scientists and en
     user-guide/user-guide
     :maxdepth: 1
 
-    .. _development-documentation:
+
+.. _development-documentation:
 
 Developer Documentation
 =======================

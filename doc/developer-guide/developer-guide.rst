@@ -17,6 +17,11 @@ Optical Feedback Control (OFC) Developer Guide
 Using lsst.ts.ofc
 =================
 
+.. toctree::
+    :glob:
+
+    *
+
 Important classes:
 
 * ``OFCData`` is the data container class for OFC operations.

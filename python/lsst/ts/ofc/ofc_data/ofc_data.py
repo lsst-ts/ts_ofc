@@ -134,12 +134,21 @@ class OFCData(BaseOFCData):
             },
         }
 
-        # Set the name of the instrument. This reads the instrument-related
-        # configuration files. The read is done in the background by scheduling
-        # a process in the event loop.
-        self._configure_lock = asyncio.Lock()
-        self.start_task = asyncio.Future()
+        # Try to create a lock and a future. Sometimes it happens that the
+        # event loop is closed, which raises a RuntimeError. If this happens,
+        # create a new event loops and try again.
+        try:
+            self._configure_lock = asyncio.Lock()
+            self.start_task = asyncio.Future()
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            self._configure_lock = asyncio.Lock()
+            self.start_task = asyncio.Future()
+
         self.start_task.set_result(None)
+
+        # Set the name of the instrument. This reads the instrument-related
+        # configuration files.
         if name is not None:
             self.name = name
 

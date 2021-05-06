@@ -1,4 +1,9 @@
 @startuml
+package "ofc_data" #DDDDDD {
+  OFCData --|> BaseOFCData
+}
+
+class OFC
 StateEstimator *-- OFCData
 OFCController *-- OFCData
 OFCController "1" *-- "2" BendModeToForce

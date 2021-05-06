@@ -12,23 +12,16 @@ Optical Feedback Control (OFC) Developer Guide
 .. image:: https://img.shields.io/badge/Jira-ts_ofc-green.svg
     :target: https://jira.lsstcorp.org/issues/?jql=labels+%3D+ts_ofc
 
-.. _lsst.ts.ofc-using:
-
-Using lsst.ts.ofc
-=================
-
-.. toctree::
-    :glob:
-
-    *
-
 Important classes:
 
-* ``OFCData`` is the data container class for OFC operations.
-  This class stores all data needed by all child classes.
-* ``StateEstimator`` contains facilities to estimate the state of the system.
-* ``OFCController`` calculates the DOF offset by minimizing the cost function.
-* ``OFC`` is the main class of the system, responsible for managing the conversion of wavefront errors into corrections.
+* :py:class:`BaseOFCData <lsst.ts.ofc.ofc_data.BaseOFCData>` a `python data class`_ that contains the static data for the ofc operation.
+* :py:class:`OFCData <lsst.ts.ofc.ofc_data.OFCData>` a data container class that inherits ``BaseOFCData`` and handles the dynamic data for ofc operations.
+  This includes reading and storing data from files and higher level data manipulation.
+* :py:class:`StateEstimator <lsst.ts.ofc.StateEstimator>` contains facilities to estimate the state of the system.
+* :py:class:`OFCController <lsst.ts.ofc.OFCController>` calculates the degrees of freedom (DoF) offset by minimizing the cost function.
+* :py:class:`OFC <lsst.ts.ofc.OFC>` is the main class of the system, responsible for managing the conversion of wavefront errors into corrections.
+
+.. _python data class: https://docs.python.org/3.8/library/dataclasses.html
 
 .. uml:: ../uml/ofc_class.uml
     :caption: OFC Class diagram.
@@ -36,10 +29,26 @@ Important classes:
 
 .. _lsst.ts.ofc-pyapi:
 
+Control Algorithm
+=================
+
+.. toctree::
+    :glob:
+
+    control-algorithm/*
+
+For more additional details about the algorithm see [Angeli2014]_, [Angeli2016a]_, [Angeli2016b]_ and [Xin2021]_.
+
 Python API reference
 ====================
 
 .. automodapi:: lsst.ts.ofc
+    :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.ofc.ofc_data
+    :no-inheritance-diagram:
+
+.. automodapi:: lsst.ts.ofc.utils
     :no-inheritance-diagram:
 
 .. _lsst.ts.ofc-contributing:
@@ -48,3 +57,14 @@ Contributing
 ============
 
 ``lsst.ts.ofc`` is developed at https://github.com/lsst-ts/ts_ofc.
+
+References
+==========
+
+.. [Angeli2014] Angeli, George Z. et al., *Real time wavefront control system for the Large Synoptic Survey Telescope (LSST).* `Proc. SPIE 9150, Modeling, Systems Engineering, and Project Management for Astronomy VI, 91500H (2014). <https://doi.org/10.1117/12.2055390>`_
+
+.. [Angeli2016a] Angeli, George Z. et al., *An integrated modeling framework for the Large Synoptic Survey Telescope (LSST).* `Proc. SPIE 9911, Modeling, Systems Engineering, and Project Management for Astronomy VI, 991118 (2016). <https://doi.org/10.1117/12.2234078>`_
+
+.. [Angeli2016b] Angeli, George Z. and Xin, Bo, *Normalized Point Source Sensitivity for LSST.* `document-17242. <https://docushare.lsst.org/docushare/dsweb/Get/Document-17242>`_
+
+.. [Xin2021] Xin, Bo, *SITCOMTN-003: Coordinate Transformations within the Rubin Active Optics System.* `sticomtn-003 <https://sitcomtn-003.lsst.io>`_

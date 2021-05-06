@@ -35,10 +35,6 @@ class TestUtils(unittest.TestCase):
 
         self.assertTrue(pkg_root.exists())
 
-        init_file = pkg_root / "python" / "lsst" / "ts" / "ofc" / "__init__.py"
-
-        self.assertTrue(init_file.exists(), f"File {init_file} does not exists.")
-
     def test_get_config_dir(self):
 
         config_dir = get_config_dir()

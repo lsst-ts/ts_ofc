@@ -19,11 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
+import pathlib
 import unittest
 
+import numpy as np
+
 from lsst.ts.ofc import OFC, OFCData, Correction
-from lsst.ts.ofc.utils import get_pkg_root, CorrectionType
+from lsst.ts.ofc.utils import CorrectionType
 
 
 class TestOFC(unittest.TestCase):
@@ -34,7 +36,9 @@ class TestOFC(unittest.TestCase):
         self.ofc_data = OFCData("lsst")
         self.ofc = OFC(self.ofc_data)
         self.test_data_path = (
-            get_pkg_root() / "tests" / "testData" / "lsst_wfs_error_iter0.z4c"
+            pathlib.Path(__file__).parent.absolute()
+            / "testData"
+            / "lsst_wfs_error_iter0.z4c"
         )
 
     def test_init_lv_dof(self):

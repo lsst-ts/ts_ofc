@@ -19,11 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
+import pathlib
 import unittest
 
+import numpy as np
+
 from lsst.ts.ofc import OFCData, StateEstimator
-from lsst.ts.ofc.utils import get_pkg_root
 
 
 class TestStateEstimator(unittest.TestCase):
@@ -36,7 +37,9 @@ class TestStateEstimator(unittest.TestCase):
         self.estimator = StateEstimator(self.ofc_data)
 
         self.wfe = np.loadtxt(
-            get_pkg_root() / "tests/testData/lsst_wfs_error_iter0.z4c"
+            pathlib.Path(__file__).parent.absolute()
+            / "testData"
+            / "lsst_wfs_error_iter0.z4c"
         )
 
         sensor_name_list = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]

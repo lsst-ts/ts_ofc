@@ -11,16 +11,17 @@ Version History
 v2.0.0
 ======
 
-Major refactor ofc code.
+Major refactor of ofc code.
 
 * The code was reorganized so that the main user-interface class (previously ``OFCCalculation``, now just ``OFC``) is at the top level of the package.
 * The ``OFC`` class is no longer subclassed for the different instruments, since the behavior was the same in all cases.
 * Document the control algorithm for OFC in rst from Confluence
+* General improvements in documentation.
 
 Data handling
 -------------
 
-All data is now handled by a single container class, OFCData, which is shared between all the other classes that require data access.
+All data is now handled by a two container classes, ``BaseOFCData`` and ``OFCData``, which is shared between all the other classes that require data access.
 Most of the data is defined in-line, instead of reading them from files.
 The data that is read from files are the ones for the instruments.
 This is handled in the background when the user sets the "name" attribute in an instance of OFCData.

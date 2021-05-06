@@ -171,8 +171,8 @@ class OFC:
     def rot_uk(self, rot, uk):
         """Rotate uk.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         rot : `float`
             Camera rotator angle in degrees.
         uk : `np.array`

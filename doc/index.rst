@@ -63,5 +63,6 @@ Version
 ====================
 
 .. toctree::
+   :maxdepth: 1
 
    versionHistory

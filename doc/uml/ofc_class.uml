@@ -1,4 +1,5 @@
 @startuml
+class OFC
 StateEstimator *-- OFCData
 OFCController *-- OFCData
 OFCController "1" *-- "2" BendModeToForce
@@ -8,4 +9,5 @@ OFC *-- StateEstimator
 OFC *-- OFCController
 OFC *-- CamRot
 OFC ..> Correction
+OFCData *-- BaseOFCData
 @enduml

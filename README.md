@@ -39,12 +39,3 @@ The packages of **documenteer**, **plantuml**, and **sphinxcontrib-plantuml** ar
 The path of `plantuml.jar` in `doc/conf.py` needs to be updated to the correct path.
 To clean the built documents, use `package-docs clean`.
 See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.
-
-## References
-
-1. Angeli, George Z. et al., Real time wavefront control system for the Large Synoptic Survey Telescope (LSST), Proc. SPIE 9150, Modeling, Systems Engineering, and Project Management for Astronomy VI, 91500H (2014). <https://doi.org/10.1117/12.2055390>
-2. Angeli, George Z. et al., An integrated modeling framework for the Large Synoptic Survey Telescope (LSST), Proc. SPIE 9911, Modeling, Systems Engineering, and Project Management for Astronomy VI, 991118 (2016). <https://doi.org/10.1117/12.2234078>
-3. Angeli, George Z. and Xin, Bo, Normalized Point Source Sensitivity for LSST, document-17242 (2016). <https://docushare.lsst.org/docushare/dsweb/Get/Document-17242>
-4. [Details of optical state estimation and control algorithms.](https://confluence.lsstcorp.org/display/LTS/Control+Algorithm+in+Optical+Feedback+Control)
-5. [Subsystem coordinate transformation.](https://confluence.lsstcorp.org/display/LTS/Subsystem+Coordinate+Transformation)
-6. [Camera rotation and degree of freedom.](https://confluence.lsstcorp.org/display/LTS/Camera+Rotation+and+Degree+of+Freedom)

@@ -20,6 +20,8 @@ pipeline {
     environment {
         // Position of LSST stack directory
         LSST_STACK = "/opt/lsst/software/stack"
+        // saluser home directory
+        SALUSER_HOME = "/home/saluser"
         // PlantUML url
         PLANTUML_URL = "https://managedway.dl.sourceforge.net/project/plantuml/plantuml.jar"
         // Pipeline stack Version
@@ -77,7 +79,7 @@ pipeline {
                 def RESULT = sh returnStatus: true, script: """
                   source ${env.LSST_STACK}/loadLSST.bash
 
-                  curl -O ${env.PLANTUML_URL}
+                  curl ${env.PLANTUML_URL} -o ${env.SALUSER_HOME}/plantuml.jar
 
                   pip install sphinxcontrib-plantuml
 

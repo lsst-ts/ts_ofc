@@ -1,0 +1,35 @@
+{% set data= load_setup_py_data() %}
+package:
+  name: "ts-ofc"
+  version: {{ data.get('version') }}
+
+source:
+  path: ../
+
+build:
+  script: python -m pip install --no-deps --ignore-installed .
+
+test:
+  requires:
+    - ts-conda-build =0.3
+    - scipy >=1.6
+  source_files:
+    - python
+    - tests
+    - setup.cfg
+    - policy
+  commands:
+    - py.test -vs
+
+requirements:
+  host:
+    - python
+    - pip
+    - setuptools_scm
+    - setuptools
+    - pytest-runner
+  run:
+    - python
+    - setuptools
+    - setuptools_scm
+    - scipy >=1.6

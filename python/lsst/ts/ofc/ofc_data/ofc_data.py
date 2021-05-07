@@ -31,12 +31,13 @@ import numpy as np
 from glob import glob
 from pathlib import Path
 
-from .utils import get_config_dir
+from ..utils import get_config_dir
+from . import BaseOFCData
 
 _INTRISICZN_FILTER_REGEX = re.compile(r"intrinsicZn(?P<name>[a-zA-Z_-]*).yaml")
 
 
-class OFCData:
+class OFCData(BaseOFCData):
     """Optical Feedback Control Data.
 
     This container class provides a unified interface to all the data used by
@@ -45,30 +46,30 @@ class OFCData:
 
     Parameters
     ----------
-    name : `string`
+    name : `string` or `None`, optional
         Name of the instrument/configuration. This must map to a directory
         inside `data_path`.
-    config_dir : `string` or `None`
+    config_dir : `string` or `None`, optional
         Path to configuration directory. If `None` (default) use data provided
         with the module. If a `string` is provided it must map to a valid path.
-    log : `logging.Logger` or `None`
+    log : `logging.Logger` or `None`, optional
         Optional logging class to be used for logging operations. If `None`,
         creates a new logger.
+    kwargs : `dict`
+        Additional keyword arguments. Value are passed over to the
+        `BaseOFCData` parent class.
 
     Attributes
     ----------
-    alpha : `np.array` of `float`
-        Alpha coefficient for the normalized point-source sensitivity (PSSN).
+    bend_mode : `dict`
+        Dictionary to hold bending mode data. The data is read alongside the
+        other files when the name is set.
     config_dir : `pathlib.Path`
         Path to the directory storing configuration files.
     control_strategy : `string`
         Name of the control strategy.
-    delta : `np.array` of `float`
-        Delta coefficient for the normalized point-source sensitivity (PSSN).
     dof_idx : `dict` of `string`
         Index of Degree of Freedom (DOF).
-    eff_wavelength : `dict` of `string`
-        Effective wavelength in um for each filter.
     field_idx : `dict` of `string`
         Mapping between sensor name and field index.
     idx_dof : `dict` of `string`
@@ -76,30 +77,13 @@ class OFCData:
     intrinsic_zk : `dict` of `string`
         Intrinsic zernike coefficients per band per detector for a specific
         instrument configuration.
-    intrinsic_zk_filename_root : `string`
-        Filename root string for the intrinsic zernike coefficients.
     log : `logging.Logger`
         Logger class used for logging operations.
-    m1m3_actuator_penalty : `float`
-        M1M3 actuator penalty factor.
-    m2_actuator_penalty : `float`
-        M2 actuator penalty factor.
-    motion_penalty : `float`
-        Penalty on control motion as a whole.
     name : `string`
         Name of the instrument configuration. This is used to define where
         `intrinsic_zk` and `y2` will be read from.
-    rb_stroke : `np.array` of `float`
-        Allowed moving range of rigid body of M2 hexapod and Camera hexapod in
-        the unit of um. e.g. rbStroke[0] means the M2 piston is allowed to move
-        +5900 um to -5900 um.
     sensitivity_matrix : `np.ndarray` of `float`
         Sensitivity matrix M.
-    sen_m_filename_root : `string`
-        Filename root string for the sensitivity matrix M.
-    sensor_mapping_filename : `string`
-        Name of the file with the mapping between the sensor name and field
-        index.
     start_task : `asyncio.Future`
         Asyncio future that tracks whether the class is setup and ready or not.
     xref : `string`
@@ -108,16 +92,6 @@ class OFCData:
         Available reference point strategies.
     y2_correction : `np.ndarray` of `float`
         Y2 correction.
-    y2_filename : `string`
-        Name of the file where `y2_correction` is read from.
-    zn3_idx : `np.array` of `bool`
-        Index of annular Zernike polynomials (z3-z22) (`True`: in use, `False`:
-        not in use).
-    zn3_idx_in_intrinsic_zn_file : `int`
-        Specify where the zernike data starts when reading the intrinsic
-        zernike coefficients.
-    znmax : `int`
-        Max number of zernikes used (to be filtered with `zn3_idx`).
 
     Raises
     ------
@@ -125,7 +99,9 @@ class OFCData:
         If input `config_dir` does not exists.
     """
 
-    def __init__(self, name, config_dir=None, log=None):
+    def __init__(self, name=None, config_dir=None, log=None, **kwargs):
+
+        super().__init__(**kwargs)
 
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
@@ -145,13 +121,6 @@ class OFCData:
                     f"Provided data path ({self.config_dir}) does not exists."
                 )
 
-        self.iqw_filename = "imgQualWgt.yaml"
-        self.y2_filename = "y2.yaml"
-        self.sensor_mapping_filename = "sensorNameToFieldIdx.yaml"
-        self.dof_state0_filename = "state0inDof.yaml"
-        self.intrinsic_zk_filename_root = "intrinsicZn"
-        self.sen_m_filename_root = "senM"
-
         # Dictionary to hold bending mode data. The data is read alongside the
         # other files when the name is set.
         self.bend_mode = {
@@ -165,55 +134,25 @@ class OFCData:
             },
         }
 
-        self.zn3_idx_in_intrinsic_zn_file = 3
+        # Try to create a lock and a future. Sometimes it happens that the
+        # event loop is closed, which raises a RuntimeError. If this happens,
+        # create a new event loops and try again.
+        try:
+            self._configure_lock = asyncio.Lock()
+            self.start_task = asyncio.Future()
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            self._configure_lock = asyncio.Lock()
+            self.start_task = asyncio.Future()
+
+        self.start_task.set_result(None)
 
         # Set the name of the instrument. This reads the instrument-related
-        # configuration files. The read is done in the background by scheduling
-        # a process in the event loop.
+        # configuration files.
+        if name is not None:
+            self.name = name
 
-        self.start_task = asyncio.Future()
-        self.start_task.set_result(None)
-        self._configure_task = None
-        self.name = name
-
-        # Filter name and associated effective wavelength in um.
-
-        self.eff_wavelength = {
-            "U": 0.365,
-            "G": 0.480,
-            "R": 0.622,
-            "I": 0.754,
-            "Z": 0.868,
-            "Y": 0.973,
-            "": 0.5,
-        }
-
-        # Max number of zernikes used (to be filtered with zn3Idx)
-        self.znmax = 22
-
-        # Rotation matrix between ZEMAX coordinate and optical coordinate
-        # systems defined in LTS-136.
-        #
-        # In ZEMAX coordinate, the hexapod position is (z', x', y', rx', ry').
-        # +z' is defined from M2 to M1M3.
-        # +y' is defined as pointing toward zenith when the telescope is
-        # pointed toward the horizon (elevation angle is 0 degree).
-        # +x' follows by the right hand rule.
-        # x', y', and z' are in um. rx' and ry' are in the arcsec.
-        #
-        # In optical coordinate system, the hexapod position is (x, y, z, rx,
-        # ry, rz).
-        # +z is defined from M1M3 to M2. +y is defined as pointing toward
-        # zenith when the telescope is pointed toward the horizon (elevation
-        # angle is 0 degree).
-        # +x follows by the right hand rule.
-        # x, y, and z are in um. rx, ry, and rz are in the degree.
-        #
-        # For the rotation matrix below, row is (z', x', y', rx', ry') and
-        # column is (x, y, z, rx, ry, rz).
-        #
-        # 1 degree = 3600 arcsec
-        rot_mat_hexapod = np.array(
+        rot_mat_hexapod: np.ndarray = np.array(
             [
                 [0.0, 0.0, -1.0, 0.0, 0.0, 0.0],
                 [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -224,9 +163,12 @@ class OFCData:
         )
 
         # Index of Degree of Freedom (DOF)
-        self.comp_dof_idx = dict(
+        self._comp_dof_idx = dict(
             m2HexPos=dict(
-                startIdx=0, idxLength=5, state0name="M2Hexapod", rot_mat=rot_mat_hexapod
+                startIdx=0,
+                idxLength=5,
+                state0name="M2Hexapod",
+                rot_mat=rot_mat_hexapod,
             ),
             camHexPos=dict(
                 startIdx=5,
@@ -247,99 +189,12 @@ class OFCData:
 
         self._dof_idx_mask = np.ones_like(self._dof_idx, dtype=bool)
 
-        # Index of annular Zernike polynomials (z3-z22)
-        self.zn3_idx = np.arange(19)
-
-        # Parameters for the AOS controller
-
         # Control strategy
-        self.control_strategy = "optiPSSN"
-        self.xref_list = ["x00", "x0", "0"]
-        self.xref = "x00"
-
-        # M1M3 actuator penalty factor
-        # how many microns of M2 piston does 1N rms force correspond to
-        # the bigger the number, the bigger the penalty
-        # 13.2584 below = 5900/445
-        # 445 means 445N, rms reaching 445N is as bad as M2 piston reaching
-        # 5900um
-        self.m1m3_actuator_penalty = 13.2584
-
-        # M2 actuator penalty factor
-        # how many microns of M2 piston does 1N rms force correspond to
-        # the bigger the number, the bigger the penalty
-        # M2 F budget for AOS = 44N. 5900/44 = 134
-        self.m2_actuator_penalty = 134
-
-        # penalty on control motion as a whole
-        # default below is 0.001, meaning 1N force is as bad as 0.001 increase
-        # in pssn use 0, if you accept whatever motion needed to produce best
-        # image quality use 1e100, if you absolutely hate anything that moves
-        self.motion_penalty = 0.001
-
-        # Normalized point-source sensitivity (PSSN) information
-        # PSSN ~ 1 - alpha * delta^2
-        # Eq (7.1) in Normalized Point Source Sensitivity for LSST
-        # (document-17242). It is noted that there are 19 terms of alpha value
-        # here for z4-z22 to use.
-
-        self.alpha = np.array(
-            [
-                6.6906168e-03,
-                9.4460611e-04,
-                9.4460611e-04,
-                6.1240430e-03,
-                6.1240430e-03,
-                1.7516747e-03,
-                1.7516747e-03,
-                4.9218300e-02,
-                9.4518035e-03,
-                9.4518035e-03,
-                3.0979027e-03,
-                3.0979027e-03,
-                4.5078901e-02,
-                4.5078901e-02,
-                1.2438449e-02,
-                1.2438449e-02,
-                4.5678764e-03,
-                4.5678764e-03,
-                3.6438430e-01,
-            ]
-        )
-        self.delta = np.array(
-            [
-                2.6353589e00,
-                5.2758650e00,
-                5.2758650e00,
-                1.6866297e00,
-                1.6866297e00,
-                5.1471854e00,
-                5.1471854e00,
-                8.6355441e-01,
-                1.6866297e00,
-                1.6866297e00,
-                2.7012429e00,
-                2.7012429e00,
-                4.4213986e-01,
-                4.4213986e-01,
-                1.6866297e00,
-                1.6866297e00,
-                1.6866297e00,
-                1.6866297e00,
-                2.8296951e-01,
-            ]
-        )
-
-        # Allowed moving range of rigid body of M2 hexapod and Camera hexapod
-        # in the unit of um. e.g. rbStroke[0] means the M2 piston is allowed to
-        # move +5900 um to -5900 um.
-        self.rb_stroke = np.array(
-            [5900, 6700, 6700, 432, 432, 8700, 7600, 7600, 864, 864]
-        )
+        self._xref = None
 
     @property
     def name(self):
-        if not self.start_task.done():
+        if not self.start_task.done() or self.start_task.result() is None:
             raise RuntimeError(
                 "Class not setup or still loading instrument files."
                 "You must await for `start_task` to complete."
@@ -348,32 +203,52 @@ class OFCData:
 
     @name.setter
     def name(self, value):
-
-        # Check if event loop is running. If not, setup as normal method.
-        if not self.start_task.get_loop().is_running():
-            self.start_task = asyncio.Future()
-            self._configure_instrument(value)
-        elif not self.start_task.done():
+        if not self.start_task.done():
             raise RuntimeError(
                 "Instrument being configured. Cannot interrupt process. "
                 "Wait for `start_task` to complete before setting instrument again."
             )
         else:
-            loop = asyncio.get_running_loop()
             self.start_task = asyncio.Future()
-            self._configure_task = loop.run_in_executor(
-                None, self._configure_instrument, value
+            self._configure_instrument(value)
+
+    @property
+    def xref(self):
+        if self._xref is None:
+            return "x00"
+        else:
+            return self._xref
+
+    @xref.setter
+    def xref(self, value):
+        if value in self.xref_list:
+            self._xref = value
+        else:
+            raise ValueError(
+                f"Invalid xref value {value}. Must be one of {self.xref_list}."
             )
 
     @property
-    def dof_idx(self):
-        return self._dof_idx[self._dof_idx_mask]
+    def xref_list(self):
+        return {"x00", "x0", "0"}
 
-    @dof_idx.setter
-    def dof_idx(self, value):
+    @property
+    def dof_idx(self):
+        return self._dof_idx[self.dof_idx_mask]
+
+    @property
+    def dof_idx_mask(self):
+        return self._dof_idx_mask
+
+    @property
+    def comp_dof_idx(self):
+        return self._comp_dof_idx
+
+    @comp_dof_idx.setter
+    def comp_dof_idx(self, value):
         if not isinstance(value, dict):
             raise ValueError(
-                f"dof_idx must be a dictionary with {self.comp_dof_idx.keys()} entries."
+                f"comp_dof_idx must be a dictionary with {self.comp_dof_idx.keys()} entries."
             )
 
         for comp in self.comp_dof_idx:
@@ -430,22 +305,18 @@ class OFCData:
             * self.eff_wavelength[filter_name]
         )
 
-    async def close(self):
-        """Close method.
+    async def configure_instrument(self, value):
+        """Configure instrument concurrently.
 
-        The method checks if `_configure_task` is completed. If not, cancel it
-        and wait for it to complete.
+        Parameters
+        ----------
+        value : `string`
+            Name of the instrument.
         """
-
-        if not self._configure_task.done():
-            self._configure_task.cancel()
-
-        try:
-            await self._configure_task
-        except asyncio.CancelledError:
-            self.log.debug("Configure task cancelled.")
-        except Exception:
-            self.log.exception("Error in configure task.")
+        async with self._configure_lock:
+            self.start_task = asyncio.Future()
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, self._configure_instrument, value)
 
     def _configure_instrument(self, value):
         """Configure OFCData instrument.

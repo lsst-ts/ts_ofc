@@ -19,11 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
+import pathlib
 import unittest
 
+import numpy as np
+
 from lsst.ts.ofc import OFCData, StateEstimator
-from lsst.ts.ofc.utils import get_pkg_root
 
 
 class TestStateEstimator(unittest.TestCase):
@@ -36,7 +37,9 @@ class TestStateEstimator(unittest.TestCase):
         self.estimator = StateEstimator(self.ofc_data)
 
         self.wfe = np.loadtxt(
-            get_pkg_root() / "tests/testData/lsst_wfs_error_iter0.z4c"
+            pathlib.Path(__file__).parent.absolute()
+            / "testData"
+            / "lsst_wfs_error_iter0.z4c"
         )
 
         sensor_name_list = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
@@ -60,13 +63,13 @@ class TestStateEstimator(unittest.TestCase):
     def test_dof_state_trim_zn_dof(self):
 
         self.estimator.ofc_data.zn3_idx = np.arange(5)
-        new_dof_mask = dict(
+        new_comp_dof_idx = dict(
             m2HexPos=np.ones(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
             M1M3Bend=np.zeros(20, dtype=bool),
             M2Bend=np.zeros(20, dtype=bool),
         )
-        self.estimator.ofc_data.dof_idx = new_dof_mask
+        self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         state = self.estimator.dof_state("", self.wfe, self.field_idx)
 
@@ -80,14 +83,16 @@ class TestStateEstimator(unittest.TestCase):
     def test_dof_state_not_enough_zk(self):
 
         self.estimator.ofc_data.zn3_idx = np.arange(4)
-        new_dof_mask = dict(
+
+        new_comp_dof_idx = dict(
             m2HexPos=np.ones(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
             M1M3Bend=np.zeros(20, dtype=bool),
             M2Bend=np.zeros(20, dtype=bool),
         )
-        new_dof_mask["M1M3Bend"][:10] = True
-        self.estimator.ofc_data.dof_idx = new_dof_mask
+        new_comp_dof_idx["M1M3Bend"][:10] = True
+
+        self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         with self.assertRaises(RuntimeError):
             self.estimator.dof_state("", self.wfe, self.field_idx)

@@ -2,66 +2,60 @@
 
 .. _lsst.ts.ofc:
 
-##############
-lsst.ts.ofc
-##############
+##############################
+Optical Feedback Control (OFC)
+##############################
 
-This module is used to calculate the aggregated degree of freedom (DOF) for the hexpods and mirrors. The process contains: (1) estimate the optical state in the basis of DOF, (2) estimate the offset of DOF used in the next iteration/ visit, and (3) rotate the DOF based on the camera rotation angle.
+.. image:: https://img.shields.io/badge/GitHub-ts_ofc-green.svg
+    :target: https://github.com/lsst-ts/ts_ofc
+.. image:: https://img.shields.io/badge/Jenkins-ts_ofc-green.svg
+    :target: https://tssw-ci.lsst.org/job/LSST_Telescope-and-Site/job/ts_ofc/
+.. image:: https://img.shields.io/badge/Jira-ts_ofc-green.svg
+    :target: https://jira.lsstcorp.org/issues/?jql=labels+%3D+ts_ofc
 
-.. _lsst.ts.ofc-using:
+.. _overview:
 
-Using lsst.ts.ofc
-====================
+Overview
+========
 
-.. toctree::
-   :maxdepth: 1
+The Optical Feedback Control (OFC) main goal is to process wavefront errors and generate corrections for the optical components; M2 Hexapod, Camera Hexapod, M1M3 and M2.
 
-Important classes:
+The software is designed to take into account the state of the system and the degree of freedom in order to optimize the control of the system.
 
-* `DataShare` is for the information change used in the algorithms. This class includes the information of indexes of annular Zernike polynomials (zk) and DOF to use.
-* `OptStateEstiDataDecorator` adds the functions/ attributes to DataShare class for the parameters needed in the OptStateEsti class.
-* `OptCtrlDataDecorator` adds the functions/ attributes to DataShare class for the parameters needed in the OptCtrl class.
-* `OptStateEsti` estimates the optical state by the pseudo-inverse method.
-* `OptCtrl` calculates the DOF offset by minimizing the cost function.
-* `ZTAAC` is a high-level class to integrate the DataShare, OptStateEstiDefault, and OptCtrlDefault classes.
-* `CamRot` rotates the calculated DOF offset.
-* `BendModeToForce` transforms the bending mode to actuator forces and vice versa.
-* `SubSysAdap` transforms the degree of freedom or actuator forces from ZEMAX coordinate to subsystem's coordinate and vice versa.
-
-.. uml:: uml/ctrlIntfClass.uml
-    :caption: ctrlIntf module diagram.
-
-.. uml:: uml/ofcClass.uml
-    :caption: OFC module diagram.
-
-Important enums:
-
-* `InstName` defines the type of instrument.
-* `DofGroup` defines the type of DOF.
-
-.. _lsst.ts.ofc-pyapi:
-
-Python API reference
-====================
-
-.. automodapi:: lsst.ts.ofc
-    :no-inheritance-diagram:
-
-.. _lsst.ts.ofc-content:
-
-Content
-====================
+The process contains:
+  1. estimate the optical state in the basis of the degrees of freedom (DOF),
+  2. estimate the offset of DOF used in the next iteration/visit, and
+  3. rotate the DOF based on the camera rotation angle.
 
 .. toctree::
+    :glob:
+    :maxdepth: 1
+    
+    *
 
-   content
+.. _user-documentation:
 
-.. _lsst.ts.ofc-contributing:
+User Documentation
+==================
 
-Contributing
-============
+User-level documentation, found in the link below, is aimed at scientists and engineers wanting to study the conversion of wavefront errors into optical corrections.
 
-``lsst.ts.ofc`` is developed at https://github.com/lsst-ts/ts_ofc.
+
+.. toctree::
+    user-guide/user-guide
+    :maxdepth: 1
+
+
+.. _development-documentation:
+
+Developer Documentation
+=======================
+
+This area of documentation focuses on the architecture of the package, its classes, API's, and how to participate to the development of the package.
+
+.. toctree::
+    developer-guide/developer-guide
+    :maxdepth: 1
 
 .. _lsst.ts.ofc-version:
 
@@ -69,5 +63,6 @@ Version
 ====================
 
 .. toctree::
+   :maxdepth: 1
 
    versionHistory

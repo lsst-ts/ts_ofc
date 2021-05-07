@@ -1,0 +1,16 @@
+@startuml
+package "ofc_data" #DDDDDD {
+  OFCData --|> BaseOFCData
+}
+
+class OFC
+StateEstimator *-- OFCData
+OFCController *-- OFCData
+OFCController "1" *-- "2" BendModeToForce
+BendModeToForce *-- OFCData
+OFC *-- OFCData
+OFC *-- StateEstimator
+OFC *-- OFCController
+OFC *-- CamRot
+OFC ..> Correction
+@enduml

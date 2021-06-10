@@ -16,6 +16,7 @@ Major refactor of ofc code.
 * The code was reorganized so that the main user-interface class (previously ``OFCCalculation``, now just ``OFC``) is at the top level of the package.
 * The ``OFC`` class is no longer subclassed for the different instruments, since the behavior was the same in all cases.
 * Document the control algorithm for OFC in rst from Confluence
+* Document the camera rotation degree of freedom in rst from Confluence
 * General improvements in documentation.
 
 Data handling

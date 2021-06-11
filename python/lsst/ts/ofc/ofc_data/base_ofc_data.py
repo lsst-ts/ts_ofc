@@ -55,8 +55,6 @@ class BaseOFCData:
         Alpha coefficient for the normalized point-source sensitivity (PSSN).
     control_strategy : `string`
         Name of the control strategy.
-    delta : `np.array` of `float`
-        Delta coefficient for the normalized point-source sensitivity (PSSN).
     dof_state0_filename : `string`
         Name of the file with the initial degrees of freedom.
     eff_wavelength : `dict` of `string`
@@ -160,29 +158,6 @@ class BaseOFCData:
             3.6438430e-01,
         ]
     )
-    delta: np.ndarray = np.array(
-        [
-            2.6353589e00,
-            5.2758650e00,
-            5.2758650e00,
-            1.6866297e00,
-            1.6866297e00,
-            5.1471854e00,
-            5.1471854e00,
-            8.6355441e-01,
-            1.6866297e00,
-            1.6866297e00,
-            2.7012429e00,
-            2.7012429e00,
-            4.4213986e-01,
-            4.4213986e-01,
-            1.6866297e00,
-            1.6866297e00,
-            1.6866297e00,
-            1.6866297e00,
-            2.8296951e-01,
-        ]
-    )
 
     # Allowed moving range of rigid body of M2 hexapod and Camera hexapod
     # in the unit of um. e.g. rbStroke[0] means the M2 piston is allowed to
@@ -190,3 +165,45 @@ class BaseOFCData:
     rb_stroke: np.ndarray = np.array(
         [5900, 6700, 6700, 432, 432, 8700, 7600, 7600, 864, 864]
     )
+
+    @property
+    def delta(self):
+        """Delta coefficient for the normalized point-source sensitivity
+        (PSSN).
+
+        This delta defines the range where PSSN=1-alpha^2 sigma^2 is accurate
+        to 0.001. What we are concerned with is that the system could be trying
+        to achieve tiny PSSN gains at the price of large control motions. This
+        only applies to converged states. In converged states, of course the
+        Zernikes will be within the range defined by delta. For more details,
+        please check the page 19-21 in:
+        https://docushare.lsst.org/docushare/dsweb/Get/Document-18041/150513.pptx.pdf
+
+        Returns
+        -------
+        `np.array` of `float`
+            Delta coefficient.
+        """
+        return np.array(
+            [
+                2.6353589e00,
+                5.2758650e00,
+                5.2758650e00,
+                1.6866297e00,
+                1.6866297e00,
+                5.1471854e00,
+                5.1471854e00,
+                8.6355441e-01,
+                1.6866297e00,
+                1.6866297e00,
+                2.7012429e00,
+                2.7012429e00,
+                4.4213986e-01,
+                4.4213986e-01,
+                1.6866297e00,
+                1.6866297e00,
+                1.6866297e00,
+                1.6866297e00,
+                2.8296951e-01,
+            ]
+        )

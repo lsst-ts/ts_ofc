@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.0.1:
+
+v2.0.1
+======
+
+* Put the **delta** in ``BaseOFCData`` to be property.
+
 .. _lsst.ts.ofc-2.0.0:
 
 v2.0.0

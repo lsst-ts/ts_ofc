@@ -251,7 +251,7 @@ class OFC:
         return corrections
 
     def get_correction(self, dof_comp):
-        """Get the hexapod correction.
+        """Get the correction.
 
         DOF: Degree of freedom.
 
@@ -271,7 +271,7 @@ class OFC:
         end_idx = start_idx + self.ofc_data.comp_dof_idx[dof_comp]["idxLength"]
         dof_idx = np.arange(start_idx, end_idx)
 
-        dof = self.lv_dof[dof_idx]
+        dof = self.ofc_controller.dof_state[dof_idx]
 
         if isinstance(self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"], float):
             trans_dof = self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"] * dof

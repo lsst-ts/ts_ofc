@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.0.2:
+
+v2.0.2
+======
+
+* ``OFC.get_correction()`` should give the aggregated degree of freedom (DOF).
+
 .. _lsst.ts.ofc-2.0.1:
 
 v2.0.1

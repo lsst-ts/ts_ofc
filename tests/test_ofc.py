@@ -344,6 +344,38 @@ class TestOFC(unittest.TestCase):
         self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
         self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
+    def test_get_correction(self):
+
+        # First time of calculation
+        correction = self._calculate_m2_hex_correction()
+
+        self.assertAlmostEqual(correction[0], 2.5379271)
+        self.assertAlmostEqual(correction[1], -0.5385152)
+        self.assertAlmostEqual(correction[2], 9.4484754)
+
+        # Second time of calculation
+        # The DOF should be aggregated
+        correction = self._calculate_m2_hex_correction()
+
+        self.assertAlmostEqual(correction[0], 5.2979926)
+        self.assertAlmostEqual(correction[1], -2.5117287)
+        self.assertAlmostEqual(correction[2], 19.6478187)
+
+    def _calculate_m2_hex_correction(self):
+
+        gain = 1.0
+        filter_name = ""
+        rot = 0.0
+
+        wfe, field_idx = self._get_wfe()
+
+        self.ofc.calculate_corrections(
+            wfe=wfe, field_idx=field_idx, filter_name=filter_name, gain=gain, rot=rot
+        )
+
+        m2_hex_corr = self.ofc.get_correction("m2HexPos")
+        return m2_hex_corr.correction
+
 
 if __name__ == "__main__":
 

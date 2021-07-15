@@ -251,7 +251,7 @@ class OFC:
         return corrections
 
     def get_correction(self, dof_comp):
-        """Get the correction.
+        """Get the aggregated correction for specified component.
 
         DOF: Degree of freedom.
 

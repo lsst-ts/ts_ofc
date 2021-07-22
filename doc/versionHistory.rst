@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.0.3:
+
+v2.0.3
+======
+
+* Fix `setup.cfg` to support conda versioning.
+
 .. _lsst.ts.ofc-2.0.2:
 
 v2.0.2

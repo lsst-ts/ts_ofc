@@ -27,7 +27,7 @@ import numpy as np
 class KalmanFilter:
     """Kalman Filter Update.
 
-    This class is used to determine the Kalman Filter update (`uk`) of degree of
+    This class is used to determine the Kalman Filter update of degree of
     freedom (DOF) at time `k+1` based on the wavefront error (`yk`) at time
     `k` and the DOF at time `k`.
 
@@ -41,14 +41,31 @@ class KalmanFilter:
 
     Attributes
     ----------
-    dof_state : `np.array`
-        State of telescope in the basis of degrees of freedom.
-    dof_state0 : `np.array`
-        Initial state of telescope in the basis of degrees of freedom.
+    Rk : `np.array`
+        Covariance of observation noise (wfe = sen_m*dof + obs_noise).
+        Dim = (9, 19, 19)
+    Kk : `np.array`
+        Kalman filter gain.
+        Dim = (50, 19)
     log : `logging.Logger`
         Logger class used for logging operations.
+    n_imqw : `np.array`
+        Array of image quality weights.
+        Dim = (9,)
     ofc_data : `OFCData`
         OFC data container.
+    Qk : `np.array`
+        Covariance of process noise. 
+        Dim = (50, 50)
+    Pkk : `np.array`
+        A posteriori estimate covariance matrix. cov(dof - dof_estimated).
+        Dim = (50, 50)
+    sen_m : `np.array`
+        Sensitivity matrix.
+        Dim = (9, 19, 50)
+    Sk : `np.array`
+        Innovation covariance. Covariance of the estimation error (wfe - sen_m*optical_state) 
+        Dim = (9, 19, 19)
     """
 
     def __init__(self, ofc_data, log=None):

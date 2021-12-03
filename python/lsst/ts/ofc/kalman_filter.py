@@ -93,7 +93,7 @@ class KalmanFilter:
 
         # Initialize error covariances matrices
         self.Rk = np.zeros((self.sen_m.shape[1], self.sen_m.shape[1]))
-        self.Qk = 0.0005*np.identity(len(self.ofc_data.dof_idx))
+        self.Qk = 0.00005*np.identity(len(self.ofc_data.dof_idx))
 
         # Initialize kalman covariances and gain.
         self.Sk = np.zeros((self.sen_m.shape[0], self.sen_m.shape[1], self.sen_m.shape[1]))

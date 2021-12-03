@@ -160,7 +160,7 @@ class OFC:
 
         # Calculate the Kalman update based on wavefront error and current optical state.
         Kalman_update = self.kalman_filter.update(wfe, optical_state)
-        uk += Kalman_update
+        uk += np.random.normal(loc = Kalman_update, scale = 0.00005)
 
         # Consider the camera rotation
         rot_uk = self.rot_uk(rot, uk)

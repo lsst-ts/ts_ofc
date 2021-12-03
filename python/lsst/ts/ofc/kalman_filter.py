@@ -41,30 +41,32 @@ class KalmanFilter:
 
     Attributes
     ----------
-    Rk : `np.array`
-        Covariance of observation noise (wfe = sen_m*dof + obs_noise).
-        Dim = (9, 19, 19)
     Kk : `np.array`
         Kalman filter gain.
         Dim = (50, 19)
     log : `logging.Logger`
         Logger class used for logging operations.
+    n: 'integer'
+        Number of performed Kalman updates.
     n_imqw : `np.array`
         Array of image quality weights.
         Dim = (9,)
     ofc_data : `OFCData`
         OFC data container.
-    Qk : `np.array`
-        Covariance of process noise. 
-        Dim = (50, 50)
     Pkk : `np.array`
         A posteriori estimate covariance matrix. cov(dof - dof_estimated).
+        Dim = (50, 50)
+    Qk : `np.array`
+        Covariance of process noise. 
         Dim = (50, 50)
     sen_m : `np.array`
         Sensitivity matrix.
         Dim = (9, 19, 50)
     Sk : `np.array`
         Innovation covariance. Covariance of the estimation error (wfe - sen_m*optical_state) 
+        Dim = (9, 19, 19)
+    Rk : `np.array`
+        Covariance of observation noise (wfe = sen_m*dof + obs_noise).
         Dim = (9, 19, 19)
     """
 
@@ -91,21 +93,29 @@ class KalmanFilter:
 
         # Initialize error covariances matrices
         self.Rk = np.zeros((self.sen_m.shape[1], self.sen_m.shape[1]))
-        self.Qk = 0.005*np.identity(len(self.ofc_data.dof_idx))
+        self.Qk = 0.0005*np.identity(len(self.ofc_data.dof_idx))
 
-        # Initializes kalman covariances and gain.
+        # Initialize kalman covariances and gain.
         self.Sk = np.zeros((self.sen_m.shape[0], self.sen_m.shape[1], self.sen_m.shape[1]))
-        self.Pkk = 0.005*np.identity(len(self.ofc_data.dof_idx))
+        self.Pkk = 5e-6*np.identity(len(self.ofc_data.dof_idx))
         self.Kk = np.zeros( (len(self.ofc_data.dof_idx), self.sen_m.shape[1]) )
+
+        # Number of measurements processes
+        self.n = 0
 
     def update(self, wfe, optical_state):
         """Compute the Kalman filter update.
         """
+        # Update number of Kalman updates
+        self.n += 1
+
         # Update Kalman filter gain and covariances.
         self.update_gain(wfe, optical_state)
 
         # Compute new measurement residual.
         res = self.residual(wfe, optical_state)
+
+        self.update_obs_covariance(res)
 
         return self.Kk@res
 
@@ -120,6 +130,11 @@ class KalmanFilter:
             res += wgt * (wf - a_mat@optical_state)
 
         return res
+
+    def update_obs_covariance(self, res):
+        """Iterative update of observation noise covariance.
+        """
+        self.Rk = ((self.n - 1) * self.Rk + res.T @ res)/self.n
 
     def update_gain(self, wfe, optical_state):
         """Update Kalman filter gain and covariances.

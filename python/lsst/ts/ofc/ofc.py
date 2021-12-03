@@ -28,6 +28,7 @@ import numpy as np
 from . import (
     CamRot,
     Correction,
+    KalmanFilter,
     OFCController,
     StateEstimator,
     BendModeToForce,
@@ -156,6 +157,10 @@ class OFC:
 
         # Calculate the uk based on the control algorithm
         uk = self.ofc_controller.uk_gain(filter_name, optical_state)
+
+        # Calculate the Kalman update based on wavefront error and current optical state.
+        Kalman_update = self.kalman_filter.update(wfe, optical_state)
+        uk += Kalman_update
 
         # Consider the camera rotation
         rot_uk = self.rot_uk(rot, uk)

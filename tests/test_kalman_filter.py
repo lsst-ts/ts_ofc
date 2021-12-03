@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of ts_ofc.
 #
 # Developed for Vera Rubin Observatory.
@@ -20,16 +19,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-try:
-    from .version import *
-except ModuleNotFoundError:
-    pass
+import pathlib
+import unittest
 
-from .camrot import *
-from .bend_mode_to_force import *
-from .state_estimator import *
-from .ofc_controller import *
-from .kalman_filter import *
-from .correction import *
-from .ofc import *
-from .ofc_data import OFCData
+import numpy as np
+
+from lsst.ts.ofc import KalmanFilter, OFCController, OFCData, StateEstimator
+
+
+class TestKalmanFilter(unittest.TestCase):
+    """Test the KalmanFilter class."""
+
+    def setUp(self):
+
+        pass
+
+
+if __name__ == "__main__":
+    # Run the unit test
+    unittest.main()

@@ -1,10 +1,18 @@
 ---
 
 # The mapping between the sensor name and field index
+# Both wavefront sensors on each corner raft are included
+# in this file for completeness.
+# But calculations in ts_ofc will expect only SW0 and make
+# calculations at the center of the wavefront chip as
+# the ts_wep CWFS pipeline only outputs one set of Zernikes
+# per pair of wavefront sensors and it is
+# stored in the butler under the SW0 detector dataId.
 
-R00_S12: 33
-R00_S21: 33
-R00_S22: 33
+R00_SG0: 33
+R00_SG1: 33
+R00_SW0: 33
+R00_SW1: 33
 R01_S00: 33
 R01_S01: 33
 R01_S02: 28
@@ -32,9 +40,10 @@ R03_S12: 32
 R03_S20: 16
 R03_S21: 32
 R03_S22: 32
-R04_S10: 32
-R04_S20: 32
-R04_S21: 32
+R04_SG0: 32
+R04_SG1: 32
+R04_SW0: 32
+R04_SW1: 32
 R10_S00: 29
 R10_S01: 29
 R10_S02: 23
@@ -170,9 +179,10 @@ R34_S12: 26
 R34_S20: 20
 R34_S21: 26
 R34_S22: 26
-R40_S01: 34
-R40_S02: 34
-R40_S12: 34
+R40_SG0: 34
+R40_SG1: 34
+R40_SW0: 34
+R40_SW1: 34
 R41_S00: 34
 R41_S01: 34
 R41_S02: 13
@@ -200,6 +210,7 @@ R43_S12: 31
 R43_S20: 25
 R43_S21: 31
 R43_S22: 31
-R44_S00: 31
-R44_S01: 31
-R44_S10: 31
+R44_SG0: 31
+R44_SG1: 31
+R44_SW0: 31
+R44_SW1: 31

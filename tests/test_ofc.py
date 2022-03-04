@@ -236,7 +236,7 @@ class TestOFC(unittest.TestCase):
 
         wfe = np.loadtxt(self.test_data_path)
 
-        sensor_name_list = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
+        sensor_name_list = ["R44_SW0", "R04_SW0", "R00_SW0", "R40_SW0"]
 
         field_idx = [
             self.ofc.ofc_data.field_idx[sensor_name] for sensor_name in sensor_name_list

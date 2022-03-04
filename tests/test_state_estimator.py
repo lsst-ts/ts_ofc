@@ -42,7 +42,7 @@ class TestStateEstimator(unittest.TestCase):
             / "lsst_wfs_error_iter0.z4c"
         )
 
-        sensor_name_list = ["R44_S00", "R04_S20", "R00_S22", "R40_S02"]
+        sensor_name_list = ["R44_SW0", "R04_SW0", "R00_SW0", "R40_SW0"]
 
         self.field_idx = [
             self.estimator.ofc_data.field_idx[sensor_name]

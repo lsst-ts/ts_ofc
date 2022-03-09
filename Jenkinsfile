@@ -23,7 +23,7 @@ pipeline {
         // saluser home directory
         SALUSER_HOME = "/home/saluser"
         // PlantUML url
-        PLANTUML_URL = "https://managedway.dl.sourceforge.net/project/plantuml/plantuml.jar"
+        PLANTUML_URL = "https://github.com/plantuml/plantuml/releases/download/v1.2022.1/plantuml-1.2022.1.jar"
         // Pipeline stack Version
         STACK_VERSION = "current"
         // XML report path

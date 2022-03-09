@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.0.4:
+
+v2.0.4
+======
+
+* Update LSSTCam sensor names.
+
 .. _lsst.ts.ofc-2.0.3:
 
 v2.0.3

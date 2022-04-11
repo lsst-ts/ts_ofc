@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.0.5:
+
+v2.0.5
+======
+
+* Format with Black v22.3.0.
+
 .. _lsst.ts.ofc-2.0.4:
 
 v2.0.4

@@ -255,7 +255,7 @@ class OFCController:
         )
         state_diff = state_diff.reshape(-1, 1)
 
-        _qx = qx + self.ofc_data.motion_penalty ** 2 * mat_h.dot(state_diff)
+        _qx = qx + self.ofc_data.motion_penalty**2 * mat_h.dot(state_diff)
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
@@ -306,7 +306,7 @@ class OFCController:
         """
         state = self.dof_state.reshape(-1, 1)
 
-        _qx = qx + self.ofc_data.motion_penalty ** 2 * mat_h.dot(state)
+        _qx = qx + self.ofc_data.motion_penalty**2 * mat_h.dot(state)
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
@@ -405,7 +405,7 @@ class OFCController:
         dof_idx = self.ofc_data.dof_idx
         mat_h = np.diag(authority[dof_idx] ** 2)
 
-        mat_f = np.linalg.inv(self.ofc_data.motion_penalty ** 2 * mat_h + q_mat)
+        mat_f = np.linalg.inv(self.ofc_data.motion_penalty**2 * mat_h + q_mat)
 
         uk = getattr(self, f"calc_uk_{self.ofc_data.xref}")(
             mat_f=mat_f, qx=qx, mat_h=mat_h

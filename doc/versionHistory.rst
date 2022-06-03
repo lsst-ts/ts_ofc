@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.0.6:
+
+v2.0.6
+======
+
+* Added documentation link to the README.
+
 .. _lsst.ts.ofc-2.0.5:
 
 v2.0.5

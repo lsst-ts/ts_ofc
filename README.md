@@ -1,6 +1,10 @@
+[![docs](https://img.shields.io/badge/docs-ts--ofc.lsst.io-brightgreen)](https://ts-ofc.lsst.io/)
+
 # Optical Feedback Control (OFC)
 
 This module is used to calculate the aggregated degree of freedom (DOF) for the hexapods and mirrors.
+
+See the docs: https://ts-ofc.lsst.io/
 
 ## Supported OS + Packages
 

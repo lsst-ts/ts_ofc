@@ -110,7 +110,17 @@ pipeline {
             }
 
         }
+        regression {
+            script {
+                slackSend(color: "danger", message: "${JOB_NAME} has suffered a regression ${BUILD_URL}", channel: "#aos-builds")
+            }
 
+        }
+        fixed {
+            script {
+                slackSend(color: "good", message: "${JOB_NAME} has been fixed ${BUILD_URL}", channel: "#aos-builds")
+            }
+        }
         cleanup {
             // clean up the workspace
             deleteDir()

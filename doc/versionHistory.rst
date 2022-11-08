@@ -5,6 +5,12 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.ofc-2.0.7:
+
+v2.0.7
+======
+
+* Update Jenkinsfile, posting to aos-builds.
 
 .. _lsst.ts.ofc-2.0.6:
 

@@ -30,7 +30,6 @@ class TestBendModeToForce(unittest.TestCase):
     """Test the BendModeToForce class."""
 
     def setUp(self):
-
         self.ofc_data = OFCData("comcam")
         self.bmf_m1m3 = BendModeToForce(component="M1M3", ofc_data=self.ofc_data)
         self.bmf_m2 = BendModeToForce(component="M2", ofc_data=self.ofc_data)
@@ -52,7 +51,6 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertEqual(self.bmf_m2.rot_mat[1, 1], 0.1040619)
 
     def test_m1m3_force(self):
-
         dof = np.zeros(20)
         dof[0:3] = np.array([1, 2, 3])
         force = self.bmf_m1m3.force(dof)
@@ -61,7 +59,6 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertAlmostEqual(force[0], 222.57988747, places=7)
 
     def test_m2_force(self):
-
         dof = np.zeros(20)
         dof[0:3] = np.array([1, 2, 3])
         force = self.bmf_m2.force(dof)
@@ -70,7 +67,6 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertAlmostEqual(force[0], 0.28011368, places=7)
 
     def test_m1m3_bending_mode(self):
-
         dof = np.zeros(20)
         dof[0:3] = np.array([1, 2, 3])
         force = self.bmf_m1m3.force(dof)
@@ -81,12 +77,10 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertLess(delta, 1e-10)
 
     def test_bad_init(self):
-
         with self.assertRaises(RuntimeError):
             BendModeToForce(component="camHex", ofc_data=self.ofc_data)
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

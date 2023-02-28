@@ -100,7 +100,6 @@ class OFCData(BaseOFCData):
     """
 
     def __init__(self, name=None, config_dir=None, log=None, **kwargs):
-
         super().__init__(**kwargs)
 
         if log is None:

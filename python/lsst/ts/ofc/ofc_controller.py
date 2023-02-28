@@ -64,7 +64,6 @@ class OFCController:
     FWHM_ATM = 0.6
 
     def __init__(self, ofc_data, log=None):
-
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:
@@ -80,7 +79,6 @@ class OFCController:
         self.dof_state0 = np.zeros(len(self.ofc_data.dof_idx))
 
         for comp in self.ofc_data.comp_dof_idx:
-
             start_idx = self.ofc_data.comp_dof_idx[comp]["startIdx"]
             end_idx = (
                 self.ofc_data.comp_dof_idx[comp]["startIdx"]

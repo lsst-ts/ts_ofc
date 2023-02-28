@@ -29,11 +29,9 @@ class TestCamRot(unittest.TestCase):
     """Test the CamRot class."""
 
     def setUp(self):
-
         self.cam_rot = CamRot()
 
     def test_rot_comp_dof_m2hex(self):
-
         self.cam_rot.rot = 45
 
         component = "m2HexPos"
@@ -44,7 +42,6 @@ class TestCamRot(unittest.TestCase):
         self.assertAlmostEqual(rot_dof_state[1], 0.00841705, places=7)
 
     def test_rot_comp_dof_camhex(self):
-
         self.cam_rot.rot = 90
         component = "camHexPos"
         dof_state = [1, 2, 3, 4, 5]
@@ -56,7 +53,6 @@ class TestCamRot(unittest.TestCase):
         self.assertEqual(delta, 0)
 
     def test_rot_comp_dof_m1m3bend(self):
-
         self.cam_rot.rot = 45
         component = "M1M3Bend"
 
@@ -73,7 +69,6 @@ class TestCamRot(unittest.TestCase):
         self.assertEqual(len(rot_dof_state), num_bend_mode)
 
     def test_rot_comp_dof_m2bend(self):
-
         self.cam_rot.rot = 45
         component = "M2Bend"
 
@@ -90,7 +85,6 @@ class TestCamRot(unittest.TestCase):
         self.assertEqual(len(rot_dof_state), num_bend_mode)
 
     def test_bad_component_name(self):
-
         dof_state = np.zeros(20)
 
         with self.assertRaises(RuntimeError):
@@ -101,6 +95,5 @@ class TestCamRot(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

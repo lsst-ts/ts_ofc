@@ -54,7 +54,6 @@ class StateEstimator:
     RCOND = 1e-4
 
     def __init__(self, ofc_data, log=None):
-
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:

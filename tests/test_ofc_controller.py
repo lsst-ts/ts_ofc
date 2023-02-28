@@ -31,7 +31,6 @@ class TestOFCController(unittest.TestCase):
     """Test the OFCController class."""
 
     def setUp(self):
-
         self.ofc_data = OFCData("lsst")
 
         estimator = StateEstimator(self.ofc_data)
@@ -59,7 +58,6 @@ class TestOFCController(unittest.TestCase):
         self.ofc_controller.reset_dof_state()
 
     def test_uk_nogain_x0(self):
-
         self.ofc_data.xref = "x0"
 
         uk = self.ofc_controller.uk(self.filter_name, self.state)
@@ -70,7 +68,6 @@ class TestOFCController(unittest.TestCase):
         self.assertAlmostEqual(uk[2], -0.53851520, places=7)
 
     def test_uk_nogain_0(self):
-
         self.ofc_data.xref = "0"
         uk = self.ofc_controller.uk(self.filter_name, self.state)
 
@@ -80,7 +77,6 @@ class TestOFCController(unittest.TestCase):
         self.assertAlmostEqual(uk[2], 30.05926538, places=7)
 
     def test_uk_nogain_x00(self):
-
         self.ofc_data.xref = "x00"
         uk = self.ofc_controller.uk(self.filter_name, self.state)
 
@@ -90,12 +86,10 @@ class TestOFCController(unittest.TestCase):
         self.assertAlmostEqual(uk[2], -0.53851520, places=7)
 
     def test_all_xref_ok(self):
-
         for xref in self.ofc_data.xref_list:
             self.assertTrue(hasattr(self.ofc_controller, f"calc_uk_{xref}"))
 
     def test_bad_gain(self):
-
         with self.assertRaises(ValueError):
             self.ofc_controller.gain = -0.5
 
@@ -103,7 +97,6 @@ class TestOFCController(unittest.TestCase):
             self.ofc_controller.gain = 1.5
 
     def test_gain(self):
-
         for gain in {0.0, 0.25, 0.5, 0.75, 1.0}:
             with self.subTest(gain=gain):
                 self.ofc_controller.gain = gain

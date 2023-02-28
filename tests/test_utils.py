@@ -30,19 +30,16 @@ class TestUtils(unittest.TestCase):
     """Test the OFCCalculation class."""
 
     def test_get_pkg_root(self):
-
         pkg_root = get_pkg_root()
 
         self.assertTrue(pkg_root.exists())
 
     def test_get_config_dir(self):
-
         config_dir = get_config_dir()
 
         self.assertTrue(config_dir.exists())
 
     def test_rot_1d_array(self):
-
         vec = np.array([1.0, 0.0])
 
         angle = 0.0
@@ -69,6 +66,5 @@ class TestUtils(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

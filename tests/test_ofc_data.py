@@ -32,18 +32,15 @@ class TestOFCDataConstructor(unittest.TestCase):
     """Test the OFCData class when not using asyncio."""
 
     def test_comcam(self):
-
         ofc_data = OFCData("comcam")
 
         self.assertEqual(ofc_data.name, "comcam")
 
     def test_lsst(self):
-
         ofc_data = OFCData("lsst")
         self.assertEqual(ofc_data.name, "lsst")
 
     def test_lsstfam(self):
-
         ofc_data = OFCData("lsstfam")
 
         self.assertEqual(ofc_data.name, "lsstfam")
@@ -54,7 +51,6 @@ class TestOFCData(unittest.TestCase):
         self.ofc_data = OFCData("comcam")
 
     def test_xref(self):
-
         self.assertEqual(self.ofc_data.xref, "x00")
 
         for xref in self.ofc_data.xref_list:
@@ -65,7 +61,6 @@ class TestOFCData(unittest.TestCase):
             self.ofc_data.xref = "bad_xref"
 
     def test_dof_idx(self):
-
         self.assertTrue(isinstance(self.ofc_data.dof_idx, np.ndarray))
         self.assertEqual(len(self.ofc_data.dof_idx), 50)
 
@@ -73,11 +68,9 @@ class TestOFCData(unittest.TestCase):
             self.ofc_data.dof_idx = np.zeros_like(self.ofc_data.dof_idx)
 
     def test_comp_dof_idx(self):
-
         self.assertTrue(isinstance(self.ofc_data.comp_dof_idx, dict))
 
         for comp in {"m2HexPos", "camHexPos", "M1M3Bend", "M2Bend"}:
-
             with self.subTest(comp=comp):
                 self.assertTrue(comp in self.ofc_data.comp_dof_idx)
 
@@ -111,7 +104,6 @@ class TestOFCData(unittest.TestCase):
             self.ofc_data.comp_dof_idx = new_dof_mask
 
     def test_get_intrinsic_zk(self):
-
         for filter_name in self.ofc_data.eff_wavelength:
             with self.subTest(filter_name=filter_name):
                 intrinsic_zk = self.ofc_data.get_intrinsic_zk(filter_name)
@@ -131,7 +123,6 @@ class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):
     """Test the OFCData class when not using asyncio."""
 
     async def test_comcam(self):
-
         ofc_data = OFCData()
 
         with self.assertRaises(RuntimeError):
@@ -142,7 +133,6 @@ class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ofc_data.name, "comcam")
 
     async def test_lsst(self):
-
         ofc_data = OFCData()
 
         with self.assertRaises(RuntimeError):
@@ -153,7 +143,6 @@ class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ofc_data.name, "lsst")
 
     async def test_lsstfam(self):
-
         ofc_data = OFCData()
 
         with self.assertRaises(RuntimeError):
@@ -165,6 +154,5 @@ class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

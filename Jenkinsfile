@@ -9,7 +9,7 @@ pipeline {
         // system decide.
         docker {
           image 'lsstts/develop-env:develop'
-          args "-u root --entrypoint=''"
+          args "--entrypoint=''"
         }
     }
 
@@ -98,15 +98,6 @@ pipeline {
                     unstable("Failed to push documentation.")
                 }
               }
-            }
-
-            // Change the ownership of workspace to Jenkins for the clean up
-            // This is to work around the condition that the user ID of jenkins
-            // is 1003 on TSSW Jenkins instance. In this post stage, it is the
-            // jenkins to do the following clean up instead of the root in the
-            // docker container.
-            withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
-                sh 'chown -R 1003:1003 ${WORK_HOME}/'
             }
 
         }

@@ -60,7 +60,6 @@ class BendModeToForce:
     RCOND = 1e-4
 
     def __init__(self, component, ofc_data):
-
         self.component = component
 
         self.ofc_data = ofc_data

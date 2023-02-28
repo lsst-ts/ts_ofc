@@ -70,7 +70,6 @@ class Correction:
     }
 
     def __init__(self, *args):
-
         self.correction = np.copy(np.array(args, dtype=float).flatten())
 
         if len(self.correction) in self.size_to_correction_type:

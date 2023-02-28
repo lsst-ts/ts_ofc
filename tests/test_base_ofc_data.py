@@ -28,7 +28,6 @@ class TestBaseOFCData(unittest.TestCase):
     """Test the OFCData class when not using asyncio."""
 
     def test_constructor(self):
-
         base_ofc_data = BaseOFCData()
 
         self.assertEqual(base_ofc_data.iqw_filename, "imgQualWgt.yaml")
@@ -41,7 +40,6 @@ class TestBaseOFCData(unittest.TestCase):
         self.assertEqual(base_ofc_data.sen_m_filename_root, "senM")
 
     def test_constructor_with_args(self):
-
         base_ofc_data = BaseOFCData(
             iqw_filename="new_imgQualWgt.yaml",
             y2_filename="new_y2.yaml",
@@ -62,6 +60,5 @@ class TestBaseOFCData(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

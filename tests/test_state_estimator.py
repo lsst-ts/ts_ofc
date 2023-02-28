@@ -31,7 +31,6 @@ class TestStateEstimator(unittest.TestCase):
     """Test the OptStateEsti class."""
 
     def setUp(self):
-
         self.ofc_data = OFCData("lsst")
 
         self.estimator = StateEstimator(self.ofc_data)
@@ -50,7 +49,6 @@ class TestStateEstimator(unittest.TestCase):
         ]
 
     def test_dof_state(self):
-
         state = self.estimator.dof_state("", self.wfe, self.field_idx)
 
         n_values = len(self.estimator.ofc_data.dof_idx)
@@ -61,7 +59,6 @@ class TestStateEstimator(unittest.TestCase):
         self.assertAlmostEqual(state[2], -0.04200292, places=7)
 
     def test_dof_state_trim_zn_dof(self):
-
         self.estimator.ofc_data.zn3_idx = np.arange(5)
         new_comp_dof_idx = dict(
             m2HexPos=np.ones(5, dtype=bool),
@@ -81,7 +78,6 @@ class TestStateEstimator(unittest.TestCase):
         self.assertAlmostEqual(state[2], -758.518174)
 
     def test_dof_state_not_enough_zk(self):
-
         self.estimator.ofc_data.zn3_idx = np.arange(4)
 
         new_comp_dof_idx = dict(
@@ -99,6 +95,5 @@ class TestStateEstimator(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

@@ -6,6 +6,21 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.0.8:
+
+v2.0.8
+======
+
+* Run black v23.1.0.
+* Update Jenkinsfile.
+
+.. _lsst.ts.ofc-2.0.7:
+
+v2.0.7
+======
+
+* Update Jenkinsfile, posting to aos-builds.
+
 .. _lsst.ts.ofc-2.0.6:
 
 v2.0.6

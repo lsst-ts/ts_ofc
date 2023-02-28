@@ -9,7 +9,7 @@ pipeline {
         // system decide.
         docker {
           image 'lsstts/develop-env:develop'
-          args "-u root --entrypoint=''"
+          args "--entrypoint=''"
         }
     }
 
@@ -100,17 +100,18 @@ pipeline {
               }
             }
 
-            // Change the ownership of workspace to Jenkins for the clean up
-            // This is to work around the condition that the user ID of jenkins
-            // is 1003 on TSSW Jenkins instance. In this post stage, it is the
-            // jenkins to do the following clean up instead of the root in the
-            // docker container.
-            withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
-                sh 'chown -R 1003:1003 ${WORK_HOME}/'
+        }
+        regression {
+            script {
+                slackSend(color: "danger", message: "${JOB_NAME} has suffered a regression ${BUILD_URL}", channel: "#aos-builds")
             }
 
         }
-
+        fixed {
+            script {
+                slackSend(color: "good", message: "${JOB_NAME} has been fixed ${BUILD_URL}", channel: "#aos-builds")
+            }
+        }
         cleanup {
             // clean up the workspace
             deleteDir()

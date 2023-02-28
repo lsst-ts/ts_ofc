@@ -32,7 +32,6 @@ class TestOFC(unittest.TestCase):
     """Test the OFCCalculation class."""
 
     def setUp(self):
-
         self.ofc_data = OFCData("lsst")
         self.ofc = OFC(self.ofc_data)
         self.test_data_path = (
@@ -42,7 +41,6 @@ class TestOFC(unittest.TestCase):
         )
 
     def test_init_lv_dof(self):
-
         self.ofc.lv_dof = np.random.rand(len(self.ofc.ofc_controller.dof_state0))
 
         self.ofc.init_lv_dof()
@@ -50,14 +48,12 @@ class TestOFC(unittest.TestCase):
         self.assertTrue(np.all(self.ofc.lv_dof == 0))
 
     def test_pssn_data(self):
-
         self.assertTrue("sensor_id" in self.ofc.pssn_data)
         self.assertTrue("pssn" in self.ofc.pssn_data)
         self.assertTrue(self.ofc.pssn_data["sensor_id"] is None)
         self.assertTrue(self.ofc.pssn_data["pssn"] is None)
 
     def test_set_fwhm_data(self):
-
         fwhm_values = np.ones((5, 19)) * 0.2
         sensor_id = np.arange(5)
 
@@ -67,7 +63,6 @@ class TestOFC(unittest.TestCase):
         self.assertAlmostEqual(self.ofc.pssn_data["pssn"][0], 0.9139012, places=6)
 
     def test_set_fwhm_data_fails(self):
-
         # Passing fwhm_values with 4 columns instead of 5
         fwhm_values = np.ones((4, 19)) * 0.2
         sensor_id = np.arange(5)
@@ -76,7 +71,6 @@ class TestOFC(unittest.TestCase):
             self.ofc.set_fwhm_data(fwhm_values, sensor_id)
 
     def test_reset(self):
-
         dof = np.ones_like(self.ofc.ofc_controller.dof_state)
         self.ofc.ofc_controller.aggregate_state(dof, self.ofc.ofc_data.dof_idx)
         self.ofc.set_last_visit_dof(dof)
@@ -102,12 +96,10 @@ class TestOFC(unittest.TestCase):
         self.assertEqual(np.sum(np.abs(self.ofc.lv_dof)), 0)
 
     def test_set_pssn_gain_unconfigured(self):
-
         with self.assertRaises(RuntimeError):
             self.ofc.set_pssn_gain()
 
     def test_set_pssn_gain(self):
-
         fwhm_values = np.ones((5, 19)) * 0.2
         sensor_id = np.arange(5)
 
@@ -126,7 +118,6 @@ class TestOFC(unittest.TestCase):
         self.assertTrue(self.ofc.ofc_controller.gain, 1.0)
 
     def test_calculate_corrections(self):
-
         gain = 1.0
         filter_name = ""
         rot = 0.0
@@ -233,7 +224,6 @@ class TestOFC(unittest.TestCase):
         self.assertAlmostEqual(self.ofc.lv_dof[7], 3.25321204, places=7)
 
     def _get_wfe(self):
-
         wfe = np.loadtxt(self.test_data_path)
 
         sensor_name_list = ["R44_SW0", "R04_SW0", "R00_SW0", "R40_SW0"]
@@ -245,7 +235,6 @@ class TestOFC(unittest.TestCase):
         return wfe, field_idx
 
     def test_get_state_correction_from_last_visit(self):
-
         new_comp_dof_idx = dict(
             m2HexPos=np.zeros(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
@@ -345,7 +334,6 @@ class TestOFC(unittest.TestCase):
         self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
     def test_get_correction(self):
-
         # First time of calculation
         correction = self._calculate_m2_hex_correction()
 
@@ -362,7 +350,6 @@ class TestOFC(unittest.TestCase):
         self.assertAlmostEqual(correction[2], 19.6478187)
 
     def _calculate_m2_hex_correction(self):
-
         gain = 1.0
         filter_name = ""
         rot = 0.0
@@ -378,6 +365,5 @@ class TestOFC(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

@@ -26,6 +26,7 @@ import yaml
 import asyncio
 import logging
 
+from astropy.io import fits
 import numpy as np
 
 from glob import glob
@@ -99,7 +100,7 @@ class OFCData(BaseOFCData):
         If input `config_dir` does not exists.
     """
 
-    def __init__(self, name=None, config_dir=None, log=None, **kwargs):
+    def __init__(self, name=None, config_dir=None, log=None, double_zernikes=True, **kwargs):
         super().__init__(**kwargs)
 
         if log is None:
@@ -119,6 +120,9 @@ class OFCData(BaseOFCData):
                 raise RuntimeError(
                     f"Provided data path ({self.config_dir}) does not exists."
                 )
+
+        # Use double zernikes for sensitivity matrices
+        self.double_zernikes = double_zernikes
 
         # Dictionary to hold bending mode data. The data is read alongside the
         # other files when the name is set.
@@ -447,13 +451,14 @@ class OFCData(BaseOFCData):
             field_idx = yaml.safe_load(fp)
 
         senm_file = Path(
-            glob(str(inst_config_dir / f"{self.sen_m_filename_root}*.yaml"))[0]
+            glob(str(inst_config_dir / f"{self.sen_m_filename_root}_{'dz' if self.double_zernikes else 'gq'}*.fits"))[0]
         )
 
         self.log.debug(f"Configuring sensitivity matrix: {senm_file}")
 
-        with open(senm_file) as fp:
-            sen_m = np.array(yaml.safe_load(fp))
+        hdulist = fits.open(senm_file)
+        sen_m = hdulist[0].data
+        hdulist.close()
 
         self.log.debug(f"done {value}")
         # Now all data was read successfully, time to set it up.

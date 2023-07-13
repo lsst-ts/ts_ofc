@@ -151,7 +151,7 @@ class OFC:
         else:
             self.ofc_controller.gain = gain
 
-        optical_state = self.state_estimator.dof_state(filter_name, wfe, field_idx)
+        optical_state = self.state_estimator.dof_state(filter_name, wfe, field_idx, rot)
 
         # Calculate the uk based on the control algorithm
         uk = self.ofc_controller.uk_gain(filter_name, optical_state)

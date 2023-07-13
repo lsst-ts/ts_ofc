@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of ts_ofc.
 #
 # Developed for Vera Rubin Observatory.
@@ -20,16 +19,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-try:
-    from .version import *
-except ModuleNotFoundError:
-    pass
+import pathlib
+import unittest
 
-from .camrot import *
-from .bend_mode_to_force import *
-from .state_estimator import *
-from .ofc_controller import *
-from .correction import *
-from .ofc import *
-from .ofc_data import OFCData
-from .sensitivity_matrix import SensitivityMatrix
+import numpy as np
+
+from lsst.ts.ofc import OFCData, StateEstimator, SensitivityMatrix
+
+
+class TestSensitivityMatrix(unittest.TestCase):
+    """Test the OptStateEsti class."""
+
+    def setUp(self):
+        self.ofc_data = OFCData("lsst")
+
+        self.sensor_names = ["R44_SW0", "R04_SW0", "R00_SW0", "R40_SW0"]
+
+    def test_sensitivity(self):
+        sensitivity_matrix = SensitivityMatrix(0.0, self.sensor_names)
+
+        print(sensitivity_matrix)
+    
+
+if __name__ == "__main__":
+    # Run the unit test
+    unittest.main()

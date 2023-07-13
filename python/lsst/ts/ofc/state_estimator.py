@@ -25,7 +25,6 @@ import logging
 
 import numpy as np
 
-
 class StateEstimator:
     """(Optical) State Estimator.
 
@@ -61,7 +60,7 @@ class StateEstimator:
 
         self.ofc_data = ofc_data
 
-    def dof_state(self, filter_name, wfe, field_idx):
+    def dof_state(self, filter_name, wfe, sensor_names, rotation_angle):
         """Compute the state in the basis of degrees of freedom.
 
         Solve y = A*x by x = pinv(A)*y.
@@ -72,8 +71,8 @@ class StateEstimator:
             Name of the filter. Must be in `self.intrinsic_zk`.
         wfe : `numpy.ndarray`
             Wavefront error im um.
-        field_idx : `numpy.ndarray` or `list` of `int`
-            Field index array.
+        sensor_names : `numpy.ndarray` or `list` of `string`
+            Sensor names array.
 
         Returns
         -------
@@ -82,20 +81,15 @@ class StateEstimator:
         """
 
         # Constuct the sensitivity matrix A
+        mat_a = SensitivityMatrix(rotation_angle, sensor_names)
+        print(mat_a.shape)
+        size_ = mat_a.shape[0]
 
-        mat_a = self.ofc_data.sensitivity_matrix[
-            np.ix_(
-                np.arange(self.ofc_data.sensitivity_matrix.shape[0]),
-                self.ofc_data.zn3_idx,
-                self.ofc_data.dof_idx,
-            )
-        ]
-
-        size_ = mat_a.shape[2]
-
-        mat_a = mat_a[field_idx, :, :]
+        if self.ofc_data.double_zernikes:
+            mat_a = mat_a[:, field_idx, :]
 
         mat_a = mat_a.reshape((-1, size_))
+
 
         # Check the dimension of pinv A
         num_zk, num_dof = mat_a.shape

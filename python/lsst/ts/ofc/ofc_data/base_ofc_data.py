@@ -150,6 +150,7 @@ class BaseOFCData:
     iqw_filename: str = "imgQualWgt.yaml"
     y2_filename: str = "y2.yaml"
     sensor_mapping_filename: str = "sensorNameToFieldIdx.yaml"
+    field_angles_filename: str = "fieldXy.yaml"
     dof_state0_filename: str = "state0inDof.yaml"
     intrinsic_zk_filename_root: str = "intrinsicZn"
     sen_m_filename_root: str = "senM"

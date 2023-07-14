@@ -460,6 +460,9 @@ class OFCData(BaseOFCData):
         sen_m = hdulist[0].data
         hdulist.close()
 
+        with open(inst_config_dir / self.field_angles_filename) as fp:
+            gq_field_angles = np.array(yaml.safe_load(fp))
+
         self.log.debug(f"done {value}")
         # Now all data was read successfully, time to set it up.
         self.image_quality_weight = image_quality_weight
@@ -471,6 +474,7 @@ class OFCData(BaseOFCData):
         self.intrinsic_zk = intrinsic_zk
         self.field_idx = field_idx
         self.sensitivity_matrix = sen_m
+        self.gq_field_angles = gq_field_angles
         self.start_task.set_result(value)
 
     async def __aenter__(self):

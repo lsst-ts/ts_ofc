@@ -380,7 +380,7 @@ class OFCController:
 
         n_imqw = self.ofc_data.normalized_image_quality_weight
 
-        sen_m = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(0.0, sensor_names)
+        sen_m = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(0.0)
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
 

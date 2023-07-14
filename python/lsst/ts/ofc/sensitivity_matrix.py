@@ -23,7 +23,6 @@ __all__ = ["SensitivityMatrix"]
 
 import numpy as np
 import galsim
-from scipy.linalg import block_diag
 import lsst.obs.lsst as obs_lsst
 from lsst.afw.cameraGeom import FIELD_ANGLE
 
@@ -40,14 +39,22 @@ class SensitivityMatrix:
     def __init__(self, ofc_data):
         self.ofc_data = ofc_data
         
-    def evaluate_sensitivity(self, rotation_angle, sensor_names):
+    def evaluate_sensitivity(self, rotation_angle, sensor_names=None):
 
-        field_idx = np.array(
-            [
-                self.ofc_data.field_idx[sensor_name]
-                for sensor_name in sensor_names
-            ]
-        )
+        if sensor_names is None:
+            #load yaml file fieldXy.yaml
+            field_idx = np.arange(self.ofc_data.gq_field_angles.shape[0])
+            field_x, field_y = zip(*self.ofc_data.gq_field_angles)
+
+        else:
+            field_idx = np.array(
+                [
+                    self.ofc_data.field_idx[sensor_name]
+                    for sensor_name in sensor_names
+                ]
+            )
+
+            field_x, field_y = get_field_angle(sensor_names)
 
         if not self.ofc_data.double_zernikes:
             # Get the field indices for the sensors
@@ -59,14 +66,7 @@ class SensitivityMatrix:
                 )
             ]
 
-            return sen_m[field_idx, :, :]
-
-        camera = obs_lsst.LsstCam().getCamera()
-        fieldList = []
-        for name in sensor_names:
-            centerPt = camera.get(name).getCenter(FIELD_ANGLE)
-            fieldList.append( ( np.degrees(centerPt[1]), np.degrees(centerPt[0]) ))
-        field_x, field_y = zip(*fieldList)
+            return sen_m[field_idx, :, :], field_idx
 
         rotated_sensitivity_matrix = np.array([
             np.array([
@@ -82,9 +82,20 @@ class SensitivityMatrix:
         ])
 
         rotated_sensitivity_matrix = np.moveaxis(rotated_sensitivity_matrix, 0, -1)
-
-
         rotated_sensitivity_matrix = rotated_sensitivity_matrix[:, self.ofc_data.znmin:self.ofc_data.znmax + 1, :]
 
-
         return rotated_sensitivity_matrix, field_idx
+
+
+def get_field_angle(sensor_names):
+    camera = obs_lsst.LsstCam().getCamera()
+    fieldList = []
+
+    for name in sensor_names:
+        centerPt = camera.get(name).getCenter(FIELD_ANGLE)
+        fieldList.append( 
+            (np.degrees(centerPt[1]), 
+             np.degrees(centerPt[0]) )
+        )
+    
+    return zip(*fieldList)

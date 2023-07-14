@@ -158,6 +158,9 @@ class BaseOFCData:
 
     eff_wavelength: dict = field(default_factory=default_eff_wavelenght)
 
+    znmax: int = 22  # Max number of zernikes used (to be filtered with zn3Idx)
+    znmin: int = 4  # Min number of zernikes used (to be filtered with zn3Idx)
+
     # Index of annular Zernike polynomials (z3-z22)
     zn3_idx: np.array = field(default_factory=default_zn3_idx)
 

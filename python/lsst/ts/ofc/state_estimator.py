@@ -24,6 +24,7 @@ __all__ = ["StateEstimator"]
 import logging
 
 import numpy as np
+from . import SensitivityMatrix
 
 class StateEstimator:
     """(Optical) State Estimator.
@@ -81,15 +82,10 @@ class StateEstimator:
         """
 
         # Constuct the sensitivity matrix A
-        mat_a = SensitivityMatrix(rotation_angle, sensor_names)
-        print(mat_a.shape)
-        size_ = mat_a.shape[0]
+        mat_a, field_idx = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(0.0, sensor_names)
 
-        if self.ofc_data.double_zernikes:
-            mat_a = mat_a[:, field_idx, :]
-
+        size_ = mat_a.shape[2]
         mat_a = mat_a.reshape((-1, size_))
-
 
         # Check the dimension of pinv A
         num_zk, num_dof = mat_a.shape

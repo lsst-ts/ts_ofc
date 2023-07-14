@@ -24,6 +24,7 @@ import logging
 import numpy as np
 
 from . import BendModeToForce
+from . import SensitivityMatrix
 
 
 class OFCController:
@@ -378,13 +379,8 @@ class OFCController:
         _dof_state = dof_state.reshape(-1, 1)
 
         n_imqw = self.ofc_data.normalized_image_quality_weight
-        sen_m = self.ofc_data.sensitivity_matrix[
-            np.ix_(
-                np.arange(self.ofc_data.sensitivity_matrix.shape[0]),
-                np.arange(self.ofc_data.sensitivity_matrix.shape[1]),
-                self.ofc_data.dof_idx,
-            )
-        ]
+
+        sen_m = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(0.0, sensor_names)
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
 

@@ -27,9 +27,10 @@ except ModuleNotFoundError:
 
 from .camrot import *
 from .bend_mode_to_force import *
+from .sensitivity_matrix import *
 from .state_estimator import *
 from .ofc_controller import *
 from .correction import *
 from .ofc import *
 from .ofc_data import OFCData
-from .sensitivity_matrix import SensitivityMatrix
+

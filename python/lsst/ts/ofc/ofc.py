@@ -157,7 +157,7 @@ class OFC:
         uk = self.ofc_controller.uk_gain(filter_name, optical_state)
 
         # Consider the camera rotation
-        rot_uk = self.rot_uk(rot, uk)
+        rot_uk = self.rot_uk(rot, uk) if not self.ofc_data.double_zernikes else uk
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(rot_uk)

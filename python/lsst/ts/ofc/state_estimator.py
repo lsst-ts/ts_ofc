@@ -82,7 +82,7 @@ class StateEstimator:
         """
 
         # Constuct the sensitivity matrix A
-        mat_a, field_idx = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(0.0, sensor_names)
+        mat_a, field_idx = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(rotation_angle, sensor_names)
 
         size_ = mat_a.shape[2]
         mat_a = mat_a.reshape((-1, size_))

@@ -6,6 +6,14 @@
 Version History
 ##################
 
+
+.. _lsst.ts.ofc-2.0.9:
+
+v2.0.9
+======
+
+* Create additional default factories for BaseOFCData.
+
 .. _lsst.ts.ofc-2.0.8:
 
 v2.0.8

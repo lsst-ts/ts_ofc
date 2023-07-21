@@ -28,3 +28,7 @@ pytest_session.txt
 
 # MacOS metadata
 .DS_Store
+.pre-commit-config.yaml
+.flake8
+.isort.cfg
+.mypy.ini

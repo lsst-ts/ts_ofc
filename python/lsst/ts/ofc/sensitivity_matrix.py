@@ -50,14 +50,15 @@ class SensitivityMatrix:
         ----------
         rotation_angle : `float`
             Rotation angle in degrees.
-        sensor_names : `list` of `str`, optional
-            List of sensor names. If None, uses all the GQ points are used.
+        sensor_names : list [str] or None, optional
+            List of sensor names. If None, uses all the Gaussian 
+            Quadrature points are used.
 
         Returns
         -------
-        `np.array` of `float`
-            Sensitivity matrix for the given rotation angle.
-        `np.array` of `int`
+        rotated_sensitivity_matrix : numpy.ndarray [float]
+            Sensitivity matrix for the given rotation angle in degree.
+        field_idx : numpy.ndarray [ float ]
             Field indices for the sensors.
         """
 
@@ -90,7 +91,7 @@ class SensitivityMatrix:
             # return the sensitivity matrix at the given field indices.
             return sen_m[field_idx, :, :], field_idx
 
-        # If using double zernikes, compute the sensitvity mat
+        # If using double zernikes, compute the sensitivity matrix
         # using galsim DoubleZernikes
         rotated_sensitivity_matrix = np.array(
             [
@@ -115,7 +116,7 @@ class SensitivityMatrix:
         rotated_sensitivity_matrix = np.moveaxis(rotated_sensitivity_matrix, 0, -1)
 
         # Subselect the relevant zernike coefficients
-        # to include in the sen matrix.
+        # to include in the sensitivity matrix.
         rotated_sensitivity_matrix = rotated_sensitivity_matrix[
             :, self.ofc_data.znmin : self.ofc_data.znmax + 1, :
         ]
@@ -128,14 +129,14 @@ def get_field_angle(sensor_names: list) -> Tuple[List[float], List[float]]:
 
     Parameters
     ----------
-    sensor_names : `list` of `str`
+    sensor_names : list [str]
         List of sensor names.
 
     Returns
     -------
-    field_x : `list` of `float`
+    field_x : list [float]
         List of field x angles in degrees.
-    field_y : `list` of `float`
+    field_y : list [float]
         List of field y angles in degrees.
     """
 
@@ -143,10 +144,10 @@ def get_field_angle(sensor_names: list) -> Tuple[List[float], List[float]]:
     camera = obs_lsst.LsstCam().getCamera()
 
     # Get the field angle for each sensor
-    fieldList = []
+    field_list = list()
     for name in sensor_names:
         centerPt = camera.get(name).getCenter(FIELD_ANGLE)
-        fieldList.append((np.degrees(centerPt[1]), np.degrees(centerPt[0])))
+        field_list.append((np.degrees(centerPt[1]), np.degrees(centerPt[0])))
 
     # Return the field angles field_x and field_y
-    return zip(*fieldList)
+    return zip(*field_list)

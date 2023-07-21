@@ -309,7 +309,7 @@ class OFCController:
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
-    def uk_gain(self, filter_name, dof_state):
+    def uk_gain(self, filter_name, dof_state, rotation_angle):
         """Estimate uk in the basis of degree of freedom (DOF) with gain
         compensation.
 
@@ -319,6 +319,8 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
+        rotation_angle : `float`
+            Rotation angle in degree.
 
         Returns
         -------
@@ -326,9 +328,9 @@ class OFCController:
             Calculated uk in the basis of DOF.
         """
 
-        return self.gain * self.uk(filter_name, dof_state)
+        return self.gain * self.uk(filter_name, dof_state, rotation_angle)
 
-    def uk(self, filter_name, dof_state):
+    def uk(self, filter_name, dof_state, rotation_angle):
         """Estimate the offset (`uk`) of degree of freedom (DOF) at time `k+1`
         based on the wavefront error (`yk`) at time `k`.
 
@@ -341,6 +343,8 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
+        rotation_angle : `float`
+            Rotation angle in degree.
 
         Returns
         -------
@@ -380,7 +384,7 @@ class OFCController:
 
         n_imqw = self.ofc_data.normalized_image_quality_weight
 
-        sen_m = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(0.0)
+        sen_m = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(rotation_angle)
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
 

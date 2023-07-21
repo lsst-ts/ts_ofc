@@ -154,7 +154,7 @@ class OFC:
         optical_state = self.state_estimator.dof_state(filter_name, wfe, field_idx, rot)
 
         # Calculate the uk based on the control algorithm
-        uk = self.ofc_controller.uk_gain(filter_name, optical_state)
+        uk = self.ofc_controller.uk_gain(filter_name, optical_state, rot)
 
         # Consider the camera rotation
         rot_uk = self.rot_uk(rot, uk) if not self.ofc_data.double_zernikes else uk

@@ -9,6 +9,7 @@ OFCController *-- OFCData
 OFCController "1" *-- "2" BendModeToForce
 BendModeToForce *-- OFCData
 OFC *-- OFCData
+OFC *-- SensitivityMatrix
 OFC *-- StateEstimator
 OFC *-- OFCController
 OFC *-- CamRot

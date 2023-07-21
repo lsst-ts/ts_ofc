@@ -6,6 +6,12 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.1.0:
+
+v2.1.0
+======
+
+* Add double zernikes to sensitivity matrix to handle camera rotation.
 
 .. _lsst.ts.ofc-2.0.9:
 

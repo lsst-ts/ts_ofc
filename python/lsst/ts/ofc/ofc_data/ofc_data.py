@@ -80,6 +80,8 @@ class OFCData(BaseOFCData):
         instrument configuration.
     log : `logging.Logger`
         Logger class used for logging operations.
+    double_zernikes : `bool`
+        Use double zernikes for sensitivity matrices.
     name : `string`
         Name of the instrument configuration. This is used to define where
         `intrinsic_zk` and `y2` will be read from.
@@ -450,15 +452,16 @@ class OFCData(BaseOFCData):
         with open(inst_config_dir / self.sensor_mapping_filename) as fp:
             field_idx = yaml.safe_load(fp)
 
+        # If using double_zernikes, retrieve the double zernike sensitivity matrix. 
+        # Otherwise, retrieve the sensitivity matrix at the GQ points.
         senm_file = Path(
             glob(str(inst_config_dir / f"{self.sen_m_filename_root}_{'dz' if self.double_zernikes else 'gq'}*.fits"))[0]
         )
 
         self.log.debug(f"Configuring sensitivity matrix: {senm_file}")
 
-        hdulist = fits.open(senm_file)
-        sen_m = hdulist[0].data
-        hdulist.close()
+        with fits.open(senm_file) as hdu:
+            sen_m = hdu[0].data
 
         with open(inst_config_dir / self.field_angles_filename) as fp:
             gq_field_angles = np.array(yaml.safe_load(fp))

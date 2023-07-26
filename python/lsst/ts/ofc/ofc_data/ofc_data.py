@@ -21,15 +21,14 @@
 
 __all__ = ["OFCData"]
 
-import re
-import yaml
 import asyncio
 import logging
-
-import numpy as np
-
+import re
 from glob import glob
 from pathlib import Path
+
+import numpy as np
+import yaml
 
 from ..utils import get_config_dir
 from . import BaseOFCData

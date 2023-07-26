@@ -21,9 +21,9 @@
 
 __all__ = ["BaseOFCData", "default_eff_wavelenght"]
 
-import numpy as np
-
 from dataclasses import dataclass, field
+
+import numpy as np
 
 
 def default_eff_wavelenght():
@@ -43,6 +43,63 @@ def default_eff_wavelenght():
         "Y": 0.973,
         "": 0.5,  # Reference effective wavelenght.
     }
+
+
+def default_alpha():
+    """Default alpha coefficient for the normalized point-source sensitivity
+
+    Returns
+    -------
+    `np.array` of `float`
+        Alpha coefficient for the normalized point-source sensitivity (PSSN).
+    """
+    return np.array(
+        [
+            6.6906168e-03,
+            9.4460611e-04,
+            9.4460611e-04,
+            6.1240430e-03,
+            6.1240430e-03,
+            1.7516747e-03,
+            1.7516747e-03,
+            4.9218300e-02,
+            9.4518035e-03,
+            9.4518035e-03,
+            3.0979027e-03,
+            3.0979027e-03,
+            4.5078901e-02,
+            4.5078901e-02,
+            1.2438449e-02,
+            1.2438449e-02,
+            4.5678764e-03,
+            4.5678764e-03,
+            3.6438430e-01,
+        ]
+    )
+
+
+def default_zn3_idx():
+    """Index of annular Zernike polynomials (z3-z22)
+
+    Returns
+    -------
+    `np.array` of `int`
+        Index of annular Zernike polynomials.
+    """
+
+    return np.arange(19)
+
+
+def default_rb_stroke():
+    """Default allowed moving range of rigid body of M2 hexapod and Camera.
+
+    Returns
+    -------
+    `np.array` of `float`
+        Allowed moving range of rigid body of M2 hexapod and Camera hexapod.
+    """
+
+    return np.array([5900, 6700, 6700, 432, 432, 8700, 7600, 7600, 864, 864])
 
 
 @dataclass
@@ -101,10 +158,10 @@ class BaseOFCData:
 
     eff_wavelength: dict = field(default_factory=default_eff_wavelenght)
 
-    znmax: int = 22  # Max number of zernikes used (to be filtered with zn3Idx)
-
-    zn3_idx: np.ndarray = np.arange(19)
     # Index of annular Zernike polynomials (z3-z22)
+    zn3_idx: np.array = field(default_factory=default_zn3_idx)
+
+    znmax: int = 22  # Max number of zernikes used (to be filtered with zn3Idx)
 
     # Control strategy
     control_strategy: str = "optiPSSN"
@@ -134,37 +191,12 @@ class BaseOFCData:
     # Eq (7.1) in Normalized Point Source Sensitivity for LSST
     # (document-17242). It is noted that there are 19 terms of alpha value
     # here for z4-z22 to use.
-
-    alpha: np.ndarray = np.array(
-        [
-            6.6906168e-03,
-            9.4460611e-04,
-            9.4460611e-04,
-            6.1240430e-03,
-            6.1240430e-03,
-            1.7516747e-03,
-            1.7516747e-03,
-            4.9218300e-02,
-            9.4518035e-03,
-            9.4518035e-03,
-            3.0979027e-03,
-            3.0979027e-03,
-            4.5078901e-02,
-            4.5078901e-02,
-            1.2438449e-02,
-            1.2438449e-02,
-            4.5678764e-03,
-            4.5678764e-03,
-            3.6438430e-01,
-        ]
-    )
+    alpha: np.ndarray = field(default_factory=default_alpha)
 
     # Allowed moving range of rigid body of M2 hexapod and Camera hexapod
     # in the unit of um. e.g. rbStroke[0] means the M2 piston is allowed to
     # move +5900 um to -5900 um.
-    rb_stroke: np.ndarray = np.array(
-        [5900, 6700, 6700, 432, 432, 8700, 7600, 7600, 864, 864]
-    )
+    rb_stroke: np.ndarray = field(default_factory=default_rb_stroke)
 
     @property
     def delta(self):

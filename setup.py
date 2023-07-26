@@ -1,9 +1,9 @@
-import os
-import sys
 import glob
+import os
 import pathlib
-import setuptools
+import sys
 
+import setuptools
 
 install_requires = []
 tests_require = ["pytest", "pytest-cov", "pytest-flake8"]

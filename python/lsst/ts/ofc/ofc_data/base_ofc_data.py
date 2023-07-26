@@ -21,9 +21,9 @@
 
 __all__ = ["BaseOFCData", "default_eff_wavelenght"]
 
-import numpy as np
-
 from dataclasses import dataclass, field
+
+import numpy as np
 
 
 def default_eff_wavelenght():

@@ -25,13 +25,7 @@ import logging
 
 import numpy as np
 
-from . import (
-    CamRot,
-    Correction,
-    OFCController,
-    StateEstimator,
-    BendModeToForce,
-)
+from . import BendModeToForce, CamRot, Correction, OFCController, StateEstimator
 from .utils import CorrectionType
 
 

@@ -23,8 +23,7 @@ import pathlib
 import unittest
 
 import numpy as np
-
-from lsst.ts.ofc import OFC, OFCData, Correction
+from lsst.ts.ofc import OFC, Correction, OFCData
 from lsst.ts.ofc.utils import CorrectionType
 
 

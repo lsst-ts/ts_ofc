@@ -6,6 +6,12 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.1.0:
+
+v2.1.0
+======
+
+* Update setup configuration files, remove flake8.
 
 .. _lsst.ts.ofc-2.0.9:
 

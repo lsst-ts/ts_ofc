@@ -26,7 +26,6 @@ import logging
 import numpy as np
 
 from . import (
-    CamRot,
     Correction,
     OFCController,
     StateEstimator,
@@ -102,11 +101,9 @@ class OFC:
         # Last visit dof
         self.lv_dof = self.ofc_controller.dof_state.copy()
 
-        self.cam_rot = CamRot()
-
         self.dof_order = ("m2HexPos", "camHexPos", "M1M3Bend", "M2Bend")
 
-    def calculate_corrections(self, wfe, field_idx, filter_name, gain, rot):
+    def calculate_corrections(self, wfe, sensor_names, filter_name, gain, rotation_angle):
         """Calculate the Hexapod, M1M3, and M2 corrections from the FWHM
         and wavefront error.
 
@@ -116,8 +113,8 @@ class OFC:
             An array of arrays (e.g. 2-d array) with wavefront erros. Each
             element contains an array of wavefront errors (in um) for a
             particular detector/field.
-        field_idx : `np.array`
-            Array with field indexes.
+        sensor_names : `list` of `string`
+            Sensor names array.
         filter_name : `string`
             Name of the filter used in the observations. This must be a valid
             entry in the `ofc_data.intrinsic_zk` and `ofc_data.eff_wavelength`
@@ -125,7 +122,7 @@ class OFC:
         gain : `float`
             User provided gain. If < 0, calculate gain based on point source
             sensitivity normalized (PSSN).
-        rot : `float`
+        rotation_angle : `float`
             Camera rotator angle (in degrees) during the observations.
 
         Returns
@@ -137,13 +134,13 @@ class OFC:
         Raises
         ------
         RuntimeError
-            If size of `wfe` is different than `field_idx`.
+            If size of `wfe` is different than `sensor_names`.
         """
 
-        if len(wfe) != len(field_idx):
+        if len(wfe) != len(sensor_names):
             RuntimeError(
                 f"Number of wavefront errors ({len(wfe)}) must be the same as "
-                f"number of field indexes ({len(field_idx)})."
+                f"number of field indexes ({len(sensor_names)})."
             )
         # Set the gain value
         if gain < 0.0:
@@ -151,91 +148,18 @@ class OFC:
         else:
             self.ofc_controller.gain = gain
 
-        optical_state = self.state_estimator.dof_state(filter_name, wfe, field_idx, rot)
+        optical_state = self.state_estimator.dof_state(filter_name, wfe, sensor_names, rotation_angle)
 
         # Calculate the uk based on the control algorithm
-        uk = self.ofc_controller.uk_gain(filter_name, optical_state, rot)
-
-        # Consider the camera rotation
-        rot_uk = self.rot_uk(rot, uk) if not self.ofc_data.double_zernikes else uk
+        uk = self.ofc_controller.uk_gain(filter_name, optical_state)
 
         # Assign the value to the last visit DOF
-        self.set_last_visit_dof(rot_uk)
+        self.set_last_visit_dof(uk)
 
         # Aggregate the rotated uk
-        self.ofc_controller.aggregate_state(rot_uk, self.ofc_data.dof_idx)
+        self.ofc_controller.aggregate_state(uk, self.ofc_data.dof_idx)
 
         return self.get_all_corrections()
-
-    def rot_uk(self, rot, uk):
-        """Rotate uk.
-
-        Parameters
-        ----------
-        rot : `float`
-            Camera rotator angle in degrees.
-        uk : `np.array`
-            Offset of degree of freedom (DOF) at time `k+1` based on the
-            wavefront error (`yk`) at time `k`.
-
-        Returns
-        -------
-        rot_uk : `np.array`
-            Rotated uk.
-        """
-        dof = np.zeros_like(self.ofc_controller.dof_state0)
-
-        dof[self.ofc_data.dof_idx] = uk
-
-        # Get the m2 and cam tilt positions. If the user truncates the dof
-        # such that these values are not in the dof_state, make them zero.
-        m2_pos_rx = (
-            self.ofc_controller.dof_state[self.ofc_data.dof_idx[3]]
-            if len(self.ofc_data.dof_idx) > 3
-            else 0.0
-        )
-        m2_pos_ry = (
-            self.ofc_controller.dof_state[self.ofc_data.dof_idx[4]]
-            if len(self.ofc_data.dof_idx) > 4
-            else 0.0
-        )
-        cam_pos_rx = (
-            self.ofc_controller.dof_state[self.ofc_data.dof_idx[8]]
-            if len(self.ofc_data.dof_idx) > 8
-            else 0.0
-        )
-        cam_pos_ry = (
-            self.ofc_controller.dof_state[self.ofc_data.dof_idx[9]]
-            if len(self.ofc_data.dof_idx) > 9
-            else 0.0
-        )
-
-        rot_dof = np.array([])
-
-        self.cam_rot.rot = rot
-
-        for dof_comp in self.dof_order:
-            start_idx = self.ofc_data.comp_dof_idx[dof_comp]["startIdx"]
-            end_idx = start_idx + self.ofc_data.comp_dof_idx[dof_comp]["idxLength"]
-            dof_idx = np.arange(start_idx, end_idx)
-
-            dof_comp_data = dof[dof_idx]
-
-            tilt_xy = (0.0, 0.0)
-
-            if dof_comp in {"m2HexPos", "M2Bend"}:
-                tilt_xy = (m2_pos_rx - cam_pos_rx, m2_pos_ry - cam_pos_ry)
-            elif dof_comp == "M1M3Bend":
-                tilt_xy = (cam_pos_rx, cam_pos_ry)
-
-            rot_dof_comp_data = self.cam_rot.rot_comp_dof(
-                dof_comp, dof_comp_data, tilt_xy=tilt_xy
-            )
-            rot_dof = np.append(rot_dof, rot_dof_comp_data)
-
-        rot_uk = rot_dof[self.ofc_data.dof_idx]
-
-        return rot_uk
 
     def get_all_corrections(self):
         """Return corrections for all components in the appropriate order.
@@ -319,11 +243,13 @@ class OFC:
 
         self.pssn_data["sensor_id"] = sensor_id.copy()
         self.pssn_data["pssn"] = np.zeros(len(fwhm))
+        print(self.pssn_data)
 
         for s_id, fw in enumerate(fwhm):
             self.pssn_data["pssn"][s_id] = np.average(
                 self.ofc_controller.fwhm_to_pssn(fwhm)
             )
+        print(self.pssn_data)
 
     def reset(self):
         """Reset the OFC calculation state, which is the aggregated DOF now.

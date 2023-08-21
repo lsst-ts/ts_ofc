@@ -23,6 +23,7 @@ __all__ = ["StateEstimator"]
 
 import logging
 
+import galsim
 import numpy as np
 from . import SensitivityMatrix
 
@@ -74,6 +75,8 @@ class StateEstimator:
             Wavefront error im um.
         sensor_names : `numpy.ndarray` or `list` of `string`
             Sensor names array.
+        rotation_angle : `float`
+            Rotation angle in degrees.
 
         Returns
         -------
@@ -81,29 +84,53 @@ class StateEstimator:
             Optical state in the basis of DOF.
         """
 
-        # Constuct the sensitivity matrix A
-        mat_a, field_idx = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(rotation_angle, sensor_names)
+        # Constuct the double zernike sensitivity matrix
+        dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data, sensor_names)
 
-        size_ = mat_a.shape[2]
-        mat_a = mat_a.reshape((-1, size_))
+        # Evaluate sensitivity matrix at sensor positions
+        sensitivity_matrix, field_idx = dz_sensitivity_matrix.evaluate(rotation_angle)
 
-        # Check the dimension of pinv A
-        num_zk, num_dof = mat_a.shape
+        # Reshape sensitivity matrix to dimensions (#zk * #sensors, # dofs) = (19 * #sensors, 50)
+        size_ = sensitivity_matrix.shape[2]
+        sensitivity_matrix = sensitivity_matrix.reshape((-1, size_))
+
+        # Check the dimension of sensitivity matrix to see if we can invert it
+        num_zk, num_dof = sensitivity_matrix.shape
         if num_zk < num_dof:
             raise RuntimeError(
                 f"Equation number ({num_zk}) < variable number ({num_dof})."
             )
 
-        pinv_a = np.linalg.pinv(mat_a, rcond=self.RCOND)
+        # Compute the pseudo-inverse of the sensitivity matrix
+        # rcond sets the truncation of different modes.
+        pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.RCOND)
 
+        # Rotate the wavefront error to the same orientation as the sensitivity matrix
+        # When creating galsim.Zernike object, the coefficients are in units of um
+        # which does not matter here as we are only rotating them.
+        for idx in range(len(sensor_names)):
+            wfe_sensor = np.pad(wfe[idx, :], (4,0))
+
+            zk_galsim = galsim.zernike.Zernike(
+                wfe_sensor, 
+                R_outer=self.ofc_data.config['obscuration']['R_outer'], 
+                R_inner=self.ofc_data.config['obscuration']['R_inner']
+            )
+            wfe[idx, :] = zk_galsim.rotate(np.deg2rad(-rotation_angle)).coef[4:]
+
+        # Compute wavefront error deviation from the intrinsic wavefront error
+        # y = wfe - intrinsic_zk - y2_correction
+        # y2_correction is a static correction for the deviation currently set to zero.
         y = (
             np.array(wfe)[:, self.ofc_data.zn3_idx]
-            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx)
+            - self.ofc_data.get_intrinsic_zk(filter_name, sensor_names, rotation_angle)
             - self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]
         )
 
+        # Reshape wavefront error to dimensions (#zk * #sensors, 1) = (19 * #sensors, 1)
         y = y.reshape(-1, 1)
 
-        x = pinv_a.dot(y)
+        # Compute optical state estimate in the basis of DOF
+        x = pinv_sensitivity_matrix.dot(y)
 
         return x.ravel()

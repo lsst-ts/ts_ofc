@@ -1,0 +1,12 @@
+description: LSST ComCam Parameters
+instrument: lsst.obs.lsst.ComCam
+
+# Pupil inner and outer radius
+pupil:
+  R_inner: 0.0
+  R_outer: 0.335
+
+# Obscuration (inner_radius / outer_radius of field)
+obscuration:
+  R_inner: 4.18
+  R_outer: 2.558

@@ -11,7 +11,12 @@ Version History
 v2.1.0
 ======
 
-* Add double zernikes to sensitivity matrix to handle camera rotation.
+* Added derotation of ts_wep zernike estimates to deal with rotation of the sensor.
+* Added ability to evaluate sensitivity matrix and intrinsic zernikes at the rotated field position.
+    * Added double zernikes sensitivity matrix for lsst and comcam.
+    * Added double zernikes intrinsic zernikes for lsst and comcam.
+* Policy folder was simplified since lsstfam and lsst share all double zernike files. 
+* Added scripts to generate sensitivity matrix and intrinsic files from batoid package.
 
 .. _lsst.ts.ofc-2.0.9:
 

@@ -25,9 +25,7 @@ import numpy as np
 import numpy.typing as npt
 from typing import Tuple, List
 import galsim
-import lsst.obs.lsst as obs_lsst
-from lsst.afw.cameraGeom import FIELD_ANGLE
-
+from .utils import get_field_angle
 
 class SensitivityMatrix:
     """Class to handle the sensitivity matrix.
@@ -38,11 +36,13 @@ class SensitivityMatrix:
         OFC data.
     """
 
-    def __init__(self, ofc_data) -> None:
+    def __init__(self, ofc_data, sensor_names: None | list = None) -> None:
         self.ofc_data = ofc_data
 
-    def evaluate_sensitivity(
-        self, rotation_angle: float, sensor_names: None | list = None
+        self.sensor_names = sensor_names
+
+    def evaluate(
+        self, rotation_angle: float, 
     ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """Evaluate the sensitivity matrix for a given rotation angle.
 
@@ -62,8 +62,11 @@ class SensitivityMatrix:
             Field indices for the sensors.
         """
 
-        # If sensor_names is None getsensitivity matrix at all GQ points
-        if sensor_names is None:
+        # Convert rotation angle to radians
+        rotation_angle = np.deg2rad(rotation_angle)
+
+        # If sensor_names is None get sensitivity matrix at all GQ points
+        if self.sensor_names is None:
             # Create array for all the GQ points
             field_idx = np.arange(self.ofc_data.gq_field_angles.shape[0])
             # Retrieve field angles for each GQ point from ofc_data
@@ -72,24 +75,10 @@ class SensitivityMatrix:
         else:
             # Obtain the field indices for the sensors
             field_idx = np.array(
-                [self.ofc_data.field_idx[sensor_name] for sensor_name in sensor_names]
+                [self.ofc_data.field_idx[sensor_name] for sensor_name in self.sensor_names]
             )
             # Get the field angles for the sensors
-            field_x, field_y = get_field_angle(sensor_names)
-
-        # If not using double zernikes, use the stored GQ sensitivity matrix
-        if not self.ofc_data.double_zernikes:
-            # Get the sensitivity matrix
-            sen_m = self.ofc_data.sensitivity_matrix[
-                np.ix_(
-                    np.arange(self.ofc_data.sensitivity_matrix.shape[0]),
-                    np.arange(self.ofc_data.sensitivity_matrix.shape[1]),
-                    self.ofc_data.dof_idx,
-                )
-            ]
-
-            # return the sensitivity matrix at the given field indices.
-            return sen_m[field_idx, :, :], field_idx
+            field_x, field_y = get_field_angle(self.sensor_names)
 
         # If using double zernikes, compute the sensitivity matrix
         # using galsim DoubleZernikes
@@ -99,21 +88,21 @@ class SensitivityMatrix:
                     [
                         zk.coef
                         for zk in galsim.zernike.DoubleZernike(
-                            self.ofc_data.sensitivity_matrix[:, :, dof_idx],
+                            self.ofc_data.sensitivity_matrix[..., dof_idx],
                             # Rubin annuli
-                            uv_inner=0.0,
-                            uv_outer=1.75,
-                            xy_inner=0.612 * 4.18,
-                            xy_outer=4.18,
+                            uv_inner=self.ofc_data.config.pupil.R_inner,
+                            uv_outer=self.ofc_data.config.pupil.R_outer,
+                            xy_inner=self.ofc_data.config.obscuration.R_inner,
+                            xy_outer=self.ofc_data.config.obscuration.R_outer,
                         ).rotate(theta_uv=rotation_angle)(field_x, field_y)
                     ]
                 )
                 for dof_idx in self.ofc_data.dof_idx
             ]
         )
-        # Reshape the sensitivity matrix to have the
-        # same shape as the one stored.
-        rotated_sensitivity_matrix = np.moveaxis(rotated_sensitivity_matrix, 0, -1)
+
+        # Reshape the sensitivity matrix to be (#field_points, #zernikes, #dofs)
+        rotated_sensitivity_matrix = np.einsum('ijk->jki', rotated_sensitivity_matrix)
 
         # Subselect the relevant zernike coefficients
         # to include in the sensitivity matrix.
@@ -122,32 +111,3 @@ class SensitivityMatrix:
         ]
 
         return rotated_sensitivity_matrix, field_idx
-
-
-def get_field_angle(sensor_names: list) -> Tuple[List[float], List[float]]:
-    """Get the field angle for a given sensor name.
-
-    Parameters
-    ----------
-    sensor_names : list [str]
-        List of sensor names.
-
-    Returns
-    -------
-    field_x : list [float]
-        List of field x angles in degrees.
-    field_y : list [float]
-        List of field y angles in degrees.
-    """
-
-    # Create camera object
-    camera = obs_lsst.LsstCam().getCamera()
-
-    # Get the field angle for each sensor
-    field_list = list()
-    for name in sensor_names:
-        centerPt = camera.get(name).getCenter(FIELD_ANGLE)
-        field_list.append((np.degrees(centerPt[1]), np.degrees(centerPt[0])))
-
-    # Return the field angles field_x and field_y
-    return zip(*field_list)

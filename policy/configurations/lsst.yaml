@@ -1,0 +1,12 @@
+description: LSST LSSTCam Parameters
+instrument: lsst.obs.lsst.LsstCam
+
+# Pupil inner and outer radius
+pupil:
+  R_inner: 0.0
+  R_outer: 1.75
+
+# Obscuration (inner_radius / outer_radius of M1M3)
+obscuration:
+  R_inner: 4.18
+  R_outer: 2.558

@@ -30,33 +30,33 @@ class TestBaseOFCData(unittest.TestCase):
     def test_constructor(self):
         base_ofc_data = BaseOFCData()
 
-        self.assertEqual(base_ofc_data.iqw_filename, "imgQualWgt.yaml")
+        self.assertEqual(base_ofc_data.iqw_filename, "img_quality_weight.yaml")
         self.assertEqual(base_ofc_data.y2_filename, "y2.yaml")
         self.assertEqual(
-            base_ofc_data.sensor_mapping_filename, "sensorNameToFieldIdx.yaml"
+            base_ofc_data.sensor_mapping_filename, "sensor_name_to_field_idx.yaml"
         )
-        self.assertEqual(base_ofc_data.dof_state0_filename, "state0inDof.yaml")
-        self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "intrinsicZn")
-        self.assertEqual(base_ofc_data.sen_m_filename_root, "senM")
+        self.assertEqual(base_ofc_data.dof_state0_filename, "state0_in_dof.yaml")
+        self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "intrinsic_zk")
+        self.assertEqual(base_ofc_data.sen_m_filename_root, "sensitivity_dz")
 
     def test_constructor_with_args(self):
         base_ofc_data = BaseOFCData(
-            iqw_filename="new_imgQualWgt.yaml",
+            iqw_filename="new_img_quality_weight.yaml",
             y2_filename="new_y2.yaml",
-            sensor_mapping_filename="new_sensorNameToFieldIdx.yaml",
-            dof_state0_filename="new_state0inDof.yaml",
-            intrinsic_zk_filename_root="new_intrinsicZn",
-            sen_m_filename_root="new_senM",
+            sensor_mapping_filename="new_sensor_name_to_field_idx.yaml",
+            dof_state0_filename="new_state0_in_dof.yaml",
+            intrinsic_zk_filename_root="new_intrinsic_zk",
+            sen_m_filename_root="new_sensitivity",
         )
 
-        self.assertEqual(base_ofc_data.iqw_filename, "new_imgQualWgt.yaml")
+        self.assertEqual(base_ofc_data.iqw_filename, "new_img_quality_weight.yaml")
         self.assertEqual(base_ofc_data.y2_filename, "new_y2.yaml")
         self.assertEqual(
-            base_ofc_data.sensor_mapping_filename, "new_sensorNameToFieldIdx.yaml"
+            base_ofc_data.sensor_mapping_filename, "new_sensor_name_to_field_idx.yaml"
         )
-        self.assertEqual(base_ofc_data.dof_state0_filename, "new_state0inDof.yaml")
-        self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "new_intrinsicZn")
-        self.assertEqual(base_ofc_data.sen_m_filename_root, "new_senM")
+        self.assertEqual(base_ofc_data.dof_state0_filename, "new_state0_in_dof.yaml")
+        self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "new_intrinsic_zk")
+        self.assertEqual(base_ofc_data.sen_m_filename_root, "new_sensitivity")
 
 
 if __name__ == "__main__":

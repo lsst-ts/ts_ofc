@@ -309,7 +309,7 @@ class OFCController:
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
-    def uk_gain(self, filter_name, dof_state, rotation_angle):
+    def uk_gain(self, filter_name, dof_state):
         """Estimate uk in the basis of degree of freedom (DOF) with gain
         compensation.
 
@@ -319,8 +319,6 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
-        rotation_angle : `float`
-            Rotation angle in degree.
 
         Returns
         -------
@@ -328,9 +326,9 @@ class OFCController:
             Calculated uk in the basis of DOF.
         """
 
-        return self.gain * self.uk(filter_name, dof_state, rotation_angle)
+        return self.gain * self.uk(filter_name, dof_state)
 
-    def uk(self, filter_name, dof_state, rotation_angle):
+    def uk(self, filter_name, dof_state):
         """Estimate the offset (`uk`) of degree of freedom (DOF) at time `k+1`
         based on the wavefront error (`yk`) at time `k`.
 
@@ -343,8 +341,6 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
-        rotation_angle : `float`
-            Rotation angle in degree.
 
         Returns
         -------
@@ -384,13 +380,17 @@ class OFCController:
 
         n_imqw = self.ofc_data.normalized_image_quality_weight
 
-        sen_m = SensitivityMatrix(self.ofc_data).evaluate_sensitivity(rotation_angle)
+        # Constuct the double zernike sensitivity matrix
+        dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
+
+        # Evaluate sensitivity matrix at sensor positions
+        sensitivity_matrix, _ = dz_sensitivity_matrix.evaluate(rotation_angle = 0.0)
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
 
         qx = 0
         q_mat = 0
-        for a_mat, wgt, y2k in zip(sen_m, n_imqw, y2c):
+        for a_mat, wgt, y2k in zip(sensitivity_matrix, n_imqw, y2c):
             y2k = y2k.reshape(-1, 1)
             qx += wgt * a_mat.T.dot(cc_mat).dot(a_mat.dot(_dof_state) + y2k)
             q_mat += wgt * a_mat.T.dot(cc_mat).dot(a_mat)

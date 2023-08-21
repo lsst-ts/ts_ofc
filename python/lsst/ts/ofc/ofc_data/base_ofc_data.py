@@ -35,15 +35,14 @@ def default_eff_wavelenght():
         Filter name and associated effective wavelength in um.
     """
     return {
-        "U": 0.365,
-        "G": 0.480,
-        "R": 0.622,
-        "I": 0.754,
-        "Z": 0.868,
-        "Y": 0.973,
+        "u": 0.365,
+        "g": 0.480,
+        "r": 0.622,
+        "i": 0.754,
+        "z": 0.868,
+        "y": 0.973,
         "": 0.5,  # Reference effective wavelenght.
     }
-
 
 def default_alpha():
     """Default alpha coefficient for the normalized point-source sensitivity
@@ -77,7 +76,6 @@ def default_alpha():
         ]
     )
 
-
 def default_zn3_idx():
     """Index of annular Zernike polynomials (z3-z22)
 
@@ -89,7 +87,6 @@ def default_zn3_idx():
 
     return np.arange(19)
 
-
 def default_rb_stroke():
     """Default allowed moving range of rigid body of M2 hexapod and Camera.
 
@@ -100,7 +97,6 @@ def default_rb_stroke():
     """
 
     return np.array([5900, 6700, 6700, 432, 432, 8700, 7600, 7600, 864, 864])
-
 
 @dataclass
 class BaseOFCData:
@@ -152,8 +148,8 @@ class BaseOFCData:
     sensor_mapping_filename: str = "sensorNameToFieldIdx.yaml"
     field_angles_filename: str = "fieldXy.yaml"
     dof_state0_filename: str = "state0inDof.yaml"
-    intrinsic_zk_filename_root: str = "intrinsicZn"
-    sen_m_filename_root: str = "senM"
+    intrinsic_zk_filename_root: str = "intrinsic_zk_"
+    sen_m_filename_root: str = "sensitivity_dz"
 
     zn3_idx_in_intrinsic_zn_file: int = 3
 
@@ -164,8 +160,6 @@ class BaseOFCData:
 
     # Index of annular Zernike polynomials (z3-z22)
     zn3_idx: np.array = field(default_factory=default_zn3_idx)
-
-    znmax: int = 22  # Max number of zernikes used (to be filtered with zn3Idx)
 
     # Control strategy
     control_strategy: str = "optiPSSN"

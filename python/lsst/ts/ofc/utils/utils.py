@@ -18,9 +18,14 @@
 #
 # You should have received a copy of the GNU General Public License
 
-__all__ = ["get_pkg_root", "get_config_dir", "rot_1d_array"]
+__all__ = ["get_pkg_root", "get_config_dir", "rot_1d_array", "get_field_angle"]
 
 import pathlib
+from typing import Tuple, List
+import numpy as np
+
+import lsst.obs.lsst as obs_lsst
+from lsst.afw.cameraGeom import FIELD_ANGLE
 
 
 def get_pkg_root():
@@ -65,3 +70,31 @@ def rot_1d_array(array, rot_mat):
     rot_array = rot_mat.dot(array2d)
 
     return rot_array.ravel()
+
+def get_field_angle(sensor_names: list) -> Tuple[List[float], List[float]]:
+    """Get the field angle for a given sensor name.
+
+    Parameters
+    ----------
+    sensor_names : list [str]
+        List of sensor names.
+
+    Returns
+    -------
+    field_x : list [float]
+        List of field x angles in degrees.
+    field_y : list [float]
+        List of field y angles in degrees.
+    """
+
+    # Create camera object
+    camera = obs_lsst.LsstCam().getCamera()
+
+    # Get the field angle for each sensor
+    field_list = list()
+    for name in sensor_names:
+        centerPt = camera.get(name).getCenter(FIELD_ANGLE)
+        field_list.append((-np.degrees(centerPt[1]), np.degrees(centerPt[0])))
+
+    # Return the field angles field_x and field_y
+    return zip(*field_list)

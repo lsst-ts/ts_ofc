@@ -143,17 +143,17 @@ class BaseOFCData:
         Max number of zernikes used (to be filtered with `zn3_idx`).
     """
 
-    iqw_filename: str = "imgQualWgt.yaml"
+    iqw_filename: str = "img_quality_weight.yaml"
     y2_filename: str = "y2.yaml"
-    sensor_mapping_filename: str = "sensorNameToFieldIdx.yaml"
-    field_angles_filename: str = "fieldXy.yaml"
-    dof_state0_filename: str = "state0inDof.yaml"
-    intrinsic_zk_filename_root: str = "intrinsic_zk_"
+    sensor_mapping_filename: str = "sensor_name_to_field_idx.yaml"
+    field_angles_filename: str = "field_xy.yaml"
+    dof_state0_filename: str = "state0_in_dof.yaml"
+    intrinsic_zk_filename_root: str = "intrinsic_zk"
     sen_m_filename_root: str = "sensitivity_dz"
 
-    zn3_idx_in_intrinsic_zn_file: int = 3
-
     eff_wavelength: dict = field(default_factory=default_eff_wavelenght)
+
+    zn3_idx_in_intrinsic_zn_file: int = 3
 
     znmax: int = 22  # Max number of zernikes used (to be filtered with zn3Idx)
     znmin: int = 4  # Min number of zernikes used (to be filtered with zn3Idx)

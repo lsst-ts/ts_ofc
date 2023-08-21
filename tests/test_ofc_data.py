@@ -48,7 +48,7 @@ class TestOFCDataConstructor(unittest.TestCase):
 
 class TestOFCData(unittest.TestCase):
     def setUp(self):
-        self.ofc_data = OFCData("comcam")
+        self.ofc_data = OFCData("lsst")
 
     def test_xref(self):
         self.assertEqual(self.ofc_data.xref, "x00")
@@ -108,7 +108,7 @@ class TestOFCData(unittest.TestCase):
             with self.subTest(filter_name=filter_name):
                 intrinsic_zk = self.ofc_data.get_intrinsic_zk(filter_name)
                 self.assertTrue(isinstance(intrinsic_zk, np.ndarray))
-                self.assertEqual(len(intrinsic_zk), 9)
+                self.assertEqual(len(intrinsic_zk), 35)
 
                 intrinsic_zk = self.ofc_data.get_intrinsic_zk(
                     filter_name, np.arange(3, 5)

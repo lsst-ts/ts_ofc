@@ -41,7 +41,6 @@ def default_eff_wavelenght():
         "i": 0.754,
         "z": 0.868,
         "y": 0.973,
-        "": 0.5,  # Reference effective wavelenght.
     }
 
 def default_alpha():
@@ -149,7 +148,7 @@ class BaseOFCData:
     field_angles_filename: str = "field_xy.yaml"
     dof_state0_filename: str = "state0_in_dof.yaml"
     intrinsic_zk_filename_root: str = "intrinsic_zk"
-    sen_m_filename_root: str = "sensitivity_dz"
+    sen_m_filename_root: str = "sensitivity"
 
     eff_wavelength: dict = field(default_factory=default_eff_wavelenght)
 

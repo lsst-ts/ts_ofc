@@ -62,7 +62,7 @@ class StateEstimator:
 
         self.ofc_data = ofc_data
 
-    def dof_state(self, filter_name, wfe, sensor_names, rotation_angle):
+    def dof_state(self, filter_name, wfe, field_idx, rotation_angle):
         """Compute the state in the basis of degrees of freedom.
 
         Solve y = A*x by x = pinv(A)*y.
@@ -73,8 +73,8 @@ class StateEstimator:
             Name of the filter. Must be in `self.intrinsic_zk`.
         wfe : `numpy.ndarray`
             Wavefront error im um.
-        sensor_names : `numpy.ndarray` or `list` of `string`
-            Sensor names array.
+        field_idx : `numpy.ndarray`
+            Field indices for the sensors.
         rotation_angle : `float`
             Rotation angle in degrees.
 
@@ -85,14 +85,20 @@ class StateEstimator:
         """
 
         # Constuct the double zernike sensitivity matrix
-        dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data, sensor_names)
+        dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data, field_idx)
 
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix, field_idx = dz_sensitivity_matrix.evaluate(rotation_angle)
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate(rotation_angle)
+
+        # Select sensitivity matrix only at used degrees of freedom
+        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
 
         # Reshape sensitivity matrix to dimensions (#zk * #sensors, # dofs) = (19 * #sensors, 50)
         size_ = sensitivity_matrix.shape[2]
         sensitivity_matrix = sensitivity_matrix.reshape((-1, size_))
+
+        # Select sensitivity matrix only at used degrees of freedom
+        sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
 
         # Check the dimension of sensitivity matrix to see if we can invert it
         num_zk, num_dof = sensitivity_matrix.shape
@@ -108,7 +114,7 @@ class StateEstimator:
         # Rotate the wavefront error to the same orientation as the sensitivity matrix
         # When creating galsim.Zernike object, the coefficients are in units of um
         # which does not matter here as we are only rotating them.
-        for idx in range(len(sensor_names)):
+        for idx in range(wfe.shape[0]):
             wfe_sensor = np.pad(wfe[idx, :], (4,0))
 
             zk_galsim = galsim.zernike.Zernike(
@@ -123,7 +129,7 @@ class StateEstimator:
         # y2_correction is a static correction for the deviation currently set to zero.
         y = (
             np.array(wfe)[:, self.ofc_data.zn3_idx]
-            - self.ofc_data.get_intrinsic_zk(filter_name, sensor_names, rotation_angle)
+            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx, rotation_angle)[:, self.ofc_data.zn3_idx]
             - self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]
         )
 

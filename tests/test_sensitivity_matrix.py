@@ -44,8 +44,9 @@ class TestSensitivityMatrix(unittest.TestCase):
             glob(
                 str(
                     self.ofc_data.config_dir
-                    / "lsst"
-                    / f"{self.ofc_data.sen_m_filename_root}_gq*.yaml"
+                    / "sensitivity_matrix"
+                    / "legacy"
+                    / f"lsst_{self.ofc_data.sen_m_filename_root}*.yaml"
                 )
             )[0]
         )

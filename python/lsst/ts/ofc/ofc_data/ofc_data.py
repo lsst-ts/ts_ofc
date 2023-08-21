@@ -33,7 +33,7 @@ import numpy as np
 from glob import glob
 from pathlib import Path
 
-from ..utils import get_config_dir, get_field_angle
+from ..utils import get_config_dir
 from . import BaseOFCData
 
 
@@ -79,8 +79,6 @@ class OFCData(BaseOFCData):
         instrument configuration.
     log : `logging.Logger`
         Logger class used for logging operations.
-    double_zernikes : `bool`
-        Use double zernikes for sensitivity matrices.
     name : `string`
         Name of the instrument configuration. This is used to define where
         `intrinsic_zk` and `y2` will be read from.
@@ -101,14 +99,16 @@ class OFCData(BaseOFCData):
         If input `config_dir` does not exists.
     """
 
-    def __init__(self, name=None, config_dir=None, log=None, double_zernikes=True, **kwargs):
+    def __init__(self, name=None, config_dir=None, log=None, **kwargs):
         super().__init__(**kwargs)
 
+        # Set logger
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:
             self.log = log.getChild(type(self).__name__)
 
+        # Set configuration folder
         if config_dir is None:
             self.log.debug("Using default configuration directory.")
             self.config_dir = get_config_dir()
@@ -121,9 +121,6 @@ class OFCData(BaseOFCData):
                 raise RuntimeError(
                     f"Provided data path ({self.config_dir}) does not exists."
                 )
-
-        # Use double zernikes for sensitivity matrices
-        self.double_zernikes = double_zernikes
 
         # Dictionary to hold bending mode data. The data is read alongside the
         # other files when the name is set.
@@ -185,8 +182,6 @@ class OFCData(BaseOFCData):
             ),
             M2Bend=dict(startIdx=30, idxLength=20, state0name="M2Bending", rot_mat=1.0),
         )
-
-        self.filters = ["u", "g", "r", "i", "z", "y"]
 
         # Index of degree of freedom
         self._dof_idx = np.arange(
@@ -273,7 +268,7 @@ class OFCData(BaseOFCData):
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]
 
-    def get_intrinsic_zk(self, filter_name, sensor_names, rotation_angle=0.0):
+    def get_intrinsic_zk(self, filter_name, field_idx=None, rotation_angle=0.0):
         """Return reformated instrisic zernike coefficients.
 
         Parameters
@@ -296,24 +291,28 @@ class OFCData(BaseOFCData):
                 f"Invalid filter name {filter_name}. Must be one of {self.intrinsic_zk.keys()}."
             )
 
-        field_x, field_y = get_field_angle(sensor_names)
+        if field_idx is None:
+            field_x, field_y = zip(*self.gq_field_angles)
+        else:
+            gq_points = self.gq_field_angles[field_idx, :]
+            field_x, field_y = zip(*gq_points)
 
         evaluated_zernikes = np.array(
             [
                 zk.coef for zk in galsim.zernike.DoubleZernike(
                     self.intrinsic_zk[filter_name],
                     # Rubin annuli
-                    uv_inner=0.0,
-                    uv_outer=1.75,
-                    xy_inner=0.612 * 4.18,
-                    xy_outer=4.18,
+                    uv_inner=self.config['pupil']['R_inner'],
+                    uv_outer=self.config['pupil']['R_outer'],
+                    xy_inner=self.config['obscuration']['R_inner'],
+                    xy_outer=self.config['obscuration']['R_outer'],
                 ).rotate(theta_uv=rotation_angle)(field_x, field_y)
             ]
         )
     
-        #evaluated_zernikes *= self.eff_wavelength[filter_name]
+        evaluated_zernikes *= self.eff_wavelength[filter_name]
 
-        return evaluated_zernikes[:,:]
+        return evaluated_zernikes[:,4:23]
 
     async def configure_instrument(self, instrument):
         """Configure instrument concurrently.
@@ -421,16 +420,15 @@ class OFCData(BaseOFCData):
                 "Check your instrument configuration directory integrity."
             )
 
-        self.filters = ['u', 'g', 'r', 'i', 'z', 'y']
         # Read all intrinsic zernike coefficients data.
-        self.log.debug(f"Configuring instrisic zernikes: {len(self.filters)} files.")
+        self.log.debug(f"Configuring instrisic zernikes: {len(self.eff_wavelength.keys())} files.")
 
         intrinsic_zk = dict()
         camera_type = instrument if instrument != 'lsstfam' else 'lsst'
         intrinsic_zk_path = self.config_dir / 'intrinsic_zernikes' / camera_type
 
-        for filter_name in self.filters:
-            file_name = f"{self.intrinsic_zk_filename_root}{filter_name}*.yaml"
+        for filter_name in self.eff_wavelength.keys():
+            file_name = f"{self.intrinsic_zk_filename_root}_{filter_name}*.yaml"
             intrinsic_file = Path(
                 glob(str(intrinsic_zk_path / file_name))[0]
             )

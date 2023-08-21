@@ -49,7 +49,9 @@ class TestStateEstimator(unittest.TestCase):
         ]
 
     def test_dof_state(self):
-        state = self.estimator.dof_state("", self.wfe, self.field_idx)
+        state = self.estimator.dof_state(
+            "r", self.wfe, self.field_idx, rotation_angle=0.0
+        )
 
         n_values = len(self.estimator.ofc_data.dof_idx)
 
@@ -68,7 +70,10 @@ class TestStateEstimator(unittest.TestCase):
         )
         self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
-        state = self.estimator.dof_state("", self.wfe, self.field_idx)
+        state = self.estimator.dof_state(
+            "g", self.wfe, self.field_idx, rotation_angle=0.0
+        )
+        print(state)
 
         n_values = len(self.estimator.ofc_data.dof_idx)
 
@@ -91,7 +96,7 @@ class TestStateEstimator(unittest.TestCase):
         self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         with self.assertRaises(RuntimeError):
-            self.estimator.dof_state("", self.wfe, self.field_idx)
+            self.estimator.dof_state("r", self.wfe, self.field_idx, rotation_angle=0.0)
 
 
 if __name__ == "__main__":

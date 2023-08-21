@@ -22,7 +22,11 @@ import unittest
 
 import numpy as np
 
-from lsst.ts.ofc.utils import get_pkg_root, get_config_dir, rot_1d_array
+from lsst.ts.ofc.utils import (
+    get_pkg_root,
+    get_config_dir,
+    rot_1d_array,
+)
 
 
 class TestUtils(unittest.TestCase):
@@ -38,6 +42,36 @@ class TestUtils(unittest.TestCase):
 
         self.assertTrue(config_dir.exists())
 
+    def test_rot_1d_array(self):
+        vec = np.array([1.0, 0.0])
+
+        def compute_rot_mat(rot):
+            """Return rotation matrix."""
+            rot_rad = np.deg2rad(rot)
+            c, s = np.cos(rot_rad), np.sin(rot_rad)
+            return np.array(((c, -s), (s, c)))
+
+        angle = 0.0
+        rot_mat = compute_rot_mat(angle)
+        rot_vec = rot_1d_array(vec, rot_mat)
+
+        self.assertEqual(vec[0], rot_vec[0])
+        self.assertEqual(vec[1], rot_vec[1])
+
+        angle = 45.0
+        rot_mat = compute_rot_mat(angle)
+        rot_vec = rot_1d_array(vec, rot_mat)
+
+        expected_value = np.sin(np.radians(angle))
+        self.assertAlmostEqual(rot_vec[0], expected_value)
+        self.assertAlmostEqual(rot_vec[1], expected_value)
+
+        angle = 90.0
+        rot_mat = compute_rot_mat(angle)
+        rot_vec = rot_1d_array(vec, rot_mat)
+
+        self.assertAlmostEqual(rot_vec[0], vec[1])
+        self.assertAlmostEqual(rot_vec[1], vec[0])
 
 if __name__ == "__main__":
     # Run the unit test

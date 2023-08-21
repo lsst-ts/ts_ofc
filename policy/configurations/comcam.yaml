@@ -8,5 +8,5 @@ pupil:
 
 # Obscuration (inner_radius / outer_radius of field)
 obscuration:
-  R_inner: 4.18
-  R_outer: 2.558
+  R_inner: 2.558
+  R_outer: 4.18

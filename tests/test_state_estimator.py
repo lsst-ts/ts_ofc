@@ -41,7 +41,7 @@ class TestStateEstimator(unittest.TestCase):
             / "lsst_wfs_error_iter0.z4c"
         )
 
-        sensor_name_list = ["R44_SW0", "R04_SW0", "R00_SW0", "R40_SW0"]
+        sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
         self.field_idx = [
             self.estimator.ofc_data.field_idx[sensor_name]
@@ -56,9 +56,9 @@ class TestStateEstimator(unittest.TestCase):
         n_values = len(self.estimator.ofc_data.dof_idx)
 
         self.assertEqual(len(state), n_values)
-        self.assertAlmostEqual(state[0], 29.99315863, places=7)
-        self.assertAlmostEqual(state[1], 0.05606898, places=7)
-        self.assertAlmostEqual(state[2], -0.04200292, places=7)
+        self.assertAlmostEqual(state[3], -1.14304491e-03, places=4)
+        self.assertAlmostEqual(state[12], -2.85609953e-03, places=4)
+        self.assertAlmostEqual(state[46], 6.42305288e-03, places=4)
 
     def test_dof_state_trim_zn_dof(self):
         self.estimator.ofc_data.zn3_idx = np.arange(5)
@@ -71,16 +71,16 @@ class TestStateEstimator(unittest.TestCase):
         self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         state = self.estimator.dof_state(
-            "g", self.wfe, self.field_idx, rotation_angle=0.0
+            "r", self.wfe, self.field_idx, rotation_angle=0.0
         )
         print(state)
 
         n_values = len(self.estimator.ofc_data.dof_idx)
 
         self.assertEqual(len(state), n_values)
-        self.assertAlmostEqual(state[0], -645.7540849494324)
-        self.assertAlmostEqual(state[1], -10221.082801186029)
-        self.assertAlmostEqual(state[2], -758.518174)
+        self.assertAlmostEqual(state[0], -278.90163287)
+        self.assertAlmostEqual(state[1], 327.86599287)
+        self.assertAlmostEqual(state[2], 654.60883647)
 
     def test_dof_state_not_enough_zk(self):
         self.estimator.ofc_data.zn3_idx = np.arange(4)

@@ -114,6 +114,7 @@ class StateEstimator:
         # Rotate the wavefront error to the same orientation as the sensitivity matrix
         # When creating galsim.Zernike object, the coefficients are in units of um
         # which does not matter here as we are only rotating them.
+        wfe = np.array(wfe)
         for idx in range(wfe.shape[0]):
             wfe_sensor = np.pad(wfe[idx, :], (4,0))
 
@@ -128,7 +129,7 @@ class StateEstimator:
         # y = wfe - intrinsic_zk - y2_correction
         # y2_correction is a static correction for the deviation currently set to zero.
         y = (
-            np.array(wfe)[:, self.ofc_data.zn3_idx]
+            wfe[:, self.ofc_data.zn3_idx]
             - self.ofc_data.get_intrinsic_zk(filter_name, field_idx, rotation_angle)[:, self.ofc_data.zn3_idx]
             - self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]
         )

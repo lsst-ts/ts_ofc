@@ -52,15 +52,15 @@ class StateEstimator:
         matrix.
     """
 
-    RCOND = 1e-4
-
-    def __init__(self, ofc_data, log=None):
+    def __init__(self, ofc_data, rcond=1e-4, log=None):
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:
             self.log = log.getChild(type(self).__name__)
 
         self.ofc_data = ofc_data
+
+        self.RCOND = rcond
 
     def dof_state(self, filter_name, wfe, field_idx, rotation_angle):
         """Compute the state in the basis of degrees of freedom.

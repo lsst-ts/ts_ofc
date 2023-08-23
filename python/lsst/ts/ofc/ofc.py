@@ -24,6 +24,7 @@ __all__ = ["OFC"]
 import logging
 
 import numpy as np
+from typing import List
 
 from . import (
     Correction,
@@ -51,8 +52,6 @@ class OFC:
 
     Attributes
     ----------
-    cam_rot : `CamRot`
-        Camera rotator class.
     default_gain : `float`
         Default gain, used when setting gain in `set_pssn_gain()` when fwhm is
         above `fwhm_threshold`.
@@ -81,7 +80,7 @@ class OFC:
     PSSN: Normalized point source sensitivity.
     """
 
-    def __init__(self, ofc_data, log=None):
+    def __init__(self, ofc_data, log=None) -> None:
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:
@@ -103,7 +102,14 @@ class OFC:
 
         self.dof_order = ("m2HexPos", "camHexPos", "M1M3Bend", "M2Bend")
 
-    def calculate_corrections(self, wfe, sensor_names, filter_name, gain, rotation_angle):
+    def calculate_corrections(
+        self,
+        wfe: np.ndarray,
+        field_idx: np.ndarray,
+        filter_name: str,
+        gain: float,
+        rotation_angle: float,
+    ) -> List[Correction]:
         """Calculate the Hexapod, M1M3, and M2 corrections from the FWHM
         and wavefront error.
 
@@ -113,8 +119,8 @@ class OFC:
             An array of arrays (e.g. 2-d array) with wavefront erros. Each
             element contains an array of wavefront errors (in um) for a
             particular detector/field.
-        sensor_names : `list` of `string`
-            Sensor names array.
+        field_idx: `np.ndarray`
+            Array with field indices
         filter_name : `string`
             Name of the filter used in the observations. This must be a valid
             entry in the `ofc_data.intrinsic_zk` and `ofc_data.eff_wavelength`
@@ -137,10 +143,10 @@ class OFC:
             If size of `wfe` is different than `sensor_names`.
         """
 
-        if len(wfe) != len(sensor_names):
+        if len(wfe) != len(field_idx):
             RuntimeError(
                 f"Number of wavefront errors ({len(wfe)}) must be the same as "
-                f"number of field indexes ({len(sensor_names)})."
+                f"number of field indexes ({len(field_idx)})."
             )
         # Set the gain value
         if gain < 0.0:
@@ -148,7 +154,9 @@ class OFC:
         else:
             self.ofc_controller.gain = gain
 
-        optical_state = self.state_estimator.dof_state(filter_name, wfe, sensor_names, rotation_angle)
+        optical_state = self.state_estimator.dof_state(
+            filter_name, wfe, field_idx, rotation_angle
+        )
 
         # Calculate the uk based on the control algorithm
         uk = self.ofc_controller.uk_gain(filter_name, optical_state)
@@ -161,7 +169,7 @@ class OFC:
 
         return self.get_all_corrections()
 
-    def get_all_corrections(self):
+    def get_all_corrections(self) -> List[Correction]:
         """Return corrections for all components in the appropriate order.
 
         Returns
@@ -173,7 +181,7 @@ class OFC:
 
         return corrections
 
-    def get_correction(self, dof_comp):
+    def get_correction(self, dof_comp: str) -> Correction:
         """Get the aggregated correction for specified component.
 
         DOF: Degree of freedom.
@@ -213,12 +221,12 @@ class OFC:
 
         return correction
 
-    def init_lv_dof(self):
+    def init_lv_dof(self) -> None:
         """Initialize last visit degree of freedom."""
 
         self.lv_dof = np.zeros_like(self.ofc_controller.dof_state0)
 
-    def set_fwhm_data(self, fwhm, sensor_id):
+    def set_fwhm_data(self, fwhm, sensor_id) -> None:
         """Set the list of FWHMSensorData of each CCD of camera.
 
         Parameters
@@ -243,15 +251,13 @@ class OFC:
 
         self.pssn_data["sensor_id"] = sensor_id.copy()
         self.pssn_data["pssn"] = np.zeros(len(fwhm))
-        print(self.pssn_data)
 
         for s_id, fw in enumerate(fwhm):
             self.pssn_data["pssn"][s_id] = np.average(
                 self.ofc_controller.fwhm_to_pssn(fwhm)
             )
-        print(self.pssn_data)
 
-    def reset(self):
+    def reset(self) -> List[Correction]:
         """Reset the OFC calculation state, which is the aggregated DOF now.
 
         This function is needed for the long slew angle of telescope.
@@ -275,7 +281,7 @@ class OFC:
 
         return self.get_all_corrections()
 
-    def set_pssn_gain(self):
+    def set_pssn_gain(self) -> None:
         """Set the gain value based on the PSSN, which comes from the FWHM by
         DM team.
 
@@ -299,7 +305,7 @@ class OFC:
         else:
             self.ofc_controller.gain = self.default_gain
 
-    def set_last_visit_dof(self, dof):
+    def set_last_visit_dof(self, dof) -> None:
         """Set the state (or degree of freedom, DOF) correction from the last
         visit.
 

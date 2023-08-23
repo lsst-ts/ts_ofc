@@ -328,7 +328,7 @@ class OFCController:
 
         return self.gain * self.uk(filter_name, dof_state)
 
-    def uk(self, filter_name, dof_state):
+    def uk(self, filter_name: str, dof_state: np.ndarray) -> np.ndarray:
         """Estimate the offset (`uk`) of degree of freedom (DOF) at time `k+1`
         based on the wavefront error (`yk`) at time `k`.
 
@@ -384,16 +384,16 @@ class OFCController:
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = dz_sensitivity_matrix.evaluate(rotation_angle = 0.0)
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate(rotation_angle=0.0)
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
 
         qx = 0
         q_mat = 0
-        for a_mat, wgt, y2k in zip(sensitivity_matrix, n_imqw, y2c):
+        for sen_mat, wgt, y2k in zip(sensitivity_matrix, n_imqw, y2c):
             y2k = y2k.reshape(-1, 1)
-            qx += wgt * a_mat.T.dot(cc_mat).dot(a_mat.dot(_dof_state) + y2k)
-            q_mat += wgt * a_mat.T.dot(cc_mat).dot(a_mat)
+            qx += wgt * sen_mat.T.dot(cc_mat).dot(sen_mat.dot(_dof_state) + y2k)
+            q_mat += wgt * sen_mat.T.dot(cc_mat).dot(sen_mat)
 
         # Calculate the F matrix.
         #

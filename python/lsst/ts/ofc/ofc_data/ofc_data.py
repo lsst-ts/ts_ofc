@@ -268,7 +268,12 @@ class OFCData(BaseOFCData):
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]
 
-    def get_intrinsic_zk(self, filter_name, field_idx=None, rotation_angle=0.0):
+    def get_intrinsic_zk(
+        self,
+        filter_name: str,
+        field_idx: np.ndarray | None = None,
+        rotation_angle: float = 0.0,
+    ) -> np.ndarray:
         """Return reformated instrisic zernike coefficients.
 
         Parameters
@@ -276,8 +281,9 @@ class OFCData(BaseOFCData):
         filter_name : `string`
             Name of the filter to get intrinsic zernike coefficients. Must be
             in the `intrinsic_zk` dictionary.
-        sensor_names : `list` of `string`
-            List of sensor names.
+        field_idx : `np.ndarray` or `None`, optional
+            Array with the field indexes to get instrisic data from (default
+            `None`). If not given, return all available data.
         rotation_angle : `float`, optional
             Rotation angle in degrees.
 
@@ -297,24 +303,28 @@ class OFCData(BaseOFCData):
             gq_points = self.gq_field_angles[field_idx, :]
             field_x, field_y = zip(*gq_points)
 
+        print(field_x, field_y)
+
         evaluated_zernikes = np.array(
             [
-                zk.coef for zk in galsim.zernike.DoubleZernike(
+                zk.coef
+                for zk in galsim.zernike.DoubleZernike(
                     self.intrinsic_zk[filter_name],
                     # Rubin annuli
-                    uv_inner=self.config['pupil']['R_inner'],
-                    uv_outer=self.config['pupil']['R_outer'],
-                    xy_inner=self.config['obscuration']['R_inner'],
-                    xy_outer=self.config['obscuration']['R_outer'],
+                    uv_inner=self.config["pupil"]["R_inner"],
+                    uv_outer=self.config["pupil"]["R_outer"],
+                    xy_inner=self.config["obscuration"]["R_inner"],
+                    xy_outer=self.config["obscuration"]["R_outer"],
                 ).rotate(theta_uv=rotation_angle)(field_x, field_y)
             ]
         )
-    
+        swap = [2, 5, 8, 10, 13, 15, 16, 18, 20]
+        evaluated_zernikes[:, swap] = evaluated_zernikes[:, swap] * -1
         evaluated_zernikes *= self.eff_wavelength[filter_name]
 
-        return evaluated_zernikes[:,4:23]
+        return evaluated_zernikes[:, 4:23]
 
-    async def configure_instrument(self, instrument):
+    async def configure_instrument(self, instrument: str) -> None:
         """Configure instrument concurrently.
 
         Parameters
@@ -382,7 +392,12 @@ class OFCData(BaseOFCData):
             dof_state0 = yaml.safe_load(fp)
 
         # Read image quality weight
-        iqw_path = self.config_dir / 'gaussian_quadrature_points' / instrument / self.iqw_filename
+        iqw_path = (
+            self.config_dir
+            / "gaussian_quadrature_points"
+            / instrument
+            / self.iqw_filename
+        )
 
         self.log.debug(f"Configuring image quality weight: {iqw_path}")
 
@@ -421,40 +436,58 @@ class OFCData(BaseOFCData):
             )
 
         # Read all intrinsic zernike coefficients data.
-        self.log.debug(f"Configuring instrisic zernikes: {len(self.eff_wavelength.keys())} files.")
+        self.log.debug(
+            f"Configuring instrisic zernikes: {len(self.eff_wavelength.keys())} files."
+        )
 
         intrinsic_zk = dict()
-        camera_type = instrument if instrument != 'lsstfam' else 'lsst'
-        intrinsic_zk_path = self.config_dir / 'intrinsic_zernikes' / camera_type
+        camera_type = instrument if instrument != "lsstfam" else "lsst"
+        intrinsic_zk_path = self.config_dir / "intrinsic_zernikes" / camera_type
 
         for filter_name in self.eff_wavelength.keys():
             file_name = f"{self.intrinsic_zk_filename_root}_{filter_name}*.yaml"
-            intrinsic_file = Path(
-                glob(str(intrinsic_zk_path / file_name))[0]
-            )
-            
+            intrinsic_file = Path(glob(str(intrinsic_zk_path / file_name))[0])
+
             with open(intrinsic_file) as fp:
                 intrinsic_zk[filter_name] = np.array(yaml.safe_load(fp))
 
         self.log.debug(f"Configuring sensor mapping: {self.sensor_mapping_filename}")
 
-        with open(self.config_dir / "gaussian_quadrature_points" / instrument / self.sensor_mapping_filename) as fp:
+        with open(
+            self.config_dir
+            / "gaussian_quadrature_points"
+            / instrument
+            / self.sensor_mapping_filename
+        ) as fp:
             field_idx = yaml.safe_load(fp)
 
         # Load the double zernikes sensitivity matrix
         senm_file = Path(
-            glob(str(self.config_dir / 'sensitivity_matrix' / f"{camera_type}_{self.sen_m_filename_root}*.yaml"))[0]
+            glob(
+                str(
+                    self.config_dir
+                    / "sensitivity_matrix"
+                    / f"{camera_type}_{self.sen_m_filename_root}*.yaml"
+                )
+            )[0]
         )
         self.log.debug(f"Configuring sensitivity matrix: {senm_file}")
 
-        with open(senm_file, 'r') as fp:
+        with open(senm_file, "r") as fp:
             sen_m = np.array(yaml.safe_load(fp))
 
-        with open(self.config_dir / "gaussian_quadrature_points" / instrument / self.field_angles_filename) as fp:
+        with open(
+            self.config_dir
+            / "gaussian_quadrature_points"
+            / instrument
+            / self.field_angles_filename
+        ) as fp:
             gq_field_angles = np.array(yaml.safe_load(fp))
             gq_field_angles[:, 0] *= -1
 
-        with open(self.config_dir / 'configurations' / f"{camera_type}.yaml") as yaml_file:
+        with open(
+            self.config_dir / "configurations" / f"{camera_type}.yaml"
+        ) as yaml_file:
             config = yaml.safe_load(yaml_file)
 
         self.log.debug(f"done {instrument}")
@@ -471,7 +504,6 @@ class OFCData(BaseOFCData):
         self.sensitivity_matrix = sen_m
         self.gq_field_angles = gq_field_angles
         self.start_task.set_result(instrument)
-
 
     async def __aenter__(self):
         return self

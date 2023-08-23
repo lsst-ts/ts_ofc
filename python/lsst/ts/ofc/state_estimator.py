@@ -59,10 +59,11 @@ class StateEstimator:
             self.log = log.getChild(type(self).__name__)
 
         self.ofc_data = ofc_data
-
+        
+        # Set rcond for the pseudoinverse computation
         self.RCOND = rcond
 
-    def dof_state(self, filter_name, wfe, field_idx, rotation_angle):
+    def dof_state(self, filter_name: str, wfe: np.ndarray, field_idx: np.ndarray, rotation_angle: float):
         """Compute the state in the basis of degrees of freedom.
 
         Solve y = A*x by x = pinv(A)*y.
@@ -85,10 +86,10 @@ class StateEstimator:
         """
 
         # Constuct the double zernike sensitivity matrix
-        dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data, field_idx)
+        dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = dz_sensitivity_matrix.evaluate(rotation_angle)
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate(rotation_angle, field_idx)
 
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]

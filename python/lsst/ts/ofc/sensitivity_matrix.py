@@ -22,9 +22,8 @@
 __all__ = ["SensitivityMatrix"]
 
 import numpy as np
-import numpy.typing as npt
-from typing import Tuple, List
 import galsim
+
 
 class SensitivityMatrix:
     """Class to handle the sensitivity matrix.
@@ -35,39 +34,39 @@ class SensitivityMatrix:
         OFC data.
     """
 
-    def __init__(self, ofc_data, field_idx: None | list = None) -> None:
+    def __init__(self, ofc_data) -> None:
         self.ofc_data = ofc_data
 
-        # If sensor_names is None get sensitivity matrix at all GQ points
-        if field_idx is None:
-            # Retrieve field angles for each GQ point from ofc_data
-            self.field_x, self.field_y = zip(*self.ofc_data.gq_field_angles)
-        else:
-            # Obtain the field indices for the sensors
-            gq_points = self.ofc_data.gq_field_angles[field_idx, :]
-            # Get the field angles for the sensors
-            self.field_x, self.field_y = zip(*gq_points)
-
     def evaluate(
-        self, rotation_angle: float, 
-    ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+        self,
+        rotation_angle: float,
+        field_idx: None | np.ndarray = None,
+    ) -> np.ndarray:
         """Evaluate the sensitivity matrix for a given rotation angle.
 
         Parameters
         ----------
         rotation_angle : `float`
             Rotation angle in degrees.
-        sensor_names : list [str] or None, optional
-            List of sensor names. If None, uses all the Gaussian 
+        field_idx : np.ndarray or None, optional
+            Array of field indices. If None, uses all the Gaussian
             Quadrature points are used.
 
         Returns
         -------
         rotated_sensitivity_matrix : numpy.ndarray [float]
             Sensitivity matrix for the given rotation angle in degree.
-        field_idx : numpy.ndarray [ float ]
-            Field indices for the sensors.
         """
+
+        # Obtain the field indices for the sensors
+        # If sensor_names is None get sensitivity matrix at all GQ points
+        gq_points = (
+            self.ofc_data.gq_field_angles[field_idx, :]
+            if field_idx is not None
+            else self.ofc_data.gq_field_angles
+        )
+        # Get the field angles for the sensors
+        field_x, field_y = zip(*gq_points)
 
         # Convert rotation angle to radians
         rotation_angle = np.deg2rad(rotation_angle)
@@ -82,11 +81,11 @@ class SensitivityMatrix:
                         for zk in galsim.zernike.DoubleZernike(
                             self.ofc_data.sensitivity_matrix[..., dof_idx],
                             # Rubin annuli
-                            uv_inner=self.ofc_data.config['pupil']['R_inner'],
-                            uv_outer=self.ofc_data.config['pupil']['R_outer'],
-                            xy_inner=self.ofc_data.config['obscuration']['R_inner'],
-                            xy_outer=self.ofc_data.config['obscuration']['R_outer'],
-                        ).rotate(theta_uv=rotation_angle)(self.field_x, self.field_y)
+                            uv_inner=self.ofc_data.config["pupil"]["R_inner"],
+                            uv_outer=self.ofc_data.config["pupil"]["R_outer"],
+                            xy_inner=self.ofc_data.config["obscuration"]["R_inner"],
+                            xy_outer=self.ofc_data.config["obscuration"]["R_outer"],
+                        ).rotate(theta_uv=rotation_angle)(field_x, field_y)
                     ]
                 )
                 for dof_idx in np.arange(50)
@@ -94,7 +93,7 @@ class SensitivityMatrix:
         )
 
         # Reshape the sensitivity matrix to be (#field_points, #zernikes, #dofs)
-        rotated_sensitivity_matrix = np.einsum('ijk->jki', rotated_sensitivity_matrix)
+        rotated_sensitivity_matrix = np.einsum("ijk->jki", rotated_sensitivity_matrix)
 
         # Subselect the relevant zernike coefficients
         # to include in the sensitivity matrix.

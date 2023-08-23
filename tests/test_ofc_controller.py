@@ -41,15 +41,15 @@ class TestOFCController(unittest.TestCase):
             / "lsst_wfs_error_iter0.z4c"
         )
 
-        sensor_name_list = ["R44_SW0", "R04_SW0", "R00_SW0", "R40_SW0"]
+        sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
         field_idx = [
             estimator.ofc_data.field_idx[sensor_name]
             for sensor_name in sensor_name_list
         ]
 
-        self.filter_name = ""
-        self.state = estimator.dof_state(self.filter_name, wfe, field_idx)
+        self.filter_name = "r"
+        self.state = estimator.dof_state(self.filter_name, wfe, field_idx, rotation_angle = 0.0)
 
         self.ofc_controller = OFCController(self.ofc_data)
 
@@ -61,6 +61,9 @@ class TestOFCController(unittest.TestCase):
         self.ofc_data.xref = "x0"
 
         uk = self.ofc_controller.uk(self.filter_name, self.state)
+        print(self.state)
+
+        print(uk)
 
         self.assertEqual(len(uk), len(self.ofc_data.dof_idx))
         self.assertAlmostEqual(uk[0], -9.44847541, places=7)

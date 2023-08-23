@@ -62,13 +62,13 @@ You can check the intrinsic aberrations on the ``OFCData`` class:
 
   ofc_data.intrinsic_zk
 
-This is a dictionary that contains the intrinsic wavefront errors for each filter and for each sensor.
+This is a dictionary that contains the intrinsic double zernike wavefront errors for each filter and for each sensor.
 In the case above, we used the empty filter.
 If you want to check the intrinsic aberrations for no filter simply do:
 
 .. code-block:: python
 
-  ofc_data.intrinsic_zk[""]
+  ofc_data.intrinsic_zk["r"]
 
 You can also check what are the available filters with:
 
@@ -82,13 +82,13 @@ This can be done with the following:
 
 .. code-block:: python
 
-  wfe = ofc_data.get_intrinsic_zk(filter_name="")  # Returns intrinsic zk for all sensors
+  wfe = ofc_data.get_intrinsic_zk(filter_name="r", field_idx=None, rotation_angle=0.0)  # Returns intrinsic zk for all sensors
 
   field_idx = np.arange(wfe.shape[0])
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, field_idx=field_idx, filter_name="", gain=1.0, rot=0.0
+      wfe=wfe, field_idx=field_idx, filter_name="r", gain=1.0, rot=0.0
   )
 
   # The corrections now should be all zeros
@@ -104,7 +104,7 @@ This is, for instance, how the `MTAOS addAberration command`_ works:
 
 .. code-block:: python
 
-  wfe = ofc_data.get_intrinsic_zk(filter_name="")  # Returns intrinsic zk for all sensors
+  wfe = ofc_data.get_intrinsic_zk(filter_name="r", field_idx=None, rotation_angle=0.0)  # Returns intrinsic zk for all sensors
 
   field_idx = np.arange(wfe.shape[0])
 
@@ -112,7 +112,7 @@ This is, for instance, how the `MTAOS addAberration command`_ works:
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, field_idx=field_idx, filter_name="", gain=1.0, rot=0.0
+      wfe=wfe, field_idx=field_idx, filter_name="r", gain=1.0, rot=0.0
   )
 
 Another very useful exercise is to modify the sensitivity matrix.
@@ -120,7 +120,7 @@ For instance, one can disable operations will all components except the Camera H
 
 .. code-block:: python
 
-  wfe = ofc_data.get_intrinsic_zk(filter_name="")  # Returns intrinsic zk for all sensors
+  wfe = ofc_data.get_intrinsic_zk(filter_name="r", field_idx=None, rotation_angle=0.0)  # Returns intrinsic zk for all sensors
 
   field_idx = np.arange(wfe.shape[0])
 
@@ -177,47 +177,62 @@ The basic structure of a configuration directory is as follows:
   ├── M2
   │   ├── M2_1um_72_force.yaml
   │   └── rotMatM2.yaml
-  ├── instrument_1
-  │   ├── imgQualWgt.yaml
-  │   ├── intrinsicZn.yaml
-  │   ├── intrinsicZnG.yaml
-  │   ├── intrinsicZnI.yaml
-  │   ├── intrinsicZnR.yaml
-  │   ├── intrinsicZnU.yaml
-  │   ├── intrinsicZnY.yaml
-  │   ├── intrinsicZnZ.yaml
-  │   ├── senM_X_Y_Z.yaml
-  │   ├── sensorNameToFieldIdx.yaml
-  │   ├── state0inDof.yaml
-  │   └── y2.yaml
-  └── instrument_2
-      ├── imgQualWgt.yaml
-      ├── intrinsicZn.yaml
-      ├── intrinsicZnG.yaml
-      ├── intrinsicZnI.yaml
-      ├── intrinsicZnR.yaml
-      ├── intrinsicZnU.yaml
-      ├── intrinsicZnY.yaml
-      ├── intrinsicZnZ.yaml
-      ├── senM_U_V_W.yaml
-      ├── sensorNameToFieldIdx.yaml
-      ├── state0inDof.yaml
-      └── y2.yaml
+  ├── configurations
+  │   ├── instrument_1.yaml
+  │   └── instrument_2.yaml
+  ├── gaussian_quadrature_points
+  │   ├── instrument_mode_1
+  │   │   ├── field_xy.yaml
+  │   │   ├── img_quality_weight.yaml
+  │   │   └── sensor_name_to_field_idx.yaml
+  │   ├── instrument_mode_2
+  │   │   ├── field_xy.yaml
+  │   │   ├── img_quality_weight.yaml
+  │   │   └── sensor_name_to_field_idx.yaml
+  │   └── instrument_mode_3
+  │       ├── field_xy.yaml
+  │       ├── img_quality_weight.yaml
+  │       └── sensor_name_to_field_idx.yaml
+  ├── intrinsic zernikes
+  │   ├── instrument_1
+  │   │   ├── intrinsic_zk_g_K_J.yaml
+  │   │   ├── intrinsic_zk_i_K_J.yaml
+  │   │   ├── intrinsic_zk_r_K_J.yaml
+  │   │   ├── intrinsic_zk_u_K_J.yaml
+  │   │   ├── intrinsic_zk_y_K_J.yaml
+  │   │   └── intrinsic_zk_z_K_J.yaml
+  │   └── instrument_2
+  │       ├── intrinsic_zk_g_K_J.yaml
+  │       ├── intrinsic_zk_i_K_J.yaml
+  │       ├── intrinsic_zk_r_K_J.yaml
+  │       ├── intrinsic_zk_u_K_J.yaml
+  │       ├── intrinsic_zk_y_K_J.yaml
+  │       └── intrinsic_zk_z_K_J.yaml
+  ├── sensitivity_matrix
+  │   ├── instrument_1_sensitivity_dz_K_J_Z.yaml
+  │   └── instrument_2_sensitivity_dz_K_J_Z.yaml
+  ├── state0inDof.yaml
+  └── y2.yaml
 
 Basically, a valid configuration directory will contain, at the very minimum;
 
   - one ``M1M3`` directory,
   - one ``M2`` directory,
-  - a set of instrument directories.
+  - one ``configurations`` directory,
+  - one ``gaussian_quadrature_points`` directory,
+  - one ``intrinsic zernikes`` directory,
+  - one ``sensitivity_matrix`` directory,
+  - one ``state0inDof.yaml`` file,
+  - one ``y2.yaml`` file
 
 The name of the instrument directory is used by the :py:class:`OFCData <lsst.ts.ofc.OFCData>` to determine where to read the instrument-related configuration files.
 This is done by the input argument when creating the class, e.g.;
 
 .. code-block:: python
 
-  ofc_data = OFCData("instrument_1", "./ofc_config_dir/")
+  ofc_data = OFCData("instrument_mode_1", "./ofc_config_dir/")
 
-Will read the instrument files from the ``instrument_1`` directory.
+Will read the instrument mode files from the ``instrument_mode_1`` directories and will retrieve the files for the corresponding instrument ``instrument_1`` directories.
 
 For instance, the directory structure of the standard configuration file (e.g. ``policy/``) is:
 
@@ -226,33 +241,55 @@ For instance, the directory structure of the standard configuration file (e.g. `
   policy
   ├── M1M3
   ├── M2
-  ├── comcam
-  ├── lsst
-  └── lsstfam
+  ├── configurations
+  ├── gaussian_quadrature_points
+  │   ├── comcam
+  │   ├── lsst
+  │   └── lsstfam
+  ├── intrinsic zernikes
+  │   ├── comcam
+  │   └── lsst
+  └── sensitivity_matrix
+      ├── comcam
+      └── lsst
 
 Which means it defines the following instruments by default:
 
+  - comcam: Commissioning Camera.
+  - lsst: LSST Camera.
+
+And the following instrument modes:
   - comcam: Commissioning Camera full array mode.
   - lsst: LSST Camera corner wavefront sensing mode.
   - lsstfam: LSST Camera full array mode.
 
 For each instrument the following files must be defined:
 
-  - ``imgQualWgt.yaml``; weighting ratio of image quality used in the Q matrix in cost function.
-  - ``intrinsicZn.yaml``; intrinsic Zernike coefficients for the monochromatic light.
-    This is a ``N`` x 24, where ``N`` is the number of sensors in the instrument.
-    The column are the 24 Zernike coefficients (Z1 - Z24).
+  - ``configurations/instrument.yaml``; configuration file for the instrument used to evaluate double zernike objects.
+    It is a yaml file used to define the pupil and obscuration inner and outer radius.
+  - ``intrinsic_zk_<filter_name>_X_Y.yaml``; intrinsic Zernike coefficients for the ``filter_name`` filter.
+    This is a 2-dimension array with 31 x 23 elements.
+    It corresponds to the double zernike intrinsic zernikes
+    The first dimension is number of terms of Zernike polynomials across the pupil.
+    The second dimension is number of terms of Zernike polynomial across the field (Z1-Z22).
+    Note that the first element in the second dimension is meaningless, corresponds to Z0.
     The unit is (Zk in um)/ (wavelength in um).
-  - ``intrinsicZn<filter_name>.yaml``; intrinsic Zernike coefficients for the ``filter_name`` filter.
-    These files have the same format as the ``intrinsicZn.yaml`` above.
     The filter names must match the values in :py:attr:`BaseOFCData.eff_wavelength <lsst.ts.ofc.OFCData.eff_wavelength>`.
     If you want to provide a custom set of filters, make sure you update the dictionary with the appropriate information.
-  - ``senM_X_Y_Z.yaml``; sensitivity matrix.
-    This files defines a 3-dimension array with X x Y x Z elements.
-    The first dimension is number of field points.
-    The second dimension is number of terms of Zernike polynomial in um (Z4-Z22).
+  - ``instrument_sensitivity_dz_X_Y_Z.yaml``; double zernike sensitivity matrix.
+    These files defines a 3-dimension array with X x Y x Z elements.
+    They are the double zernike sensitivity matrix.
+    The first dimension is number of terms of Zernike polynomials across the pupil.
+    The second dimension is number of terms of Zernike polynomial across the field.
     The third dimension is the number of degrees of freedom (DOF).
     The DOF are (1) M2 dz, dx, dy in um, (2) M2 rx, ry in arcsec, (3) Cam dz, dx, dy in um, (4) Cam rx, ry in arcsec, (5) 20 M1M3 bending mode in um,  (6) 20 M2 bending mode in um.
-  - ``sensorNameToFieldIdx.yaml``; mapping between the sensor name and field index.
+
+For each instrument mode the following files must be defined:
+
+  - ``img_quality_weight.yaml``; weighting ratio of image quality used in the Q matrix in cost function.
+  - ``sensor_name_to_field_idx.yaml``; mapping between the sensor name and field index.
+  - ``field_xy.yaml``; field x and y in degree.
+
+The directory must also include the following files that are shared among different instruments:
   - ``state0inDof.yaml``: initial state of the optics in the basis of DOF.
   - ``y2.yaml``: the wavefront error correction between the central raft and corner wavefront sensor.

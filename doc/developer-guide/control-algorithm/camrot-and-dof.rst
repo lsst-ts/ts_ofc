@@ -1,4 +1,30 @@
 #####################################
+Camera Rotation with Double Zernikes
+#####################################
+
+The way we deal with rotation in the updated code differs from the previous approach.
+It is important to understand that when we rotate the camera, there are two rotations that come into play:
+- Rotation of the field angle
+- Rotation of the sensor relative to the reference coordinate system.
+
+We therefore need to be careful to distinguish between these two rotations.
+
+Rotation of the sensor
+============================
+
+To deal with the rotation of the sensor, we derotate the zernikes obtained with the Wavefront Estimation Pipeline (WEP) code. 
+We do that by using the galsim.Zernike object. Since WEP provides zernike coefficients Z4-Z22, we add zeros to zernikes Z1-Z3 and then rotate them using the galsim.Zernike object rotation method.
+This ensures that whatever zernikes we use in state_estimator are derotated.
+
+
+Rotation of the field angle
+============================
+
+To account for the fact that after we have rotated the camera we are looking at another field angle position, we leverage the DoubleZernike object available in galsim.
+In this mode we use the double zernike sensitivity matrix and the DoubleZernike class in galsim, to compute the sensitivity matrix and the intrinsic zernikes at the rotated field angle. 
+
+
+#####################################
 Camera Rotation and Degree of Freedom
 #####################################
 
@@ -160,10 +186,3 @@ The rotation angle can be simplified further to be :math:`\Delta r_{x} = r_{x, t
 And it is the similar correction for M2 bending mode.
 
 \* Some studies based on the affine transformation and Euler rotation are `Coordinate Transformation.nb <https://confluence.lsstcorp.org/download/attachments/77991830/Coordinate%20Transformation.nb?version=1&modificationDate=1531750704000&api=v2>`_, `Coordinate Transformation.pdf <https://confluence.lsstcorp.org/download/attachments/77991830/Coordinate%20Transformation.pdf?version=1&modificationDate=1531750720000&api=v2>`_, `Coordinate Transformation 2.nb <https://confluence.lsstcorp.org/download/attachments/77991830/Coordinate%20Transformation%202.nb?version=1&modificationDate=1531750745000&api=v2>`_, and `Coordinate Transformation 2.pdf <https://confluence.lsstcorp.org/download/attachments/77991830/Coordinate%20Transformation%202.pdf?version=1&modificationDate=1531750766000&api=v2>`_.
-
-#####################################
-Camera Rotation with Double Zernikes
-#####################################
-
-In this mode we use the double zernike sensitivity matrix and the DoubleZernike class in galsim, to compute the sensitivity matrix at the rotated angle. 
-This allows us to remove the degree of freedom rotatione explained above. 

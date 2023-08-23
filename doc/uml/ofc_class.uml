@@ -12,6 +12,5 @@ OFC *-- OFCData
 OFC *-- SensitivityMatrix
 OFC *-- StateEstimator
 OFC *-- OFCController
-OFC *-- CamRot
 OFC ..> Correction
 @enduml

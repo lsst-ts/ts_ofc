@@ -26,12 +26,7 @@ import logging
 import numpy as np
 from typing import List
 
-from . import (
-    Correction,
-    OFCController,
-    StateEstimator,
-    BendModeToForce,
-)
+from . import BendModeToForce, Correction, OFCController, StateEstimator
 from .utils import CorrectionType
 
 

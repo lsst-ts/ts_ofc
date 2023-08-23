@@ -4,8 +4,9 @@ This configuration only affects single-package Sphinx documentation builds.
 """
 
 import os.path
-from documenteer.conf.pipelinespkg import *
+
 import lsst.ts.ofc
+from documenteer.conf.pipelinespkg import *
 
 project = "ts_ofc"
 html_theme_options["logotext"] = project

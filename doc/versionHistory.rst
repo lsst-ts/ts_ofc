@@ -6,9 +6,9 @@
 Version History
 ##################
 
-.. _lsst.ts.ofc-2.1.0:
+.. _lsst.ts.ofc-2.2.0:
 
-v2.1.0
+v2.2.0
 ======
 
 * Added derotation of ts_wep zernike estimates to deal with rotation of the sensor.
@@ -17,6 +17,13 @@ v2.1.0
     * Added double zernikes intrinsic zernikes for lsst and comcam.
 * Policy folder was simplified since lsstfam and lsst share all double zernike files. 
 * Added scripts to generate sensitivity matrix and intrinsic files from batoid package.
+
+.. _lsst.ts.ofc-2.1.0:
+
+v2.1.0
+======
+
+* Update setup configuration files, remove flake8.
 
 .. _lsst.ts.ofc-2.0.9:
 

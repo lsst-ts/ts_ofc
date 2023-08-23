@@ -21,17 +21,17 @@
 
 __all__ = ["OFCData"]
 
-import re
-import yaml
 import asyncio
 import logging
+import re
+
+from glob import glob
+from pathlib import Path
 
 from astropy.io import fits
 import galsim
 import numpy as np
-
-from glob import glob
-from pathlib import Path
+import yaml
 
 from ..utils import get_config_dir
 from . import BaseOFCData

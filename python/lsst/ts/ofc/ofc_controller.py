@@ -384,7 +384,7 @@ class OFCController:
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = dz_sensitivity_matrix.evaluate(rotation_angle=0.0)
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate()
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
 

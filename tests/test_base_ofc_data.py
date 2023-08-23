@@ -37,7 +37,7 @@ class TestBaseOFCData(unittest.TestCase):
         )
         self.assertEqual(base_ofc_data.dof_state0_filename, "state0_in_dof.yaml")
         self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "intrinsic_zk")
-        self.assertEqual(base_ofc_data.sen_m_filename_root, "sensitivity_dz")
+        self.assertEqual(base_ofc_data.sen_m_filename_root, "sensitivity")
 
     def test_constructor_with_args(self):
         base_ofc_data = BaseOFCData(

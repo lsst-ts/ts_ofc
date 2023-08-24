@@ -54,8 +54,8 @@ def double_zernike(
     optic: batoid.Optic,
     field: float,
     wavelength: float,
-    rings: int = 7,
-    spokes: int = 25,
+    rings: int = 11,
+    spokes: int = 35,
     jmax: int = 22,
     kmax: int = 22,
     **kwargs,
@@ -122,7 +122,7 @@ def double_zernike(
 
 
 def get_intrinsic_zk(
-    config: dict, instrument: str, band: str, jmax: int = 22, kmax: int = 15
+    config: dict, instrument: str, band: str, jmax: int = 22, kmax: int = 15, rings: int = 11, spokes: int = 35
 ) -> np.ndarray:
     """Get the intrinsic double zernike coefficients
     for a given instrument and band.
@@ -139,6 +139,10 @@ def get_intrinsic_zk(
         Maximum j index, by default 22
     kmax : int, optional
         Maximum k index, by default 15
+    rings : int, optional
+        Number of rings in the field, by default 11
+    spokes : int, optional
+        Number of spokes in each ring, by default 35
 
     Returns
     -------
@@ -153,6 +157,8 @@ def get_intrinsic_zk(
         field=np.deg2rad(config["pupil"]["R_outer"]),
         wavelength=wavelength * 1e-6,  # nm -> m
         eps=0.61,
+        rings=rings,
+        spokes=spokes,
         jmax=jmax,
         kmax=kmax,
     )

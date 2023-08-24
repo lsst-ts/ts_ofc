@@ -4,7 +4,7 @@
  # Dimensions: (31,23,50)             
  # The first dimension is kmax = 31, corresponds to number of Zernike             
  # polynomials used to measure wavefront variation accross the pupil.             
- # The second dimension is jmax = 23, corresponds to number of Zernike             
+ # The second dimension is jmax = 22, corresponds to number of Zernike             
  # polynomials used to measure wavefront variation accross the field.             
  # The third dimension is 50 degree of freedom (DOF)             
  # polynomials used to measure wavefront variation accross the field.             

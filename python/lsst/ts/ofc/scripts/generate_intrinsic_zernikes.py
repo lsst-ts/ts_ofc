@@ -12,6 +12,7 @@ def save_intrinsic_zk(
     filter_name: str,
     intrinsic_zk: np.ndarray,
     path: str,
+    kmax: int,
 ) -> None:
     """Save intrinsic zernike coefficients to a fits file and a yaml file.
 
@@ -23,16 +24,19 @@ def save_intrinsic_zk(
         Intrinsic zernike coefficients.
     path : str
         Path to save the intrinsic zernike coefficients.
+    kmax : int
+        Maximum zernike index for the zernikes across the pupil
     """
 
     # Save yaml file with header and content shown as legacy yaml files.
-    with open(f"{path}/intrinsic_zk_{filter_name}_31_23.yaml", "w") as yaml_file:
+    with open(f"{path}/intrinsic_zk_{filter_name}_{kmax + 1}_23.yaml", "w") as yaml_file:
         yaml_file.write(
             f"--- \n \
             \n # Intrinsic Zk for the {filter_name} band. \
             \n # The first dimension is kmax = 31, corresponds to number of Zernike \
             \n # polynomials used to measure wavefront variation accross the pupil. \
-            \n # The second dimension is jmax = 23, corresponds to number of Zernike \
+            \n # The second dimension is 23, the first element in that dimension is meaningless \
+            \n # the other 22 elements, are jmax = 22 which corresponds to number of Zernike \
             \n # polynomials used to measure wavefront variation accross the field. \
             \n # Units are (Zk in um)/ (wavelength in um) \
             \n \n"
@@ -75,14 +79,15 @@ def main(args: argparse.Namespace) -> None:
         config = yaml.safe_load(fp)
 
     # Compute intrinsic zernikes
-    intrinsic = get_intrinsic_zk(config, args.instrument, args.filter, jmax=22, kmax=30)
+    kmax = 30
+    intrinsic = get_intrinsic_zk(config, args.instrument, args.filter, jmax=22, kmax=30, rings=15, spokes=55)
 
     # Swap corresponding zernike that are flipped in batoid
     swap = [2, 5, 8, 10, 13, 15, 16, 18, 20]
     intrinsic[:, swap] *= -1
 
     # Save the intrinsic double zernikes
-    save_intrinsic_zk(args.filter, intrinsic, args.path)
+    save_intrinsic_zk(args.filter, intrinsic, args.path, kmax=kmax)
 
 
 def parse_arguments() -> argparse.Namespace:

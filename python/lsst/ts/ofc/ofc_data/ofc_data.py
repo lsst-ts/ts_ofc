@@ -318,8 +318,7 @@ class OFCData(BaseOFCData):
                 ).rotate(theta_uv=rotation_angle)(field_x, field_y)
             ]
         )
-        swap = [2, 5, 8, 10, 13, 15, 16, 18, 20]
-        evaluated_zernikes[:, swap] = evaluated_zernikes[:, swap] * -1
+
         evaluated_zernikes *= self.eff_wavelength[filter_name]
 
         return evaluated_zernikes[:, 4:23]
@@ -445,7 +444,7 @@ class OFCData(BaseOFCData):
         intrinsic_zk_path = self.config_dir / "intrinsic_zernikes" / camera_type
 
         for filter_name in self.eff_wavelength.keys():
-            file_name = f"{self.intrinsic_zk_filename_root}_{filter_name}*.yaml"
+            file_name = f"{self.intrinsic_zk_filename_root}_{filter_name}_31*.yaml"
             intrinsic_file = Path(glob(str(intrinsic_zk_path / file_name))[0])
 
             with open(intrinsic_file) as fp:

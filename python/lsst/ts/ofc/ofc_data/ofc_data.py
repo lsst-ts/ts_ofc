@@ -303,8 +303,6 @@ class OFCData(BaseOFCData):
             gq_points = self.gq_field_angles[field_idx, :]
             field_x, field_y = zip(*gq_points)
 
-        print(field_x, field_y)
-
         evaluated_zernikes = np.array(
             [
                 zk.coef

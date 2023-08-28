@@ -371,7 +371,6 @@ class OFCController:
             2.0 * np.pi / self.ofc_data.eff_wavelength[filter_name]
         ) ** 2.0 * self.ofc_data.alpha[self.ofc_data.zn3_idx]
         cc_mat = np.diag(cc_mat)
-
         # Calculate the Qx.
         #
         # Qx = sum_{wi * A.T * C.T * C * (A * yk + y2k)}.
@@ -385,6 +384,9 @@ class OFCController:
 
         # Evaluate sensitivity matrix at sensor positions
         sensitivity_matrix = dz_sensitivity_matrix.evaluate()
+
+        # Select sensitivity matrix only at used degrees of freedom
+        sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
 

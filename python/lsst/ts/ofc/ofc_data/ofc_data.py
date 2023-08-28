@@ -393,7 +393,7 @@ class OFCData(BaseOFCData):
         # Read image quality weight
         iqw_path = (
             self.config_dir
-            / "gaussian_quadrature_points"
+            / "sample_points"
             / instrument
             / self.iqw_filename
         )
@@ -454,7 +454,7 @@ class OFCData(BaseOFCData):
 
         with open(
             self.config_dir
-            / "gaussian_quadrature_points"
+            / "sample_points"
             / instrument
             / self.sensor_mapping_filename
         ) as fp:
@@ -477,7 +477,7 @@ class OFCData(BaseOFCData):
 
         with open(
             self.config_dir
-            / "gaussian_quadrature_points"
+            / "sample_points"
             / instrument
             / self.field_angles_filename
         ) as fp:

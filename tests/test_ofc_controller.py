@@ -25,67 +25,67 @@ import unittest
 import numpy as np
 from lsst.ts.ofc import OFCController, OFCData, StateEstimator
 
-
 class TestOFCController(unittest.TestCase):
     """Test the OFCController class."""
 
     def setUp(self):
         self.ofc_data = OFCData("lsst")
-
-        estimator = StateEstimator(self.ofc_data)
-
-        wfe = np.loadtxt(
-            pathlib.Path(__file__).parent.absolute()
-            / "testData"
-            / "lsst_wfs_error_iter0.z4c"
-        )
-
-        sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
-
-        field_idx = [
-            estimator.ofc_data.field_idx[sensor_name]
-            for sensor_name in sensor_name_list
-        ]
-
-        self.filter_name = "r"
-        self.state = estimator.dof_state(self.filter_name, wfe, field_idx, rotation_angle = 0.0)
-
+        self.ofc_data.motion_penalty = 0.0001 # Set small motion penalty to allow for larger corrections
         self.ofc_controller = OFCController(self.ofc_data)
 
-        test_dof_state0 = np.ones(len(self.ofc_controller.dof_state0))
+        test_dof_state0 = np.zeros(50)
+        test_dof_state0[15] = 0.5
+        test_dof_state0[25] = 1.5
+        test_dof_state0[45] = 1.5
+
         self.ofc_controller.dof_state0 = test_dof_state0
         self.ofc_controller.reset_dof_state()
+
+        self.filter_name = "r"
 
     def test_uk_nogain_x0(self):
         self.ofc_data.xref = "x0"
 
-        uk = self.ofc_controller.uk(self.filter_name, self.state)
-        print(self.state)
+        sum_uk = np.zeros(50)
+        for _ in range(3):
+            uk = self.ofc_controller.uk(self.filter_name, self.ofc_controller.dof_state0 + sum_uk)
+            sum_uk += uk
 
-        print(uk)
-
+        # Check length of correction vector matches used number of DOFs
         self.assertEqual(len(uk), len(self.ofc_data.dof_idx))
-        self.assertAlmostEqual(uk[0], -9.44847541, places=7)
-        self.assertAlmostEqual(uk[1], -2.53792714, places=7)
-        self.assertAlmostEqual(uk[2], -0.53851520, places=7)
 
+        # Check that corrections match original dof_state after three iterations. 
+        # Note that other degrees of freedom values are not checked because 
+        # degenerate solutions exist.
+        assert self.mean_squared_residual(-sum_uk[15], 0.5) < 5e-2
+        assert self.mean_squared_residual(-sum_uk[25], 1.5) < 5e-2
+        assert self.mean_squared_residual(-sum_uk[45], 1.5) < 5e-2
+    
+    def mean_squared_residual(self, new_array, reference_array):
+        return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
+    
     def test_uk_nogain_0(self):
         self.ofc_data.xref = "0"
-        uk = self.ofc_controller.uk(self.filter_name, self.state)
+        uk = self.ofc_controller.uk(self.filter_name, self.ofc_controller.dof_state0)
 
+        # Check length of correction vector matches used number of DOFs
         self.assertEqual(len(uk), len(self.ofc_data.dof_idx))
-        self.assertAlmostEqual(uk[0], -113.62056585, places=7)
-        self.assertAlmostEqual(uk[1], -89.94878290, places=7)
-        self.assertAlmostEqual(uk[2], 30.05926538, places=7)
+
+        # Check for ref "0" our corrections is minus the initial DOF state
+        assert self.mean_squared_residual(-uk, self.ofc_controller.dof_state0) < 1e-6
 
     def test_uk_nogain_x00(self):
         self.ofc_data.xref = "x00"
-        uk = self.ofc_controller.uk(self.filter_name, self.state)
+        uk = self.ofc_controller.uk(self.filter_name, self.ofc_controller.dof_state0)
 
+        # Check length of correction vector matches used number of DOFs
         self.assertEqual(len(uk), len(self.ofc_data.dof_idx))
-        self.assertAlmostEqual(uk[0], -9.44847541, places=7)
-        self.assertAlmostEqual(uk[1], -2.53792714, places=7)
-        self.assertAlmostEqual(uk[2], -0.53851520, places=7)
+
+        # Check for ref "x00" our corrections match the corrections for x0, when dof_state = dof_state0
+        self.ofc_data.xref = "x0"
+        uk_ref0 = self.ofc_controller.uk(self.filter_name, self.ofc_controller.dof_state0)
+
+        assert self.mean_squared_residual(uk_ref0, uk) < 1e-6
 
     def test_all_xref_ok(self):
         for xref in self.ofc_data.xref_list:

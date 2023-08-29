@@ -180,7 +180,7 @@ The basic structure of a configuration directory is as follows:
   ├── configurations
   │   ├── instrument_1.yaml
   │   └── instrument_2.yaml
-  ├── gaussian_quadrature_points
+  ├── sample_points
   │   ├── instrument_mode_1
   │   │   ├── field_xy.yaml
   │   │   ├── img_quality_weight.yaml
@@ -219,7 +219,7 @@ Basically, a valid configuration directory will contain, at the very minimum;
   - one ``M1M3`` directory,
   - one ``M2`` directory,
   - one ``configurations`` directory,
-  - one ``gaussian_quadrature_points`` directory,
+  - one ``sample_points`` directory,
   - one ``intrinsic zernikes`` directory,
   - one ``sensitivity_matrix`` directory,
   - one ``state0inDof.yaml`` file,
@@ -242,7 +242,7 @@ For instance, the directory structure of the standard configuration file (e.g. `
   ├── M1M3
   ├── M2
   ├── configurations
-  ├── gaussian_quadrature_points
+  ├── sample_points
   │   ├── comcam
   │   ├── lsst
   │   └── lsstfam

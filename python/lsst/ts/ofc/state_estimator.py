@@ -52,7 +52,7 @@ class StateEstimator:
         matrix.
     """
 
-    def __init__(self, ofc_data, rcond=1e-4, log=None):
+    def __init__(self, ofc_data, rcond=5e-4, log=None):
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:

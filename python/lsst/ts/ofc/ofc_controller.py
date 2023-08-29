@@ -434,3 +434,41 @@ class OFCController:
         pssn = 1.0 / ((fwhm / denominator) ** 2 + 1.0)
 
         return pssn
+
+
+    def remove_degeneracies(self, uk: np.ndarray, rcond: float = 1e-7) -> np.ndarray:
+        """Remove degeneracies from the correction vector.
+        
+        Parameters
+        ----------
+        uk : `numpy.ndarray`
+            Correction vector.
+        rcond : `float`
+            Cutoff for singular values. Singular values smaller than rcond * largest_singular_value are set to zero.
+
+        Returns
+        -------
+        truncated_uk: `numpy.ndarray`
+            Degeneracy-free correction vector.
+        """
+
+        # Constuct the double zernike sensitivity matrix
+        dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
+
+        # Evaluate sensitivity matrix at sensor positions
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate()
+
+        # Reshape sensitivity matrix to dimensions (#zk * #sensors, # dofs) = (19 * #sensors, 50)
+        size_ = sensitivity_matrix.shape[2]
+        sensitivity_matrix = sensitivity_matrix.reshape((-1, size_))
+        sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
+
+        _, s, v = np.linalg.svd(sensitivity_matrix, full_matrices = False)
+
+        # Set modes with singular value smaller than rcond to zero.
+        truncated_modes = np.ones(len(self.ofc_data.dof_idx))
+        truncated_modes[s**2 < rcond] = 0
+    
+        truncated_uk = v.T@np.diag(truncated_modes)@np.linalg.inv(v.T)@uk
+
+        return truncated_uk

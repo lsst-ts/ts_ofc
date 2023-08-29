@@ -32,11 +32,12 @@ class TestOFC(unittest.TestCase):
 
     def setUp(self):
         self.ofc_data = OFCData("lsst")
+        self.ofc_data.motion_penalty = 0.0001 # Set small motion penalty to allow for larger corrections
         self.ofc = OFC(self.ofc_data)
         self.test_data_path = (
             pathlib.Path(__file__).parent.absolute()
             / "testData"
-            / "lsst_wfs_error_iter0.z4c"
+            / "lsst_wfs_error_test_ofc.z4c"
         )
 
     def test_init_lv_dof(self):
@@ -118,10 +119,15 @@ class TestOFC(unittest.TestCase):
 
     def test_calculate_corrections(self):
         gain = 1.0
-        filter_name = ""
-        rot = 0.0
+        filter_name = "r"
+        rotation_angle = 0.0
+
+        self.ofc.ofc_data.xref = '0'
 
         wfe, field_idx = self._get_wfe()
+
+        self.ofc.ofc_controller.dof_state0[45] = 0.1
+        self.ofc.ofc_controller.reset_dof_state()
 
         (
             m2_hex_corr,
@@ -129,7 +135,7 @@ class TestOFC(unittest.TestCase):
             m1m3_corr,
             m2_corr,
         ) = self.ofc.calculate_corrections(
-            wfe=wfe, field_idx=field_idx, filter_name=filter_name, gain=gain, rot=rot
+            wfe=wfe, field_idx=field_idx, filter_name=filter_name, gain=gain, rotation_angle=rotation_angle
         )
 
         self.assertTrue(isinstance(m2_hex_corr, Correction))
@@ -147,85 +153,36 @@ class TestOFC(unittest.TestCase):
         self.assertEqual(len(m1m3_corr()), 156)
         self.assertEqual(len(m2_corr()), 72)
 
-        # Data taken from previous version of the software.
-        expected_m2_hex_corr = (
-            2.5379271481981194,
-            -0.5385152037171632,
-            9.448475412170623,
-            6.371036372249689e-05,
-            -0.00011220461454586595,
-            0.0,
-        )
-        expected_cam_hex_corr = (
-            -1.1955042327995036,
-            3.2532120407166447,
-            39.918997395310775,
-            0.0004669118574001339,
-            2.157033634143978e-05,
-            0.0,
-        )
-        expected_m1m3_corr_sample = (
-            6.40274808e00,
-            2.71962001e00,
-            2.37669494e-01,
-            -9.38012046e-01,
-        )
-        expected_m2_corr_sample = (
-            0.16922937,
-            -0.03938491,
-            -0.35643931,
-            -0.51508621,
-            -0.38215294,
-            -0.03123699,
-        )
-
-        for computed_value, expected_value in zip(m2_hex_corr(), expected_m2_hex_corr):
+        for computed_value in m2_hex_corr():
             with self.subTest(
                 correction="M2Hexapod",
-                computed_value=computed_value,
-                expected_value=expected_value,
+                computed_value=computed_value
             ):
-                self.assertAlmostEqual(computed_value, expected_value, places=7)
+                self.assertAlmostEqual(computed_value, 0.0, places=4)
 
-        for computed_value, expected_value in zip(
-            cam_hex_corr(), expected_cam_hex_corr
-        ):
+        for computed_value in cam_hex_corr():
             with self.subTest(
                 correction="CamHexapod",
-                computed_value=computed_value,
-                expected_value=expected_value,
+                computed_value=computed_value
             ):
-                self.assertAlmostEqual(computed_value, expected_value, places=7)
+                self.assertAlmostEqual(computed_value, 0.0, places=4)
 
-        for computed_value, expected_value in zip(
-            m1m3_corr()[: len(expected_m1m3_corr_sample)], expected_m1m3_corr_sample
+        # Check corrections match the original DOF state up to 0.02ums
+        for idx, computed_value, expected_value in zip(np.arange(50),
+            self.ofc.lv_dof, self.ofc.ofc_controller.dof_state0
         ):
             with self.subTest(
-                correction="M1M3",
+                correction=f"Correction DOF {idx}",
                 computed_value=computed_value,
                 expected_value=expected_value,
             ):
-                self.assertAlmostEqual(computed_value, expected_value, places=7)
+                assert np.abs(expected_value + computed_value) < 2e-2
 
-        for computed_value, expected_value in zip(
-            m2_corr()[: len(expected_m2_corr_sample)], expected_m2_corr_sample
-        ):
-            with self.subTest(
-                correction="M2",
-                computed_value=computed_value,
-                expected_value=expected_value,
-            ):
-                self.assertAlmostEqual(computed_value, expected_value, places=7)
-
-        self.assertAlmostEqual(self.ofc.lv_dof[0], -9.44847541, places=7)
-        self.assertAlmostEqual(self.ofc.lv_dof[1], -2.53792714, places=7)
-        self.assertAlmostEqual(self.ofc.lv_dof[5], -39.91899739, places=7)
-        self.assertAlmostEqual(self.ofc.lv_dof[7], 3.25321204, places=7)
 
     def _get_wfe(self):
         wfe = np.loadtxt(self.test_data_path)
 
-        sensor_name_list = ["R44_SW0", "R04_SW0", "R00_SW0", "R40_SW0"]
+        sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
         field_idx = [
             self.ofc.ofc_data.field_idx[sensor_name] for sensor_name in sensor_name_list
@@ -276,7 +233,7 @@ class TestOFC(unittest.TestCase):
                     field_idx=field_idx,
                     filter_name=filter_name,
                     gain=1.0,
-                    rot=0.0,
+                    rotation_angle=0.0,
                 )
                 self.assertTrue(
                     np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr()))
@@ -288,24 +245,31 @@ class TestOFC(unittest.TestCase):
                 self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
     def test_truncate_dof(self):
+        """ Check that we can truncate the number of degrees of freedom used 
+        in the calculation successfully.
+        """
+
+        # Set used degrees of freedom
         new_comp_dof_idx = dict(
             m2HexPos=np.zeros(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
             M1M3Bend=np.zeros(20, dtype=bool),
             M2Bend=np.zeros(20, dtype=bool),
         )
-
         self.ofc.ofc_data.comp_dof_idx = new_comp_dof_idx
 
+        # Check that the number of degrees of freedom used is 5
         self.assertEqual(len(self.ofc.ofc_data.dof_idx), 5)
 
-        filter_name = ""
+        # Set filter name, wavefront error and field_idx
+        filter_name = "r"
 
         wfe = self.ofc.ofc_data.get_intrinsic_zk(filter_name)
-
         wfe[:, 0:1] += 0.1  # add 0.1 um of defocus
 
         field_idx = np.arange(wfe.shape[0])
+
+        # Calculate corrections
         (
             m2_hex_corr,
             cam_hex_corr,
@@ -316,51 +280,65 @@ class TestOFC(unittest.TestCase):
             field_idx=field_idx,
             filter_name=filter_name,
             gain=1.0,
-            rot=0.0,
+            rotation_angle=0.0,
         )
 
+        # Retrieve camera hexapod corrections
         x, y, z, u, v, w = cam_hex_corr()
 
-        self.assertAlmostEqual(x, 0.00011914744971686098)
-        self.assertAlmostEqual(y, -5.2710512039956525e-05)
-        self.assertAlmostEqual(z, -6.271489529009416)
-        self.assertAlmostEqual(u, 0.0)
-        self.assertAlmostEqual(v, 0.0)
-        self.assertAlmostEqual(w, 0.0)
+        # Check that the camera hexapod corrections are right. 
+        # All of them should be zero except for defocus.
+        self.assertAlmostEqual(x, 0.0, places = 5)
+        self.assertAlmostEqual(y, 0.0, places = 5)
+        self.assertAlmostEqual(z, -6, places = 0)
+        self.assertAlmostEqual(u, 0.0, places = 9)
+        self.assertAlmostEqual(v, 0.0, places = 9)
+        self.assertAlmostEqual(w, 0.0, places = 9)
 
+        # Check that the other corrections are zero
         self.assertTrue(np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr())))
         self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
         self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
     def test_get_correction(self):
         # First time of calculation
-        correction = self._calculate_m2_hex_correction()
-
-        self.assertAlmostEqual(correction[0], 2.5379271)
-        self.assertAlmostEqual(correction[1], -0.5385152)
-        self.assertAlmostEqual(correction[2], 9.4484754)
+        correction0 = self._calculate_cam_hex_correction()
 
         # Second time of calculation
         # The DOF should be aggregated
-        correction = self._calculate_m2_hex_correction()
+        correction = self._calculate_cam_hex_correction()
 
-        self.assertAlmostEqual(correction[0], 5.2979926)
-        self.assertAlmostEqual(correction[1], -2.5117287)
-        self.assertAlmostEqual(correction[2], 19.6478187)
+        # Check that the accumulated correction is twice the original correction
+        # Note that this works because we reset the state both times
+        self.assertAlmostEqual(correction[0], 2*correction0[0])
+        self.assertAlmostEqual(correction[1], 2*correction0[1])
+        self.assertAlmostEqual(correction[2], 2*correction0[2])
+        self.assertAlmostEqual(correction[3], 2*correction0[3])
+        self.assertAlmostEqual(correction[4], 2*correction0[4])
+        self.assertAlmostEqual(correction[5], 2*correction0[5])
 
-    def _calculate_m2_hex_correction(self):
+    def _calculate_cam_hex_correction(self):
         gain = 1.0
-        filter_name = ""
-        rot = 0.0
+        filter_name = "r"
+        rotation_angle = 0.0
 
-        wfe, field_idx = self._get_wfe()
+        self.ofc.ofc_data.xref = 'x0'
 
+        # Set wavefront error
+        wfe = self.ofc.ofc_data.get_intrinsic_zk(filter_name)
+        wfe[:, 0:1] += 0.1  # add 0.1 um of defocus
+
+        field_idx = np.arange(wfe.shape[0])
+
+        # Calculate corrections
         self.ofc.calculate_corrections(
-            wfe=wfe, field_idx=field_idx, filter_name=filter_name, gain=gain, rot=rot
+            wfe=wfe, field_idx=field_idx, filter_name=filter_name, gain=gain, rotation_angle=rotation_angle
         )
 
-        m2_hex_corr = self.ofc.get_correction("m2HexPos")
-        return m2_hex_corr.correction
+        # Return corrections for camera hexapod. 
+        # Corrections are accumulated the second time this function is run.
+        cam_hex_corr = self.ofc.get_correction("camHexPos")
+        return cam_hex_corr.correction
 
 
 if __name__ == "__main__":

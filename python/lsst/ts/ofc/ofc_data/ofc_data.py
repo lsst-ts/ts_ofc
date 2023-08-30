@@ -23,12 +23,10 @@ __all__ = ["OFCData"]
 
 import asyncio
 import logging
-import re
 
 from glob import glob
 from pathlib import Path
 
-from astropy.io import fits
 import galsim
 import numpy as np
 import yaml
@@ -389,12 +387,7 @@ class OFCData(BaseOFCData):
             dof_state0 = yaml.safe_load(fp)
 
         # Read image quality weight
-        iqw_path = (
-            self.config_dir
-            / "sample_points"
-            / instrument
-            / self.iqw_filename
-        )
+        iqw_path = self.config_dir / "sample_points" / instrument / self.iqw_filename
 
         self.log.debug(f"Configuring image quality weight: {iqw_path}")
 
@@ -474,10 +467,7 @@ class OFCData(BaseOFCData):
             sen_m = np.array(yaml.safe_load(fp))
 
         with open(
-            self.config_dir
-            / "sample_points"
-            / instrument
-            / self.field_angles_filename
+            self.config_dir / "sample_points" / instrument / self.field_angles_filename
         ) as fp:
             gq_field_angles = np.array(yaml.safe_load(fp))
             gq_field_angles[:, 0] *= -1

@@ -24,6 +24,8 @@ __all__ = ["SensitivityMatrix"]
 import numpy as np
 import galsim
 
+from .ofc_data import OFCData
+
 
 class SensitivityMatrix:
     """Class to handle the sensitivity matrix.
@@ -34,7 +36,7 @@ class SensitivityMatrix:
         OFC data.
     """
 
-    def __init__(self, ofc_data) -> None:
+    def __init__(self, ofc_data: OFCData) -> None:
         self.ofc_data = ofc_data
 
     def evaluate(
@@ -92,7 +94,8 @@ class SensitivityMatrix:
             ]
         )
 
-        # Reshape the sensitivity matrix to be (#field_points, #zernikes, #dofs)
+        # Reshape the sensitivity matrix to be
+        # (#field_points, #zernikes, #dofs)
         rotated_sensitivity_matrix = np.einsum("ijk->jki", rotated_sensitivity_matrix)
 
         # Subselect the relevant zernike coefficients

@@ -43,6 +43,7 @@ def default_eff_wavelenght():
         "y": 0.973,
     }
 
+
 def default_alpha():
     """Default alpha coefficient for the normalized point-source sensitivity
 
@@ -75,6 +76,7 @@ def default_alpha():
         ]
     )
 
+
 def default_zn3_idx():
     """Index of annular Zernike polynomials (z3-z22)
 
@@ -86,6 +88,7 @@ def default_zn3_idx():
 
     return np.arange(19)
 
+
 def default_rb_stroke():
     """Default allowed moving range of rigid body of M2 hexapod and Camera.
 
@@ -96,6 +99,7 @@ def default_rb_stroke():
     """
 
     return np.array([5900, 6700, 6700, 432, 432, 8700, 7600, 7600, 864, 864])
+
 
 @dataclass
 class BaseOFCData:

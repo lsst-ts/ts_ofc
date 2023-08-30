@@ -122,7 +122,13 @@ def double_zernike(
 
 
 def get_intrinsic_zk(
-    config: dict, instrument: str, band: str, jmax: int = 22, kmax: int = 15, rings: int = 11, spokes: int = 35
+    config: dict,
+    instrument: str,
+    band: str,
+    jmax: int = 22,
+    kmax: int = 15,
+    rings: int = 11,
+    spokes: int = 35,
 ) -> np.ndarray:
     """Get the intrinsic double zernike coefficients
     for a given instrument and band.

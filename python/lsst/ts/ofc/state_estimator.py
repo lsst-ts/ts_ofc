@@ -26,6 +26,8 @@ import logging
 import galsim
 import numpy as np
 from . import SensitivityMatrix
+from .ofc_data import OFCData
+
 
 class StateEstimator:
     """(Optical) State Estimator.
@@ -52,18 +54,26 @@ class StateEstimator:
         matrix.
     """
 
-    def __init__(self, ofc_data, rcond=5e-4, log=None):
+    def __init__(
+        self, ofc_data: OFCData, rcond: int = 5e-4, log: logging.Logger = None
+    ) -> None:
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:
             self.log = log.getChild(type(self).__name__)
 
         self.ofc_data = ofc_data
-        
-        # Set rcond for the pseudoinverse computation
-        self.RCOND = rcond
 
-    def dof_state(self, filter_name: str, wfe: np.ndarray, field_idx: np.ndarray, rotation_angle: float):
+        # Set rcond for the pseudoinverse computation
+        self.rcond = rcond
+
+    def dof_state(
+        self,
+        filter_name: str,
+        wfe: np.ndarray,
+        field_idx: np.ndarray,
+        rotation_angle: float,
+    ) -> np.ndarray:
         """Compute the state in the basis of degrees of freedom.
 
         Solve y = A*x by x = pinv(A)*y.
@@ -94,7 +104,8 @@ class StateEstimator:
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
 
-        # Reshape sensitivity matrix to dimensions (#zk * #sensors, # dofs) = (19 * #sensors, 50)
+        # Reshape sensitivity matrix to dimensions
+        # (#zk * #sensors, # dofs) = (19 * #sensors, 50)
         size_ = sensitivity_matrix.shape[2]
         sensitivity_matrix = sensitivity_matrix.reshape((-1, size_))
 
@@ -110,32 +121,37 @@ class StateEstimator:
 
         # Compute the pseudo-inverse of the sensitivity matrix
         # rcond sets the truncation of different modes.
-        pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.RCOND)
+        pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.rcond)
 
-        # Rotate the wavefront error to the same orientation as the sensitivity matrix
-        # When creating galsim.Zernike object, the coefficients are in units of um
-        # which does not matter here as we are only rotating them.
+        # Rotate the wavefront error to the same orientation as the
+        # sensitivity matrix. When creating galsim.Zernike object,
+        # the coefficients are in units of um which does not matter
+        # here as we are only rotating them.
         wfe = np.array(wfe)
         for idx in range(wfe.shape[0]):
-            wfe_sensor = np.pad(wfe[idx, :], (4,0))
+            wfe_sensor = np.pad(wfe[idx, :], (4, 0))
 
             zk_galsim = galsim.zernike.Zernike(
-                wfe_sensor, 
-                R_outer=self.ofc_data.config['obscuration']['R_outer'], 
-                R_inner=self.ofc_data.config['obscuration']['R_inner']
+                wfe_sensor,
+                R_outer=self.ofc_data.config["obscuration"]["R_outer"],
+                R_inner=self.ofc_data.config["obscuration"]["R_inner"],
             )
             wfe[idx, :] = zk_galsim.rotate(np.deg2rad(-rotation_angle)).coef[4:]
 
         # Compute wavefront error deviation from the intrinsic wavefront error
         # y = wfe - intrinsic_zk - y2_correction
-        # y2_correction is a static correction for the deviation currently set to zero.
+        # y2_correction is a static correction for the
+        # deviation currently set to zero.
         y = (
             wfe[:, self.ofc_data.zn3_idx]
-            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx, rotation_angle)[:, self.ofc_data.zn3_idx]
+            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx, rotation_angle)[
+                :, self.ofc_data.zn3_idx
+            ]
             - self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]
         )
 
-        # Reshape wavefront error to dimensions (#zk * #sensors, 1) = (19 * #sensors, 1)
+        # Reshape wavefront error to dimensions
+        # (#zk * #sensors, 1) = (19 * #sensors, 1)
         y = y.reshape(-1, 1)
 
         # Compute optical state estimate in the basis of DOF

@@ -24,9 +24,9 @@ __all__ = ["OFC"]
 import logging
 
 import numpy as np
-from typing import List
 
 from . import BendModeToForce, Correction, OFCController, StateEstimator
+from .ofc_data import OFCData
 from .utils import CorrectionType
 
 
@@ -75,7 +75,7 @@ class OFC:
     PSSN: Normalized point source sensitivity.
     """
 
-    def __init__(self, ofc_data, log=None) -> None:
+    def __init__(self, ofc_data: OFCData, log: logging.Logger = None) -> None:
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:
@@ -108,7 +108,7 @@ class OFC:
         filter_name: str,
         gain: float,
         rotation_angle: float,
-    ) -> List[Correction]:
+    ) -> list[Correction]:
         """Calculate the Hexapod, M1M3, and M2 corrections from the FWHM
         and wavefront error.
 
@@ -171,7 +171,7 @@ class OFC:
 
         return self.get_all_corrections()
 
-    def get_all_corrections(self) -> List[Correction]:
+    def get_all_corrections(self) -> list[Correction]:
         """Return corrections for all components in the appropriate order.
 
         Returns
@@ -259,7 +259,7 @@ class OFC:
                 self.ofc_controller.fwhm_to_pssn(fwhm)
             )
 
-    def reset(self) -> List[Correction]:
+    def reset(self) -> list[Correction]:
         """Reset the OFC calculation state, which is the aggregated DOF now.
 
         This function is needed for the long slew angle of telescope.

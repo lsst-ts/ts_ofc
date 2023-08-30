@@ -29,7 +29,9 @@ def save_intrinsic_zk(
     """
 
     # Save yaml file with header and content shown as legacy yaml files.
-    with open(f"{path}/intrinsic_zk_{filter_name}_{kmax + 1}_23.yaml", "w") as yaml_file:
+    with open(
+        f"{path}/intrinsic_zk_{filter_name}_{kmax + 1}_23.yaml", "w"
+    ) as yaml_file:
         yaml_file.write(
             f"--- \n \
             \n # Intrinsic Zk for the {filter_name} band. \
@@ -79,8 +81,9 @@ def main(args: argparse.Namespace) -> None:
         config = yaml.safe_load(fp)
 
     # Compute intrinsic zernikes
-    kmax = 30
-    intrinsic = get_intrinsic_zk(config, args.instrument, args.filter, jmax=22, kmax=30, rings=15, spokes=55)
+    intrinsic = get_intrinsic_zk(
+        config, args.instrument, args.filter, jmax=22, kmax=args.kmax, rings=15, spokes=55
+    )
 
     # Swap corresponding zernike that are flipped in batoid
     swap = [2, 5, 8, 10, 13, 15, 16, 18, 20]
@@ -113,6 +116,13 @@ def parse_arguments() -> argparse.Namespace:
         choices=["LSST", "ComCam"],
         default="LSST",
         help="Type of instrument to use",
+    )
+
+    parser.add_argument(
+        "--kmax",
+        default=30,
+        type=int,
+        help="Maximum kmax index",
     )
 
     return parser.parse_args()

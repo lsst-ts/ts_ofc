@@ -364,5 +364,5 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def generate_intrinsic_zernikes() -> None:
     main(parse_arguments())

@@ -82,7 +82,13 @@ def main(args: argparse.Namespace) -> None:
 
     # Compute intrinsic zernikes
     intrinsic = get_intrinsic_zk(
-        config, args.instrument, args.filter, jmax=22, kmax=args.kmax, rings=15, spokes=55
+        config,
+        args.instrument,
+        args.filter,
+        jmax=22,
+        kmax=args.kmax,
+        rings=15,
+        spokes=55,
     )
 
     # Swap corresponding zernike that are flipped in batoid
@@ -90,7 +96,7 @@ def main(args: argparse.Namespace) -> None:
     intrinsic[:, swap] *= -1
 
     # Save the intrinsic double zernikes
-    save_intrinsic_zk(args.filter, intrinsic, args.path, kmax=kmax)
+    save_intrinsic_zk(args.filter, intrinsic, args.path, kmax=args.kmax)
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -128,5 +134,5 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def generate_intrinsic_zernikes() -> None:
     main(parse_arguments())

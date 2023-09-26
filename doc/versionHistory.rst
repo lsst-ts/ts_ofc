@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.1.1:
+
+v2.1.1
+======
+
+* Update pre-commit hooks with ruff.
+
 .. _lsst.ts.ofc-2.1.0:
 
 v2.1.0

@@ -260,7 +260,7 @@ class OFCData(BaseOFCData):
                 )
             if (
                 not isinstance(value[comp], np.ndarray)
-                or not value[comp].dtype.type is np.bool_
+                or value[comp].dtype.type is not np.bool_
             ):
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]

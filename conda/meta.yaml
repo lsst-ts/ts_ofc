@@ -16,7 +16,6 @@ test:
   source_files:
     - python
     - tests
-    - setup.cfg
     - policy
   commands:
     - py.test -vs

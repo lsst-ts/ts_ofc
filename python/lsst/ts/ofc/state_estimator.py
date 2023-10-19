@@ -99,7 +99,7 @@ class StateEstimator:
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = dz_sensitivity_matrix.evaluate(-rotation_angle, field_idx)
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate(rotation_angle, field_idx)
 
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
@@ -144,7 +144,7 @@ class StateEstimator:
         # deviation currently set to zero.
         y = (
             wfe[:, self.ofc_data.zn3_idx]
-            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx, -rotation_angle)[
+            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx, rotation_angle)[
                 :, self.ofc_data.zn3_idx
             ]
             - self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]

@@ -301,6 +301,9 @@ class OFCData(BaseOFCData):
             gq_points = self.gq_field_angles[field_idx, :]
             field_x, field_y = zip(*gq_points)
 
+        # Convert rotation angle to radians
+        rotation_angle = np.deg2rad(rotation_angle)
+        
         evaluated_zernikes = np.array(
             [
                 zk.coef
@@ -435,7 +438,7 @@ class OFCData(BaseOFCData):
         intrinsic_zk_path = self.config_dir / "intrinsic_zernikes" / camera_type
 
         for filter_name in self.eff_wavelength.keys():
-            file_name = f"{self.intrinsic_zk_filename_root}_{filter_name}_31*.yaml"
+            file_name = f"{self.intrinsic_zk_filename_root}_{filter_name.lower()}_31*.yaml"
             intrinsic_file = Path(glob(str(intrinsic_zk_path / file_name))[0])
 
             with open(intrinsic_file) as fp:

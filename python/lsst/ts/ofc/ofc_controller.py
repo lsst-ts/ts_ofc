@@ -386,6 +386,9 @@ class OFCController:
         sensitivity_matrix = dz_sensitivity_matrix.evaluate()
 
         # Select sensitivity matrix only at used degrees of freedom
+        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
+        
+        # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
 
         y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]

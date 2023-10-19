@@ -55,7 +55,7 @@ class StateEstimator:
     """
 
     def __init__(
-        self, ofc_data: OFCData, rcond: int = 5e-4, log: logging.Logger = None
+        self, ofc_data: OFCData, rcond: int = 1e-4, log: logging.Logger = None
     ) -> None:
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
@@ -99,7 +99,7 @@ class StateEstimator:
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = dz_sensitivity_matrix.evaluate(rotation_angle, field_idx)
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate(-rotation_angle, field_idx)
 
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
@@ -136,7 +136,7 @@ class StateEstimator:
                 R_outer=self.ofc_data.config["obscuration"]["R_outer"],
                 R_inner=self.ofc_data.config["obscuration"]["R_inner"],
             )
-            wfe[idx, :] = zk_galsim.rotate(np.deg2rad(-rotation_angle)).coef[4:]
+            wfe[idx, :] = zk_galsim.rotate(np.deg2rad(rotation_angle)).coef[4:]
 
         # Compute wavefront error deviation from the intrinsic wavefront error
         # y = wfe - intrinsic_zk - y2_correction
@@ -144,7 +144,7 @@ class StateEstimator:
         # deviation currently set to zero.
         y = (
             wfe[:, self.ofc_data.zn3_idx]
-            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx, rotation_angle)[
+            - self.ofc_data.get_intrinsic_zk(filter_name, field_idx, -rotation_angle)[
                 :, self.ofc_data.zn3_idx
             ]
             - self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]

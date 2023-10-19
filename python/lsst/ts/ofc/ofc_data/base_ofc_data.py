@@ -35,12 +35,12 @@ def default_eff_wavelenght():
         Filter name and associated effective wavelength in um.
     """
     return {
-        "u": 0.365,
-        "g": 0.480,
-        "r": 0.622,
-        "i": 0.754,
-        "z": 0.868,
-        "y": 0.973,
+        "U": 0.365,
+        "G": 0.480,
+        "R": 0.622,
+        "I": 0.754,
+        "Z": 0.868,
+        "Y": 0.973,
     }
 
 

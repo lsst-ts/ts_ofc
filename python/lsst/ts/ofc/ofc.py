@@ -161,7 +161,7 @@ class OFC:
         uk = self.ofc_controller.uk_gain(filter_name, optical_state)
 
         # Remove degeneracies from correction vector
-        uk = self.ofc_controller.remove_degeneracies(uk, rcond=self.rcond_degeneracy)
+        #uk = self.ofc_controller.remove_degeneracies(uk, rcond=self.rcond_degeneracy)
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)

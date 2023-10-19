@@ -17,6 +17,12 @@ v2.2.0
     * Added double zernikes intrinsic zernikes for lsst and comcam.
 * Policy folder was simplified since lsstfam and lsst share all double zernike files. 
 * Added scripts to generate sensitivity matrix and intrinsic files from batoid package.
+.. _lsst.ts.ofc-2.1.1:
+
+v2.1.1
+======
+
+* Update pre-commit hooks with ruff.
 
 .. _lsst.ts.ofc-2.1.0:
 

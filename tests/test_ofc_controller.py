@@ -19,18 +19,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import pathlib
 import unittest
 
 import numpy as np
-from lsst.ts.ofc import OFCController, OFCData, StateEstimator
+from lsst.ts.ofc import OFCController, OFCData
+
 
 class TestOFCController(unittest.TestCase):
     """Test the OFCController class."""
 
     def setUp(self):
         self.ofc_data = OFCData("lsst")
-        self.ofc_data.motion_penalty = 0.0001 # Set small motion penalty to allow for larger corrections
+        # Set small motion penalty to allow for larger corrections
+        self.ofc_data.motion_penalty = 0.0001
         self.ofc_controller = OFCController(self.ofc_data)
 
         test_dof_state0 = np.zeros(50)
@@ -48,22 +49,24 @@ class TestOFCController(unittest.TestCase):
 
         sum_uk = np.zeros(50)
         for _ in range(3):
-            uk = self.ofc_controller.uk(self.filter_name, self.ofc_controller.dof_state0 + sum_uk)
+            uk = self.ofc_controller.uk(
+                self.filter_name, self.ofc_controller.dof_state0 + sum_uk
+            )
             sum_uk += uk
 
         # Check length of correction vector matches used number of DOFs
         self.assertEqual(len(uk), len(self.ofc_data.dof_idx))
 
-        # Check that corrections match original dof_state after three iterations. 
-        # Note that other degrees of freedom values are not checked because 
-        # degenerate solutions exist.
+        # Check that corrections match original dof_state after three
+        # iterations. Note that other degrees of freedom values are
+        # not checked because degenerate solutions exist.
         assert self.mean_squared_residual(-sum_uk[15], 0.5) < 5e-2
         assert self.mean_squared_residual(-sum_uk[25], 1.5) < 5e-2
         assert self.mean_squared_residual(-sum_uk[45], 1.5) < 5e-2
-    
+
     def mean_squared_residual(self, new_array, reference_array):
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
-    
+
     def test_uk_nogain_0(self):
         self.ofc_data.xref = "0"
         uk = self.ofc_controller.uk(self.filter_name, self.ofc_controller.dof_state0)
@@ -81,9 +84,12 @@ class TestOFCController(unittest.TestCase):
         # Check length of correction vector matches used number of DOFs
         self.assertEqual(len(uk), len(self.ofc_data.dof_idx))
 
-        # Check for ref "x00" our corrections match the corrections for x0, when dof_state = dof_state0
+        # Check for ref "x00" our corrections match the corrections
+        # for x0, when dof_state = dof_state0
         self.ofc_data.xref = "x0"
-        uk_ref0 = self.ofc_controller.uk(self.filter_name, self.ofc_controller.dof_state0)
+        uk_ref0 = self.ofc_controller.uk(
+            self.filter_name, self.ofc_controller.dof_state0
+        )
 
         assert self.mean_squared_residual(uk_ref0, uk) < 1e-6
 

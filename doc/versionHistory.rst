@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-2.1.2:
+
+v2.1.2
+======
+
+* Substituted pssn to fwhm for gain calculations.
+
 .. _lsst.ts.ofc-2.1.1:
 
 v2.1.1

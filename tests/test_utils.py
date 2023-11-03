@@ -26,9 +26,9 @@ from lsst.ts.ofc.utils import (
     get_config_dir,
     get_field_angles,
     get_pkg_root,
-    intrinsic_zernikes,
     rot_1d_array,
 )
+from lsst.ts.ofc.utils.intrinsic_zernikes import intrinsic_zernikes
 
 
 class TestUtils(unittest.TestCase):

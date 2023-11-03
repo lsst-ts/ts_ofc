@@ -24,7 +24,8 @@ import unittest
 
 import numpy as np
 from lsst.ts.ofc import OFC, Correction, OFCData
-from lsst.ts.ofc.utils import CorrectionType, get_field_angles, intrinsic_zernikes
+from lsst.ts.ofc.utils import CorrectionType, get_field_angles
+from lsst.ts.ofc.utils.intrinsic_zernikes import intrinsic_zernikes
 
 
 class TestOFC(unittest.TestCase):

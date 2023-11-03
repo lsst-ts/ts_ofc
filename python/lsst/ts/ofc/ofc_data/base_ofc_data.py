@@ -132,7 +132,7 @@ class BaseOFCData:
         +5900 um to -5900 um.
     sen_m_filename_root : `string`
         Filename root string for the sensitivity matrix M.
-    y2_filename : `string`
+    y2_filename_root : `string`
         Name of the file where `y2_correction` is read from.
     zn3_idx : `np.array` of `bool`
         Index of annular Zernike polynomials (z3-z22) (`True`: in use, `False`:
@@ -145,7 +145,7 @@ class BaseOFCData:
     """
 
     gq_filename: str = "lsst_gq_points.yaml"
-    y2_filename: str = "y2.yaml"
+    y2_filename_root: str = "_y2.yaml"
     dof_state0_filename: str = "state0_in_dof.yaml"
     intrinsic_zk_filename_root: str = "intrinsic_zk"
     sen_m_filename_root: str = "sensitivity"

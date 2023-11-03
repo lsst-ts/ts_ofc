@@ -24,7 +24,7 @@ import logging
 import numpy as np
 
 from . import BendModeToForce, SensitivityMatrix
-from .utils import get_field_angle
+from .utils import get_field_angles
 
 
 class OFCController:
@@ -274,7 +274,12 @@ class OFCController:
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
-    def uk_gain(self, filter_name, dof_state, sensor_names):
+    def uk_gain(
+        self,
+        filter_name: str,
+        dof_state: np.ndarray,
+        sensor_names: list[str] | None = None,
+    ) -> np.ndarray:
         """Estimate uk in the basis of degree of freedom (DOF) with gain
         compensation.
 
@@ -291,12 +296,25 @@ class OFCController:
         -------
         uk : `numpy.ndarray`
             Calculated uk in the basis of DOF.
+
+        Raises
+        ------
+        RuntimeError
+            If `sensor_names` is not provided for full array mode instruments.
         """
+
+        if self.ofc_data.name != "lsst" and sensor_names is None:
+            raise RuntimeError(
+                "sensor_names must be provided for full array mode instruments."
+            )
 
         return self.gain * self.uk(filter_name, dof_state, sensor_names)
 
     def uk(
-        self, filter_name: str, dof_state: np.ndarray, sensor_names: list[str]
+        self,
+        filter_name: str,
+        dof_state: np.ndarray,
+        sensor_names: list[str] | None = None,
     ) -> np.ndarray:
         """Estimate the offset (`uk`) of degree of freedom (DOF) at time `k+1`
         based on the wavefront error (`yk`) at time `k`.
@@ -322,7 +340,13 @@ class OFCController:
         ------
         RuntimeError
             If `xref` strategy is not valid.
+            If `sensor_names` is not provided for full array mode instruments.
         """
+        if self.ofc_data.name != "lsst" and sensor_names is None:
+            raise RuntimeError(
+                "sensor_names must be provided for full array mode instruments."
+            )
+
         if self.ofc_data.xref not in self.ofc_data.xref_list:
             raise RuntimeError(
                 f"Unspecified reference frame {self.ofc_data.xref}. "
@@ -356,12 +380,12 @@ class OFCController:
         # Quadrature points to evaluate the sensitivity matrix.
         # Otherwise, for full array mode instruments,
         # we will use the sensor positions with equal weights.
-        if self.ofc_data.instrument == "lsst":
+        if self.ofc_data.name == "lsst":
             n_imqw = self.ofc_data.normalized_image_quality_weight
             field_angles = self.ofc_data.gq_points
         else:
             n_imqw = np.ones(len(sensor_names)) / len(sensor_names)
-            field_angles = get_field_angle(sensor_names)
+            field_angles = get_field_angles(sensor_names)
 
         sensitivity_matrix = dz_sensitivity_matrix.evaluate(field_angles)
 
@@ -371,7 +395,19 @@ class OFCController:
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
 
-        y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
+        # Calculate the y2 correction.
+        # If the instrument is LSST, we will use the Gaussian
+        # Quadrature points to evaluate the y2 correction.
+        # Otherwise, for full array mode instruments,
+        # we will use the sensor positions to retrieve the y2 correction.
+        if self.ofc_data.name == "lsst":
+            y2c = np.array(
+                [self.ofc_data.gq_y2_correction[idx + 1] for idx in range(len(n_imqw))]
+            )
+        else:
+            y2c = np.array(
+                [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
+            )
 
         qx = 0
         q_mat = 0
@@ -396,13 +432,17 @@ class OFCController:
 
         return uk.ravel()
 
-    def remove_degeneracies(self, uk: np.ndarray, rcond: float = 1e-7) -> np.ndarray:
+    def remove_degeneracies(
+        self, uk: np.ndarray, sensor_names: list, rcond: float = 1e-7
+    ) -> np.ndarray:
         """Remove degeneracies from the correction vector.
 
         Parameters
         ----------
         uk : `numpy.ndarray`
             Correction vector.
+        sensor_names: `list` of `string`
+            List of sensor names.
         rcond : `float`
             Cutoff for singular values. Singular values smaller
             than rcond * largest_singular_value are set to zero.
@@ -424,8 +464,11 @@ class OFCController:
         # Constuct the double zernike sensitivity matrix
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
+        # Compute field angles
+        field_angles = get_field_angles(sensor_names)
+
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = dz_sensitivity_matrix.evaluate()
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate(field_angles)
 
         # Reshape sensitivity matrix to dimensions
         # (#zk * #sensors, # dofs) = (19 * #sensors, 50)

@@ -30,7 +30,7 @@ from ..ofc_data import OFCData
 def intrinsic_zernikes(
     ofc_data: OFCData,
     filter_name: str,
-    field_angles: list | list = None,
+    field_angles: list,
     rotation_angle: float = 0.0,
 ) -> np.ndarray:
     """Return reformated instrisic zernike coefficients.

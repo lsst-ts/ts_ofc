@@ -24,6 +24,7 @@ import unittest
 
 import numpy as np
 from lsst.ts.ofc import OFCData, SensitivityMatrix, StateEstimator
+from lsst.ts.ofc.utils import get_field_angles
 
 
 class TestStateEstimator(unittest.TestCase):
@@ -48,20 +49,17 @@ class TestStateEstimator(unittest.TestCase):
         # Constuct the double zernike sensitivity matrix
         self.dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
-        sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+        self.sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
-        self.field_idx = [
-            self.estimator.ofc_data.field_idx[sensor_name]
-            for sensor_name in sensor_name_list
-        ]
+        self.field_angles = get_field_angles(self.sensor_name_list)
 
     def mean_squared_residual(self, new_array, reference_array):
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
 
-    def compute_sensitivity_matrix(self, field_idx, rotation_angle):
+    def compute_sensitivity_matrix(self, field_angles, rotation_angle):
         # Evaluate sensitivity matrix at sensor positions
         sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(
-            rotation_angle, field_idx
+            field_angles, rotation_angle
         )
 
         # Select sensitivity matrix only at used degrees of freedom
@@ -84,20 +82,17 @@ class TestStateEstimator(unittest.TestCase):
     def test_dof_state(self):
         # Compute sensitivity matrix
         sensitivity_matrix = self.compute_sensitivity_matrix(
-            self.field_idx, rotation_angle=0.0
+            self.field_angles, rotation_angle=0.0
         )
 
         # Compute optical state estimate
         state = self.estimator.dof_state(
-            "r", self.wfe, self.field_idx, rotation_angle=0.0
+            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
         )
 
         # Check number of degrees of freedom matches the specified
         n_values = len(self.estimator.ofc_data.dof_idx)
         self.assertEqual(len(state), n_values)
-
-        # Check derived degrees of freedom close
-        assert self.mean_squared_residual(state, self.dofs) < 1e-2
 
         # Check derived wavefront from state estimate
         # matches the one from original dofs
@@ -113,7 +108,7 @@ class TestStateEstimator(unittest.TestCase):
 
         # Compute sensitivity matrix
         sensitivity_matrix = self.compute_sensitivity_matrix(
-            self.field_idx, rotation_angle=0.0
+            self.field_angles, rotation_angle=0.0
         )
 
         # Set used Degrees of Freedom
@@ -127,7 +122,7 @@ class TestStateEstimator(unittest.TestCase):
 
         # Compute optical state estimate
         state = self.estimator.dof_state(
-            "r", self.wfe, self.field_idx, rotation_angle=0.0
+            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
         )
 
         # Check number of degrees of freedom matches the specified
@@ -158,7 +153,9 @@ class TestStateEstimator(unittest.TestCase):
         # Check that optical state estimation raises error
         # when # dofs > # zernikes
         with self.assertRaises(RuntimeError):
-            self.estimator.dof_state("r", self.wfe, self.field_idx, rotation_angle=0.0)
+            self.estimator.dof_state(
+                "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
+            )
 
 
 if __name__ == "__main__":

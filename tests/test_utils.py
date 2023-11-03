@@ -21,11 +21,21 @@
 import unittest
 
 import numpy as np
-from lsst.ts.ofc.utils import get_config_dir, get_pkg_root, rot_1d_array
+from lsst.ts.ofc import OFCData
+from lsst.ts.ofc.utils import (
+    get_config_dir,
+    get_field_angles,
+    get_pkg_root,
+    intrinsic_zernikes,
+    rot_1d_array,
+)
 
 
 class TestUtils(unittest.TestCase):
     """Test the OFCCalculation class."""
+
+    def setUp(self):
+        self.ofc_data = OFCData("lsst")
 
     def test_get_pkg_root(self):
         pkg_root = get_pkg_root()
@@ -67,6 +77,43 @@ class TestUtils(unittest.TestCase):
 
         self.assertAlmostEqual(rot_vec[0], vec[1])
         self.assertAlmostEqual(rot_vec[1], vec[0])
+
+    def test_get_field_angles(self):
+        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+
+        field_x, field_y = zip(*get_field_angles(sensor_names))
+
+        self.assertEqual(len(field_x), len(sensor_names))
+        self.assertEqual(len(field_y), len(sensor_names))
+
+        sensor_field_angles = [
+            [1.1902777777777778, -1.1902777777777778],
+            [1.1902777777777778, 1.1902777777777778],
+            [-1.1902777777777778, -1.1902777777777778],
+            [-1.1902777777777778, 1.1902777777777778],
+        ]
+
+        for idx in range(len(field_x)):
+            self.assertEqual(field_x[idx], sensor_field_angles[idx][0])
+            self.assertEqual(field_y[idx], sensor_field_angles[idx][1])
+
+        sensor_names = ["R03_S12"]
+        print(get_field_angles(sensor_names))
+
+    def test_get_intrinsic_zernikes(self):
+        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+        field_angles = get_field_angles(sensor_names)
+
+        for filter_name in self.ofc_data.eff_wavelength:
+            with self.subTest(filter_name=filter_name):
+                intrinsic_zk = intrinsic_zernikes(
+                    self.ofc_data, filter_name, field_angles
+                )
+                self.assertTrue(isinstance(intrinsic_zk, np.ndarray))
+                self.assertEqual(len(intrinsic_zk), 4)
+
+        with self.assertRaises(RuntimeError):
+            intrinsic_zernikes(self.ofc_data, "bad_filter_name", field_angles)
 
 
 if __name__ == "__main__":

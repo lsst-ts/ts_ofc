@@ -80,7 +80,9 @@ class SensitivityMatrix:
                             uv_outer=self.ofc_data.config["pupil"]["R_outer"],
                             xy_inner=self.ofc_data.config["obscuration"]["R_inner"],
                             xy_outer=self.ofc_data.config["obscuration"]["R_outer"],
-                        ).rotate(theta_uv=rotation_angle)(field_x, field_y)
+                        ).rotate(theta_uv=rotation_angle)(
+                            field_x, field_y
+                        )  # TODO: Remove once we remove the ZCS
                     ]
                 )
                 for dof_idx in np.arange(50)

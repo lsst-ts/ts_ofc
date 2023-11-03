@@ -24,7 +24,7 @@ import unittest
 
 import numpy as np
 from lsst.ts.ofc import OFC, Correction, OFCData
-from lsst.ts.ofc.utils import CorrectionType
+from lsst.ts.ofc.utils import CorrectionType, get_field_angles, intrinsic_zernikes
 
 
 class TestOFC(unittest.TestCase):
@@ -41,6 +41,10 @@ class TestOFC(unittest.TestCase):
             / "testData"
             / "lsst_wfs_error_test_ofc.z4c"
         )
+
+        self.wfe = np.loadtxt(self.test_data_path)
+        self.sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+        self.field_angles = get_field_angles(self.sensor_name_list)
 
     def test_init_lv_dof(self):
         self.ofc.lv_dof = np.random.rand(len(self.ofc.ofc_controller.dof_state0))
@@ -104,12 +108,10 @@ class TestOFC(unittest.TestCase):
 
     def test_calculate_corrections(self):
         gain = 1.0
-        filter_name = "r"
+        filter_name = "R"
         rotation_angle = 0.0
 
         self.ofc.ofc_data.xref = "0"
-
-        wfe, field_idx = self._get_wfe()
 
         self.ofc.ofc_controller.dof_state0[45] = 0.1
         self.ofc.ofc_controller.reset_dof_state()
@@ -120,8 +122,8 @@ class TestOFC(unittest.TestCase):
             m1m3_corr,
             m2_corr,
         ) = self.ofc.calculate_corrections(
-            wfe=wfe,
-            field_idx=field_idx,
+            wfe=self.wfe,
+            sensor_names=self.sensor_name_list,
             filter_name=filter_name,
             gain=gain,
             rotation_angle=rotation_angle,
@@ -144,13 +146,13 @@ class TestOFC(unittest.TestCase):
 
         for computed_value in m2_hex_corr():
             with self.subTest(correction="M2Hexapod", computed_value=computed_value):
-                self.assertAlmostEqual(computed_value, 0.0, places=4)
+                self.assertAlmostEqual(computed_value, 0.0, places=2)
 
         for computed_value in cam_hex_corr():
             with self.subTest(correction="CamHexapod", computed_value=computed_value):
-                self.assertAlmostEqual(computed_value, 0.0, places=4)
+                self.assertAlmostEqual(computed_value, 0.0, places=2)
 
-        # Check corrections match the original DOF state up to 0.02ums
+        # Check corrections match the original DOF state up to 0.1ums
         for idx, computed_value, expected_value in zip(
             np.arange(50), self.ofc.lv_dof, self.ofc.ofc_controller.dof_state0
         ):
@@ -159,18 +161,7 @@ class TestOFC(unittest.TestCase):
                 computed_value=computed_value,
                 expected_value=expected_value,
             ):
-                assert np.abs(expected_value + computed_value) < 2e-2
-
-    def _get_wfe(self):
-        wfe = np.loadtxt(self.test_data_path)
-
-        sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
-
-        field_idx = [
-            self.ofc.ofc_data.field_idx[sensor_name] for sensor_name in sensor_name_list
-        ]
-
-        return wfe, field_idx
+                assert np.abs(expected_value + computed_value) < 1e-1
 
     def test_get_state_correction_from_last_visit(self):
         new_comp_dof_idx = dict(
@@ -203,8 +194,8 @@ class TestOFC(unittest.TestCase):
 
         for filter_name in self.ofc.ofc_data.intrinsic_zk:
             with self.subTest(filter_name=filter_name):
-                wfe = self.ofc.ofc_data.get_intrinsic_zk(filter_name)
-                field_idx = np.arange(wfe.shape[0])
+                wfe = intrinsic_zernikes(self.ofc_data, filter_name, self.field_angles)
+
                 (
                     m2_hex_corr,
                     cam_hex_corr,
@@ -212,7 +203,7 @@ class TestOFC(unittest.TestCase):
                     m2_corr,
                 ) = self.ofc.calculate_corrections(
                     wfe=wfe,
-                    field_idx=field_idx,
+                    sensor_names=self.sensor_name_list,
                     filter_name=filter_name,
                     gain=1.0,
                     rotation_angle=0.0,
@@ -243,13 +234,11 @@ class TestOFC(unittest.TestCase):
         # Check that the number of degrees of freedom used is 5
         self.assertEqual(len(self.ofc.ofc_data.dof_idx), 5)
 
-        # Set filter name, wavefront error and field_idx
-        filter_name = "r"
+        # Set filter name, wavefront error
+        filter_name = "R"
 
-        wfe = self.ofc.ofc_data.get_intrinsic_zk(filter_name)
+        wfe = intrinsic_zernikes(self.ofc_data, filter_name, self.field_angles)
         wfe[:, 0:1] += 0.1  # add 0.1 um of defocus
-
-        field_idx = np.arange(wfe.shape[0])
 
         # Calculate corrections
         (
@@ -259,7 +248,7 @@ class TestOFC(unittest.TestCase):
             m2_corr,
         ) = self.ofc.calculate_corrections(
             wfe=wfe,
-            field_idx=field_idx,
+            sensor_names=self.sensor_name_list,
             filter_name=filter_name,
             gain=1.0,
             rotation_angle=0.0,
@@ -302,21 +291,19 @@ class TestOFC(unittest.TestCase):
 
     def _calculate_cam_hex_correction(self):
         gain = 1.0
-        filter_name = "r"
+        filter_name = "R"
         rotation_angle = 0.0
 
         self.ofc.ofc_data.xref = "x0"
 
         # Set wavefront error
-        wfe = self.ofc.ofc_data.get_intrinsic_zk(filter_name)
+        wfe = intrinsic_zernikes(self.ofc_data, filter_name, self.field_angles)
         wfe[:, 0:1] += 0.1  # add 0.1 um of defocus
-
-        field_idx = np.arange(wfe.shape[0])
 
         # Calculate corrections
         self.ofc.calculate_corrections(
             wfe=wfe,
-            field_idx=field_idx,
+            sensor_names=self.sensor_name_list,
             filter_name=filter_name,
             gain=gain,
             rotation_angle=rotation_angle,

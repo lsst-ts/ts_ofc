@@ -42,7 +42,7 @@ class TestOFCController(unittest.TestCase):
         self.ofc_controller.dof_state0 = test_dof_state0
         self.ofc_controller.reset_dof_state()
 
-        self.filter_name = "r"
+        self.filter_name = "R"
 
     def test_uk_nogain_x0(self):
         self.ofc_data.xref = "x0"
@@ -50,7 +50,8 @@ class TestOFCController(unittest.TestCase):
         sum_uk = np.zeros(50)
         for _ in range(3):
             uk = self.ofc_controller.uk(
-                self.filter_name, self.ofc_controller.dof_state0 + sum_uk
+                self.filter_name,
+                self.ofc_controller.dof_state0 + sum_uk,
             )
             sum_uk += uk
 

@@ -28,7 +28,7 @@ import numpy as np
 
 from . import SensitivityMatrix
 from .ofc_data import OFCData
-from .utils import get_field_angle, intrinsic_zernikes
+from .utils import get_field_angles, intrinsic_zernikes
 
 
 class StateEstimator:
@@ -57,7 +57,7 @@ class StateEstimator:
     """
 
     def __init__(
-        self, ofc_data: OFCData, rcond: int = 1e-4, log: logging.Logger = None
+        self, ofc_data: OFCData, rcond: int = 1e-3, log: logging.Logger = None
     ) -> None:
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
@@ -73,7 +73,7 @@ class StateEstimator:
         self,
         filter_name: str,
         wfe: np.ndarray,
-        field_idx: np.ndarray,
+        sensor_names: list,
         rotation_angle: float,
     ) -> np.ndarray:
         """Compute the state in the basis of degrees of freedom.
@@ -86,8 +86,8 @@ class StateEstimator:
             Name of the filter. Must be in `self.intrinsic_zk`.
         wfe : `numpy.ndarray`
             Wavefront error im um.
-        field_idx : `numpy.ndarray`
-            Field indices for the sensors.
+        sensor_names : `list`
+            List of sensor names.
         rotation_angle : `float`
             Rotation angle in degrees.
 
@@ -101,7 +101,7 @@ class StateEstimator:
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Get the field angles for the sensors
-        field_angles = get_field_angle(self.sensor_names)
+        field_angles = get_field_angles(sensor_names)
 
         # Evaluate sensitivity matrix at sensor positions
         sensitivity_matrix = dz_sensitivity_matrix.evaluate(
@@ -149,12 +149,15 @@ class StateEstimator:
         # y = wfe - intrinsic_zk - y2_correction
         # y2_correction is a static correction for the
         # deviation currently set to zero.
+        y2_correction = np.array(
+            [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
+        )
         y = (
             wfe[:, self.ofc_data.zn3_idx]
-            - intrinsic_zernikes(filter_name, field_angles, rotation_angle)[
-                :, self.ofc_data.zn3_idx
-            ]
-            - self.ofc_data.y2_correction[np.ix_(field_idx, self.ofc_data.zn3_idx)]
+            - intrinsic_zernikes(
+                self.ofc_data, filter_name, field_angles, rotation_angle
+            )[:, self.ofc_data.zn3_idx]
+            - y2_correction[:, self.ofc_data.zn3_idx]
         )
 
         # Reshape wavefront error to dimensions

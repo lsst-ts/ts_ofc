@@ -94,7 +94,7 @@ class OFC:
         self.default_gain = 0.7
 
         # Truncation of degenerate modes after correction calculation
-        self.rcond_degeneracy = 5e-4
+        self.rcond_degeneracy = 1e-3
 
         # Last visit dof
         self.lv_dof = self.ofc_controller.dof_state.copy()
@@ -161,7 +161,9 @@ class OFC:
         uk = self.ofc_controller.uk_gain(filter_name, optical_state, sensor_names)
 
         # Remove degeneracies from correction vector
-        uk = self.ofc_controller.remove_degeneracies(uk, rcond=self.rcond_degeneracy)
+        uk = self.ofc_controller.remove_degeneracies(
+            uk, sensor_names, rcond=self.rcond_degeneracy
+        )
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)

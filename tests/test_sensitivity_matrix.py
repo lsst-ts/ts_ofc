@@ -36,14 +36,15 @@ class TestSensitivityMatrix(unittest.TestCase):
 
         self.sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
-        self.unrotated_sensitivity_matrix = self.sensitivity_matrix.evaluate()
+        self.unrotated_sensitivity_matrix = self.sensitivity_matrix.evaluate(
+            field_angles=self.ofc_data.gq_points
+        )
 
-        # Import the old sensitivity matrix evaluated at 35 GQ points
         gq_sensitivity_matrix_file = Path(
             glob(
                 str(
-                    self.ofc_data.config_dir
-                    / "sensitivity_matrix"
+                    Path(__file__).parent.absolute()
+                    / "testData"
                     / "legacy"
                     / f"lsst_{self.ofc_data.sen_m_filename_root}*.yaml"
                 )
@@ -53,11 +54,27 @@ class TestSensitivityMatrix(unittest.TestCase):
         with open(gq_sensitivity_matrix_file, "r") as fp:
             self.gq_sensitivity_matrix = np.array(yaml.safe_load(fp))
 
+            # Note that we use only up to 31 index for the old
+            # sensitivity matrix, because the last 4 elements
+            # corresponded to the corner wavvefront sensors
+            # which we have excluded from the unrotated_sensitivity_matrix.
+            self.gq_sensitivity_matrix = self.gq_sensitivity_matrix[:31, ...]
+
     def mean_squared_residual(self, new_array, reference_array):
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
 
     def test_dz_sensitivity_matrix(self):
+        print(self.ofc_data.gq_points)
+        # Check that the sensitivity matrix for dz is the same as the one
+        # that we had before the last ts_ofc refactor.
         for dof in np.arange(50):
+            print(dof)
+            print(
+                self.mean_squared_residual(
+                    self.unrotated_sensitivity_matrix[..., dof],
+                    self.gq_sensitivity_matrix[..., dof],
+                )
+            )
             assert (
                 self.mean_squared_residual(
                     self.unrotated_sensitivity_matrix[..., dof],
@@ -101,7 +118,7 @@ class TestSensitivityMatrix(unittest.TestCase):
 
         for angle in angles:
             rotated_sensitivity_matrix = self.sensitivity_matrix.evaluate(
-                rotation_angle=angle
+                field_angles=self.ofc_data.gq_points, rotation_angle=angle
             )
 
             # Check for zernikes excited uniformally

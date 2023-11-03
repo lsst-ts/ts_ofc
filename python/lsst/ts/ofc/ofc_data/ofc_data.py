@@ -288,18 +288,18 @@ class OFCData(BaseOFCData):
         Raises
         ------
         RuntimeError
-            If instrument configuration directory does not exists.
-            If y2 configuration files does not exists in the configuration
-            directory.
-            If intrinsic zernike coefficients files does not exists in the
-            configuration directory.
-            If image quality weight file not exists in the configuration
-            directory.
+            If y2 configuration files does not exist.
+            If intrinsic zernike coefficients files does not exist.
+            If gaussian quadrature points file does not exist.
+            If sensitivity matrix file does not exist.
+            If configuration file does not exist.
         """
 
         # Set the name of the instrument. Either lsst or comcam
         camera_type = instrument if instrument != "lsstfam" else "lsst"
 
+        # Reading bend mode data
+        # -----------------------
         self.log.debug("Reading bend mode data.")
 
         for comp in self.bend_mode:
@@ -316,25 +316,19 @@ class OFCData(BaseOFCData):
 
         self.log.debug(f"Configuring {instrument}")
 
-        inst_config_dir = self.config_dir / instrument
-        if not inst_config_dir.exists():
-            RuntimeError(
-                f"Instrument {inst_config_dir!s} configuration directory does not exists. "
-                f"Make sure the name you are passing ({instrument}) exists in the configuration directory: "
-                f"{self.config_dir!s}."
-            )
-
         # Load all data to local variables and only set them at the end if
         # everthing went fine. Otherwise you can leave the class in a broken
         # state.
 
         # Read dof_state0
+        # ---------------
         dof_state0_path = self.config_dir / self.dof_state0_filename
 
         with open(dof_state0_path) as fp:
             dof_state0 = yaml.safe_load(fp)
 
         # Read image quality weight
+        # -------------------------
         gq_path = self.config_dir / "gq_points" / self.gq_filename
 
         self.log.debug(f"Configuring image quality weight: {gq_path}")
@@ -344,35 +338,64 @@ class OFCData(BaseOFCData):
                 data = yaml.safe_load(fp)
             # The first two elements of each rwo correspond to the field angle,
             # the third element is the weight.
-            gq_points = np.array([entry[:2] for entry in data])
+            gq_points = [(-entry[0], entry[1]) for entry in data]
             image_quality_weight = np.array([entry[2] for entry in data])
         except FileNotFoundError:
             raise RuntimeError(
-                f"Could not read image quality file from instrument config directory: {gq_path!s}. "
+                "Could not read gaussian quadrature points file "
+                f"from instrument config directory: {gq_path!s}. "
                 "Check your instrument configuration directory integrity."
             )
 
         # Read y2 file
-        y2_path = self.config_dir / self.y2_filename
+        # -------------
+        y2_path = self.config_dir / "y2" / f"{instrument}{self.y2_filename_root}"
 
         self.log.debug(f"Configuring y2: {y2_path}")
 
         try:
             with open(y2_path) as fp:
-                y2_correction = np.array(yaml.safe_load(fp))
+                y2_correction = yaml.safe_load(fp)
         except FileNotFoundError:
             raise RuntimeError(
                 f"Could not read y2 file from instrument config directory: {y2_path!s}. "
                 "Check your instrument configuration directory integrity."
             )
 
-        # Read all intrinsic zernike coefficients data.
+        # If the instrument is lsst read and set up
+        # y2_correction for the gaussian quadrature points
+        # ------------------------------------------------
+        if instrument == "lsst":
+            gq_y2_path = (
+                self.config_dir / "y2" / f"{instrument}_gq{self.y2_filename_root}"
+            )
+
+            self.log.debug(f"Configuring y2: {gq_y2_path}")
+
+            try:
+                with open(gq_y2_path) as fp:
+                    gq_y2_correction = yaml.safe_load(fp)
+            except FileNotFoundError:
+                raise RuntimeError(
+                    "Could not read y2 gaussian quadrature file "
+                    f"from instrument config directory: {gq_y2_path!s}. "
+                    "Check your instrument configuration directory integrity."
+                )
+
+        # Read all intrinsic zernike coefficients data
+        # --------------------------------------------
         self.log.debug(
             f"Configuring instrisic zernikes: {len(self.eff_wavelength.keys())} files."
         )
 
         intrinsic_zk = dict()
         intrinsic_zk_path = self.config_dir / "intrinsic_zernikes" / camera_type
+        if not intrinsic_zk_path.exists():
+            RuntimeError(
+                f"Instrument {camera_type!s} intrinsic zernikes directory does not exists. "
+                f"Make sure the name you are passing ({camera_type}) "
+                "exists in the intrinsic zernikes directory"
+            )
 
         for filter_name in self.eff_wavelength.keys():
             file_name = (
@@ -383,8 +406,11 @@ class OFCData(BaseOFCData):
             with open(intrinsic_file) as fp:
                 intrinsic_zk[filter_name] = np.array(yaml.safe_load(fp))
 
-        # Load the double zernikes sensitivity matrix
-        senm_file = Path(
+        # Read double zernikes sensitivity matrix
+        # ---------------------------------------
+        self.log.debug("Configuring sensitivity matrix:")
+
+        sensitivity_matrix_path = Path(
             glob(
                 str(
                     self.config_dir
@@ -393,17 +419,32 @@ class OFCData(BaseOFCData):
                 )
             )[0]
         )
-        self.log.debug(f"Configuring sensitivity matrix: {senm_file}")
 
-        with open(senm_file, "r") as fp:
-            sen_m = np.array(yaml.safe_load(fp))
+        try:
+            with open(sensitivity_matrix_path, "r") as fp:
+                sensitivity_matrix = np.array(yaml.safe_load(fp))
+        except FileNotFoundError:
+            raise RuntimeError(
+                "Could not read sensitivity_matrix file from "
+                f"instrument sensitivity_matrix directory: {sensitivity_matrix_path!s}. "
+                "Check your sensitivity matrix directory integrity."
+            )
 
-        with open(
-            self.config_dir / "configurations" / f"{camera_type}.yaml"
-        ) as yaml_file:
-            config = yaml.safe_load(yaml_file)
+        # Read configuration file for camera_type
+        # ---------------------------------------
+        configuration_path = self.config_dir / "configurations" / f"{camera_type}.yaml"
+        try:
+            with open(configuration_path) as yaml_file:
+                config = yaml.safe_load(yaml_file)
+        except FileNotFoundError:
+            raise RuntimeError(
+                "Could not read configuration file from instrument "
+                f"configurations directory: {configuration_path!s}. "
+                "Check your configurations directory integrity."
+            )
 
-        self.log.debug(f"done {instrument}")
+        self.log.debug(f"Done configuring {instrument}")
+
         # Now all data was read successfully, time to set it up.
         self.config = config
         self.gq_points = gq_points
@@ -412,8 +453,9 @@ class OFCData(BaseOFCData):
         )
         self.dof_state0 = dof_state0
         self.y2_correction = y2_correction
+        self.gq_y2_correction = gq_y2_correction if instrument == "lsst" else None
         self.intrinsic_zk = intrinsic_zk
-        self.sensitivity_matrix = sen_m
+        self.sensitivity_matrix = sensitivity_matrix
         self.start_task.set_result(instrument)
 
     async def __aenter__(self):

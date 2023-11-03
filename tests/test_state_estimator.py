@@ -23,7 +23,7 @@ import pathlib
 import unittest
 
 import numpy as np
-from lsst.ts.ofc import OFCData, StateEstimator, SensitivityMatrix
+from lsst.ts.ofc import OFCData, SensitivityMatrix, StateEstimator
 
 
 class TestStateEstimator(unittest.TestCase):
@@ -41,12 +41,9 @@ class TestStateEstimator(unittest.TestCase):
         )
 
         dofs = np.loadtxt(
-            pathlib.Path(__file__).parent.absolute()
-            / "testData"
-            / "lsst_dof_iter0.txt"
+            pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_dof_iter0.txt"
         )
         self.dofs = dofs[:, 1]
-
 
         # Constuct the double zernike sensitivity matrix
         self.dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
@@ -63,23 +60,32 @@ class TestStateEstimator(unittest.TestCase):
 
     def compute_sensitivity_matrix(self, field_idx, rotation_angle):
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(rotation_angle, field_idx)
+        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(
+            rotation_angle, field_idx
+        )
 
         # Select sensitivity matrix only at used degrees of freedom
-        sensitivity_matrix = sensitivity_matrix[:, self.dz_sensitivity_matrix.ofc_data.zn3_idx, :]
+        sensitivity_matrix = sensitivity_matrix[
+            :, self.dz_sensitivity_matrix.ofc_data.zn3_idx, :
+        ]
 
-        # Reshape sensitivity matrix to dimensions (#zk * #sensors, # dofs) = (19 * #sensors, 50)
+        # Reshape sensitivity matrix to dimensions
+        # (#zk * #sensors, # dofs) = (19 * #sensors, 50)
         size_ = sensitivity_matrix.shape[2]
         sensitivity_matrix = sensitivity_matrix.reshape((-1, size_))
 
         # Select sensitivity matrix only at used degrees of freedom
-        sensitivity_matrix = sensitivity_matrix[..., self.dz_sensitivity_matrix.ofc_data.dof_idx]
+        sensitivity_matrix = sensitivity_matrix[
+            ..., self.dz_sensitivity_matrix.ofc_data.dof_idx
+        ]
 
         return sensitivity_matrix
-    
+
     def test_dof_state(self):
         # Compute sensitivity matrix
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_idx, rotation_angle=0.0)
+        sensitivity_matrix = self.compute_sensitivity_matrix(
+            self.field_idx, rotation_angle=0.0
+        )
 
         # Compute optical state estimate
         state = self.estimator.dof_state(
@@ -90,20 +96,25 @@ class TestStateEstimator(unittest.TestCase):
         n_values = len(self.estimator.ofc_data.dof_idx)
         self.assertEqual(len(state), n_values)
 
-        # Check derived degrees of freedom close 
+        # Check derived degrees of freedom close
         assert self.mean_squared_residual(state, self.dofs) < 1e-2
 
-        # Check derived wavefront from state estimate matches the one from original dofs
-        residual = self.mean_squared_residual(sensitivity_matrix@self.dofs, sensitivity_matrix@state)
+        # Check derived wavefront from state estimate
+        # matches the one from original dofs
+        residual = self.mean_squared_residual(
+            sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
+        )
         assert residual < 1e-3
 
     def test_dof_state_trim_zn_dof(self):
         # Set zernike indices to Z4-Z9
         self.estimator.ofc_data.zn3_idx = np.arange(5)
         self.dz_sensitivity_matrix.ofc_data.zn3_idx = np.arange(5)
-        
+
         # Compute sensitivity matrix
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_idx, rotation_angle=0.0)
+        sensitivity_matrix = self.compute_sensitivity_matrix(
+            self.field_idx, rotation_angle=0.0
+        )
 
         # Set used Degrees of Freedom
         new_comp_dof_idx = dict(
@@ -123,8 +134,11 @@ class TestStateEstimator(unittest.TestCase):
         n_values = len(self.estimator.ofc_data.dof_idx)
         self.assertEqual(len(state), n_values)
 
-        # Check derived wavefront from state estimate matches the one from original dofs
-        residual = self.mean_squared_residual(sensitivity_matrix@self.dofs, sensitivity_matrix[..., :n_values]@state)
+        # Check derived wavefront from state estimate matches
+        # the one from original dofs
+        residual = self.mean_squared_residual(
+            sensitivity_matrix @ self.dofs, sensitivity_matrix[..., :n_values] @ state
+        )
         assert residual < 1e-2
 
     def test_dof_state_not_enough_zk(self):
@@ -141,7 +155,8 @@ class TestStateEstimator(unittest.TestCase):
         new_comp_dof_idx["M1M3Bend"][:10] = True
         self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
-        # Check that optical state estimation raises error when # dofs > # zernikes
+        # Check that optical state estimation raises error
+        # when # dofs > # zernikes
         with self.assertRaises(RuntimeError):
             self.estimator.dof_state("r", self.wfe, self.field_idx, rotation_angle=0.0)
 

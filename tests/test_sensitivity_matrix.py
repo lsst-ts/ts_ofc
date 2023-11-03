@@ -22,10 +22,9 @@
 import unittest
 from glob import glob
 from pathlib import Path
-import yaml
 
 import numpy as np
-
+import yaml
 from lsst.ts.ofc import OFCData, SensitivityMatrix
 
 
@@ -72,7 +71,8 @@ class TestSensitivityMatrix(unittest.TestCase):
 
         # Define  degrees of freedom that excite zernikes across the field
         # uniformly (radial order 0). In particular, we look at those that are
-        # constant accross the field. For these any rotation should give the same result.
+        # constant accross the field. For these any rotation
+        # should give the same result.
         dof_zks_r0 = [
             (0, 4),  # M2 dz excites focus Z4 uniformly across the field
             (1, 8),  # M2 dx excites coma Z8 uniformly across the field
@@ -100,9 +100,12 @@ class TestSensitivityMatrix(unittest.TestCase):
         ]
 
         for angle in angles:
-            rotated_sensitivity_matrix = self.sensitivity_matrix.evaluate(rotation_angle=angle)
+            rotated_sensitivity_matrix = self.sensitivity_matrix.evaluate(
+                rotation_angle=angle
+            )
 
-            # Check for zernikes excited uniformally accross the field (radial order 0)
+            # Check for zernikes excited uniformally
+            # accross the field (radial order 0)
             for dof, zernike in dof_zks_r0:
                 residual = self.mean_squared_residual(
                     rotated_sensitivity_matrix[:, zernike - 4, dof],
@@ -110,8 +113,9 @@ class TestSensitivityMatrix(unittest.TestCase):
                 )
                 assert residual < 1e-3
 
-            # Check for excited zernikes that are symmetric when rotate 180 degrees,
-            # but not when rotated 90 degrees or any other angle.
+            # Check for excited zernikes that are symmetric
+            # when rotate 180 degrees, but not when rotated 90
+            # degrees or any other angle.
             for dof, zernike in dof_zks_r2:
                 residual = self.mean_squared_residual(
                     rotated_sensitivity_matrix[:, zernike - 4, dof],

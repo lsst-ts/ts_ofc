@@ -32,7 +32,9 @@ class TestOFC(unittest.TestCase):
 
     def setUp(self):
         self.ofc_data = OFCData("lsst")
-        self.ofc_data.motion_penalty = 0.0001 # Set small motion penalty to allow for larger corrections
+        self.ofc_data.motion_penalty = (
+            0.0001  # Set small motion penalty to allow for larger corrections
+        )
         self.ofc = OFC(self.ofc_data)
         self.test_data_path = (
             pathlib.Path(__file__).parent.absolute()
@@ -47,28 +49,12 @@ class TestOFC(unittest.TestCase):
 
         self.assertTrue(np.all(self.ofc.lv_dof == 0))
 
-    def test_pssn_data(self):
-        self.assertTrue("sensor_id" in self.ofc.pssn_data)
-        self.assertTrue("pssn" in self.ofc.pssn_data)
-        self.assertTrue(self.ofc.pssn_data["sensor_id"] is None)
-        self.assertTrue(self.ofc.pssn_data["pssn"] is None)
-
     def test_set_fwhm_data(self):
         fwhm_values = np.ones((5, 19)) * 0.2
-        sensor_id = np.arange(5)
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values)
 
-        self.assertTrue(np.all(sensor_id == self.ofc.pssn_data["sensor_id"]))
-        self.assertAlmostEqual(self.ofc.pssn_data["pssn"][0], 0.9139012, places=6)
-
-    def test_set_fwhm_data_fails(self):
-        # Passing fwhm_values with 4 columns instead of 5
-        fwhm_values = np.ones((4, 19)) * 0.2
-        sensor_id = np.arange(5)
-
-        with self.assertRaises(RuntimeError):
-            self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        assert np.allclose(self.ofc.fwhm_data, fwhm_values)
 
     def test_reset(self):
         dof = np.ones_like(self.ofc.ofc_controller.dof_state)
@@ -95,25 +81,24 @@ class TestOFC(unittest.TestCase):
         self.assertEqual(len(self.ofc.lv_dof), 50)
         self.assertEqual(np.sum(np.abs(self.ofc.lv_dof)), 0)
 
-    def test_set_pssn_gain_unconfigured(self):
+    def test_set_gain_from_fwhm_unconfigured(self):
         with self.assertRaises(RuntimeError):
-            self.ofc.set_pssn_gain()
+            self.ofc.set_gain_from_fwhm()
 
-    def test_set_pssn_gain(self):
+    def test_set_gain_from_fwhm(self):
         fwhm_values = np.ones((5, 19)) * 0.2
-        sensor_id = np.arange(5)
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values)
 
-        self.ofc.set_pssn_gain()
+        self.ofc.set_gain_from_fwhm()
 
         self.assertTrue(self.ofc.ofc_controller.gain, self.ofc.default_gain)
 
         fwhm_values = np.ones((5, 19))
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values)
 
-        self.ofc.set_pssn_gain()
+        self.ofc.set_gain_from_fwhm()
 
         self.assertTrue(self.ofc.ofc_controller.gain, 1.0)
 
@@ -122,7 +107,7 @@ class TestOFC(unittest.TestCase):
         filter_name = "r"
         rotation_angle = 0.0
 
-        self.ofc.ofc_data.xref = '0'
+        self.ofc.ofc_data.xref = "0"
 
         wfe, field_idx = self._get_wfe()
 
@@ -135,7 +120,11 @@ class TestOFC(unittest.TestCase):
             m1m3_corr,
             m2_corr,
         ) = self.ofc.calculate_corrections(
-            wfe=wfe, field_idx=field_idx, filter_name=filter_name, gain=gain, rotation_angle=rotation_angle
+            wfe=wfe,
+            field_idx=field_idx,
+            filter_name=filter_name,
+            gain=gain,
+            rotation_angle=rotation_angle,
         )
 
         self.assertTrue(isinstance(m2_hex_corr, Correction))
@@ -154,22 +143,16 @@ class TestOFC(unittest.TestCase):
         self.assertEqual(len(m2_corr()), 72)
 
         for computed_value in m2_hex_corr():
-            with self.subTest(
-                correction="M2Hexapod",
-                computed_value=computed_value
-            ):
+            with self.subTest(correction="M2Hexapod", computed_value=computed_value):
                 self.assertAlmostEqual(computed_value, 0.0, places=4)
 
         for computed_value in cam_hex_corr():
-            with self.subTest(
-                correction="CamHexapod",
-                computed_value=computed_value
-            ):
+            with self.subTest(correction="CamHexapod", computed_value=computed_value):
                 self.assertAlmostEqual(computed_value, 0.0, places=4)
 
         # Check corrections match the original DOF state up to 0.02ums
-        for idx, computed_value, expected_value in zip(np.arange(50),
-            self.ofc.lv_dof, self.ofc.ofc_controller.dof_state0
+        for idx, computed_value, expected_value in zip(
+            np.arange(50), self.ofc.lv_dof, self.ofc.ofc_controller.dof_state0
         ):
             with self.subTest(
                 correction=f"Correction DOF {idx}",
@@ -177,7 +160,6 @@ class TestOFC(unittest.TestCase):
                 expected_value=expected_value,
             ):
                 assert np.abs(expected_value + computed_value) < 2e-2
-
 
     def _get_wfe(self):
         wfe = np.loadtxt(self.test_data_path)
@@ -245,7 +227,7 @@ class TestOFC(unittest.TestCase):
                 self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
     def test_truncate_dof(self):
-        """ Check that we can truncate the number of degrees of freedom used 
+        """Check that we can truncate the number of degrees of freedom used
         in the calculation successfully.
         """
 
@@ -286,14 +268,14 @@ class TestOFC(unittest.TestCase):
         # Retrieve camera hexapod corrections
         x, y, z, u, v, w = cam_hex_corr()
 
-        # Check that the camera hexapod corrections are right. 
+        # Check that the camera hexapod corrections are right.
         # All of them should be zero except for defocus.
-        self.assertAlmostEqual(x, 0.0, places = 5)
-        self.assertAlmostEqual(y, 0.0, places = 5)
-        self.assertAlmostEqual(z, -6, places = 0)
-        self.assertAlmostEqual(u, 0.0, places = 9)
-        self.assertAlmostEqual(v, 0.0, places = 9)
-        self.assertAlmostEqual(w, 0.0, places = 9)
+        self.assertAlmostEqual(x, 0.0, places=5)
+        self.assertAlmostEqual(y, 0.0, places=5)
+        self.assertAlmostEqual(z, -6, places=0)
+        self.assertAlmostEqual(u, 0.0, places=9)
+        self.assertAlmostEqual(v, 0.0, places=9)
+        self.assertAlmostEqual(w, 0.0, places=9)
 
         # Check that the other corrections are zero
         self.assertTrue(np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr())))
@@ -308,21 +290,22 @@ class TestOFC(unittest.TestCase):
         # The DOF should be aggregated
         correction = self._calculate_cam_hex_correction()
 
-        # Check that the accumulated correction is twice the original correction
+        # Check that the accumulated correction is
+        # twice the original correction.
         # Note that this works because we reset the state both times
-        self.assertAlmostEqual(correction[0], 2*correction0[0])
-        self.assertAlmostEqual(correction[1], 2*correction0[1])
-        self.assertAlmostEqual(correction[2], 2*correction0[2])
-        self.assertAlmostEqual(correction[3], 2*correction0[3])
-        self.assertAlmostEqual(correction[4], 2*correction0[4])
-        self.assertAlmostEqual(correction[5], 2*correction0[5])
+        self.assertAlmostEqual(correction[0], 2 * correction0[0])
+        self.assertAlmostEqual(correction[1], 2 * correction0[1])
+        self.assertAlmostEqual(correction[2], 2 * correction0[2])
+        self.assertAlmostEqual(correction[3], 2 * correction0[3])
+        self.assertAlmostEqual(correction[4], 2 * correction0[4])
+        self.assertAlmostEqual(correction[5], 2 * correction0[5])
 
     def _calculate_cam_hex_correction(self):
         gain = 1.0
         filter_name = "r"
         rotation_angle = 0.0
 
-        self.ofc.ofc_data.xref = 'x0'
+        self.ofc.ofc_data.xref = "x0"
 
         # Set wavefront error
         wfe = self.ofc.ofc_data.get_intrinsic_zk(filter_name)
@@ -332,10 +315,14 @@ class TestOFC(unittest.TestCase):
 
         # Calculate corrections
         self.ofc.calculate_corrections(
-            wfe=wfe, field_idx=field_idx, filter_name=filter_name, gain=gain, rotation_angle=rotation_angle
+            wfe=wfe,
+            field_idx=field_idx,
+            filter_name=filter_name,
+            gain=gain,
+            rotation_angle=rotation_angle,
         )
 
-        # Return corrections for camera hexapod. 
+        # Return corrections for camera hexapod.
         # Corrections are accumulated the second time this function is run.
         cam_hex_corr = self.ofc.get_correction("camHexPos")
         return cam_hex_corr.correction

@@ -21,8 +21,7 @@
 import unittest
 
 import numpy as np
-
-from lsst.ts.ofc.utils import get_pkg_root, get_config_dir, rot_1d_array
+from lsst.ts.ofc.utils import get_config_dir, get_pkg_root, rot_1d_array
 
 
 class TestUtils(unittest.TestCase):
@@ -68,6 +67,7 @@ class TestUtils(unittest.TestCase):
 
         self.assertAlmostEqual(rot_vec[0], vec[1])
         self.assertAlmostEqual(rot_vec[1], vec[0])
+
 
 if __name__ == "__main__":
     # Run the unit test

@@ -48,13 +48,13 @@ class OFC:
     Attributes
     ----------
     default_gain : `float`
-        Default gain, used when setting gain in `set_pssn_gain()` when fwhm is
-        above `fwhm_threshold`.
+        Default gain, used when setting gain in
+        `set_gain_from_fwhm()` when fwhm is above `fwhm_threshold`.
     dof_order : `tuple`
         Order of the degrees of freedom.
     fwhm_threshold : `float`
         Full width half maximum threshold when estimating gain with
-        `set_pssn_gain()`.
+        `set_gain_from_fwhm()`.
     log : `logging.Logger`
         Logger class used for logging operations.
     lv_dof : `np.ndarray`
@@ -149,7 +149,7 @@ class OFC:
             )
         # Set the gain value
         if gain < 0.0:
-            self.set_pssn_gain()
+            self.set_gain_from_fwhm()
         else:
             self.ofc_controller.gain = gain
 
@@ -264,7 +264,7 @@ class OFC:
 
         return self.get_all_corrections()
 
-    def set_pssn_gain(self) -> None:
+    def set_gain_from_fwhm(self) -> None:
         """Set the gain value based on the FWHM, which comes from the FWHM by
         DM team.
 

@@ -23,8 +23,8 @@ import logging
 
 import numpy as np
 
-from . import BendModeToForce
-from . import SensitivityMatrix
+from . import BendModeToForce, SensitivityMatrix
+from .utils import get_field_angle
 
 
 class OFCController:
@@ -170,41 +170,6 @@ class OFCController:
         else:
             raise ValueError(f"Gain must be in the range of [0, 1]. Got {value}.")
 
-    def effective_fwhm_g4(self, pssn, field_idx):
-        """Calculate the effective FWHM by Gaussian quadrature.
-
-        FWHM: Full width at half maximum.
-        FWHM = eta * FWHM_{atm} * sqrt(1/PSSN -1).
-        Effective GQFWHM = sum_{i} (w_{i}* FWHM_{i}).
-
-        Parameters
-        ----------
-        pssn : `numpy.ndarray` or `list`
-            Normalized point source sensitivity (PSSN).
-        fieldIdx : `numpy.ndarray` or `list` of `int`
-            Field index array.
-
-        Returns
-        -------
-        `float`
-            Effective FWHM in arcsec by Gaussain quadrature.
-
-        Raises
-        ------
-        ValueError
-            Input values are unphysical.
-        """
-
-        # Normalized image quality weight
-        n_imqw = self.ofc_data.normalized_image_quality_weight[field_idx]
-        fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1.0 / np.array(pssn) - 1.0)
-        fwhm_gq = np.sum(n_imqw * fwhm)
-
-        if np.isnan(fwhm_gq) or np.isinf(fwhm_gq):
-            raise ValueError("Input values are unphysical.")
-
-        return fwhm_gq
-
     def authority(self):
         """Compute the authority of the system.
 
@@ -309,7 +274,7 @@ class OFCController:
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
-    def uk_gain(self, filter_name, dof_state):
+    def uk_gain(self, filter_name, dof_state, sensor_names):
         """Estimate uk in the basis of degree of freedom (DOF) with gain
         compensation.
 
@@ -319,6 +284,8 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
+        sensor_names : `list` of `string`
+            List of sensor names.
 
         Returns
         -------
@@ -326,9 +293,11 @@ class OFCController:
             Calculated uk in the basis of DOF.
         """
 
-        return self.gain * self.uk(filter_name, dof_state)
+        return self.gain * self.uk(filter_name, dof_state, sensor_names)
 
-    def uk(self, filter_name: str, dof_state: np.ndarray) -> np.ndarray:
+    def uk(
+        self, filter_name: str, dof_state: np.ndarray, sensor_names: list[str]
+    ) -> np.ndarray:
         """Estimate the offset (`uk`) of degree of freedom (DOF) at time `k+1`
         based on the wavefront error (`yk`) at time `k`.
 
@@ -341,6 +310,8 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
+        sensor_names : `list` of `string`
+            List of sensor names.
 
         Returns
         -------
@@ -377,17 +348,26 @@ class OFCController:
 
         _dof_state = dof_state.reshape(-1, 1)
 
-        n_imqw = self.ofc_data.normalized_image_quality_weight
-
         # Constuct the double zernike sensitivity matrix
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = dz_sensitivity_matrix.evaluate()
+        # If the instrument is LSST, we will use the Gaussian
+        # Quadrature points to evaluate the sensitivity matrix.
+        # Otherwise, for full array mode instruments,
+        # we will use the sensor positions with equal weights.
+        if self.ofc_data.instrument == "lsst":
+            n_imqw = self.ofc_data.normalized_image_quality_weight
+            field_angles = self.ofc_data.gq_points
+        else:
+            n_imqw = np.ones(len(sensor_names)) / len(sensor_names)
+            field_angles = get_field_angle(sensor_names)
+
+        sensitivity_matrix = dz_sensitivity_matrix.evaluate(field_angles)
 
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
-        
+
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
 
@@ -415,28 +395,6 @@ class OFCController:
         )
 
         return uk.ravel()
-
-    def fwhm_to_pssn(self, fwhm):
-        """Convert the FWHM data to PSSN.
-
-        Take the array of FWHM values (nominally 1 per CCD) and convert
-        it to PSSN (nominally 1 per CCD).
-
-        Parameters
-        ----------
-        fwhm : `numpy.ndarray[x]`
-            An array of FWHM values with sensor information.
-
-        Returns
-        -------
-        pssn : `numpy.ndarray[y]`
-            An array of PSSN values.
-        """
-
-        denominator = self.ETA * self.FWHM_ATM
-        pssn = 1.0 / ((fwhm / denominator) ** 2 + 1.0)
-
-        return pssn
 
     def remove_degeneracies(self, uk: np.ndarray, rcond: float = 1e-7) -> np.ndarray:
         """Remove degeneracies from the correction vector.

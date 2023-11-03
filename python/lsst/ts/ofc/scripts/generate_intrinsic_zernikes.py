@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
+
 import argparse
-from astropy.io import fits
+import pathlib
+import textwrap
+
 import numpy as np
 import ruamel.yaml
-
-import textwrap
-import pathlib
+from astropy.io import fits
 from generate_sensitivity_matrix import get_intrinsic_zk
 
 
@@ -112,8 +114,8 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "filter",
-        choices=["r", "i", "z", "y", "g", "u"],
+        "--filter",
+        choices=["r", "i", "z", "y", "g", "u", ""],
         help="What filter to generate the double zernikes for",
     )
 

@@ -102,21 +102,6 @@ class TestOFCData(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.ofc_data.comp_dof_idx = new_dof_mask
 
-    def test_get_intrinsic_zk(self):
-        for filter_name in self.ofc_data.eff_wavelength:
-            with self.subTest(filter_name=filter_name):
-                intrinsic_zk = self.ofc_data.get_intrinsic_zk(filter_name)
-                self.assertTrue(isinstance(intrinsic_zk, np.ndarray))
-                self.assertEqual(len(intrinsic_zk), 35)
-
-                intrinsic_zk = self.ofc_data.get_intrinsic_zk(
-                    filter_name, np.arange(3, 5)
-                )
-                self.assertEqual(len(intrinsic_zk), 2)
-
-        with self.assertRaises(RuntimeError):
-            self.ofc_data.get_intrinsic_zk("bad_filter_name")
-
 
 class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):
     """Test the OFCData class when not using asyncio."""

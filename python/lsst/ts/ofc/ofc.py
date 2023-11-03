@@ -63,8 +63,8 @@ class OFC:
         Instance of `OFCController` class.
     ofc_data : `OFCData`
         OFC data container.
-    pssn_data : `dict`
-        Normalized point source sensitivity data.
+    fwhm_data : `dict`
+        Full Width Half Maximum data.
     state_estimator : `StateEstimator`
         Instance of `StateEstimator`.
 
@@ -81,7 +81,7 @@ class OFC:
         else:
             self.log = log.getChild(type(self).__name__)
 
-        self.pssn_data = dict(sensor_id=None, pssn=None)
+        self.fwhm_data = None
 
         self.ofc_data = ofc_data
 
@@ -104,7 +104,7 @@ class OFC:
     def calculate_corrections(
         self,
         wfe: np.ndarray,
-        field_idx: np.ndarray,
+        sensor_names: list,
         filter_name: str,
         gain: float,
         rotation_angle: float,
@@ -118,8 +118,8 @@ class OFC:
             An array of arrays (e.g. 2-d array) with wavefront erros. Each
             element contains an array of wavefront errors (in um) for a
             particular detector/field.
-        field_idx: `np.ndarray`
-            Array with field indices
+        sensor_names: `list`
+            List of sensor names.
         filter_name : `string`
             Name of the filter used in the observations. This must be a valid
             entry in the `ofc_data.intrinsic_zk` and `ofc_data.eff_wavelength`
@@ -142,10 +142,10 @@ class OFC:
             If size of `wfe` is different than `sensor_names`.
         """
 
-        if len(wfe) != len(field_idx):
+        if len(wfe) != len(sensor_names):
             RuntimeError(
                 f"Number of wavefront errors ({len(wfe)}) must be the same as "
-                f"number of field indexes ({len(field_idx)})."
+                f"number of sensors ({len(sensor_names)})."
             )
         # Set the gain value
         if gain < 0.0:
@@ -154,14 +154,14 @@ class OFC:
             self.ofc_controller.gain = gain
 
         optical_state = self.state_estimator.dof_state(
-            filter_name, wfe, field_idx, rotation_angle
+            filter_name, wfe, sensor_names, rotation_angle
         )
 
         # Calculate the uk based on the control algorithm
-        uk = self.ofc_controller.uk_gain(filter_name, optical_state)
+        uk = self.ofc_controller.uk_gain(filter_name, optical_state, sensor_names)
 
         # Remove degeneracies from correction vector
-        #uk = self.ofc_controller.remove_degeneracies(uk, rcond=self.rcond_degeneracy)
+        uk = self.ofc_controller.remove_degeneracies(uk, rcond=self.rcond_degeneracy)
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)
@@ -228,36 +228,17 @@ class OFC:
 
         self.lv_dof = np.zeros_like(self.ofc_controller.dof_state0)
 
-    def set_fwhm_data(self, fwhm, sensor_id) -> None:
+    def set_fwhm_data(self, fwhm) -> None:
         """Set the list of FWHMSensorData of each CCD of camera.
 
         Parameters
         ----------
         fwhm : `np.ndarray`
-            Array of arrays (e.g. 2-d array) which contains the FWHM data.
             Each element contains an array of fwhm (in arcsec) measurements for
-            a  particular sensor.
-        sensor_id : `np.array` of `int`
-            Array with the sensor id.
-
-        Raises
-        ------
-        RuntimeError
-            If size of `fwhm` and `sensor_id` are different.
+            a particular sensor.
         """
 
-        if len(fwhm) != len(sensor_id):
-            raise RuntimeError(
-                f"Size of fwhm ({len(fwhm)}) is different than sensor_id ({len(sensor_id)})."
-            )
-
-        self.pssn_data["sensor_id"] = sensor_id.copy()
-        self.pssn_data["pssn"] = np.zeros(len(fwhm))
-
-        for s_id, fw in enumerate(fwhm):
-            self.pssn_data["pssn"][s_id] = np.average(
-                self.ofc_controller.fwhm_to_pssn(fwhm)
-            )
+        self.fwhm_data = fwhm
 
     def reset(self) -> list[Correction]:
         """Reset the OFC calculation state, which is the aggregated DOF now.
@@ -284,23 +265,24 @@ class OFC:
         return self.get_all_corrections()
 
     def set_pssn_gain(self) -> None:
-        """Set the gain value based on the PSSN, which comes from the FWHM by
+        """Set the gain value based on the FWHM, which comes from the FWHM by
         DM team.
 
         Raises
         ------
         RuntimeError
-            If `pssn_data` is not properly set.
+            If `fwhm_data` is not properly set.
         """
 
-        if self.pssn_data["pssn"] is None or self.pssn_data["sensor_id"] is None:
+        if self.fwhm_data is None:
             raise RuntimeError(
-                "PSSN data not set. Run `set_fwhm_data` with appropriate data."
+                "FWHM data not set. Run `set_fwhm_data` with appropriate data."
             )
 
-        fwhm_gq = self.ofc_controller.effective_fwhm_g4(
-            self.pssn_data["pssn"], self.pssn_data["sensor_id"]
-        )
+        fwhm_gq = np.mean(self.fwhm_data)
+
+        if np.isnan(fwhm_gq) or np.isinf(fwhm_gq):
+            raise ValueError("FWHM values are unphysical.")
 
         if fwhm_gq > self.fwhm_threshold:
             self.ofc_controller.gain = 1.0

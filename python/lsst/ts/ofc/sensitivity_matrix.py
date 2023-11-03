@@ -21,8 +21,8 @@
 
 __all__ = ["SensitivityMatrix"]
 
-import numpy as np
 import galsim
+import numpy as np
 
 from .ofc_data import OFCData
 
@@ -41,8 +41,8 @@ class SensitivityMatrix:
 
     def evaluate(
         self,
+        field_angles: list,
         rotation_angle: float = 0.0,
-        field_idx: None | np.ndarray = None,
     ) -> np.ndarray:
         """Evaluate the sensitivity matrix for a given rotation angle.
 
@@ -50,9 +50,9 @@ class SensitivityMatrix:
         ----------
         rotation_angle : `float`
             Rotation angle in degrees.
-        field_idx : np.ndarray or None, optional
-            Array of field indices. If None, uses all the Gaussian
-            Quadrature points are used.
+        field_angles : `list` [`tuple` [`float`, `float`]]
+            List of tuples field angles in degrees.
+            [(field_x, field_y)]
 
         Returns
         -------
@@ -60,15 +60,8 @@ class SensitivityMatrix:
             Sensitivity matrix for the given rotation angle in degree.
         """
 
-        # Obtain the field indices for the sensors
-        # If sensor_names is None get sensitivity matrix at all GQ points
-        gq_points = (
-            self.ofc_data.gq_field_angles[field_idx, :]
-            if field_idx is not None
-            else self.ofc_data.gq_field_angles
-        )
-        # Get the field angles for the sensors
-        field_x, field_y = zip(*gq_points)
+        # Get the field angles
+        field_x, field_y = zip(*field_angles)
 
         # Convert rotation angle to radians
         rotation_angle = np.deg2rad(rotation_angle)

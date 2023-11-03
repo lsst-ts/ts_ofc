@@ -41,6 +41,7 @@ def default_eff_wavelenght():
         "I": 0.754,
         "Z": 0.868,
         "Y": 0.973,
+        "": 0.5,
     }
 
 
@@ -131,9 +132,6 @@ class BaseOFCData:
         +5900 um to -5900 um.
     sen_m_filename_root : `string`
         Filename root string for the sensitivity matrix M.
-    sensor_mapping_filename : `string`
-        Name of the file with the mapping between the sensor name and field
-        index.
     y2_filename : `string`
         Name of the file where `y2_correction` is read from.
     zn3_idx : `np.array` of `bool`
@@ -146,10 +144,8 @@ class BaseOFCData:
         Max number of zernikes used (to be filtered with `zn3_idx`).
     """
 
-    iqw_filename: str = "img_quality_weight.yaml"
+    gq_filename: str = "lsst_gq_points.yaml"
     y2_filename: str = "y2.yaml"
-    sensor_mapping_filename: str = "sensor_name_to_field_idx.yaml"
-    field_angles_filename: str = "field_xy.yaml"
     dof_state0_filename: str = "state0_in_dof.yaml"
     intrinsic_zk_filename_root: str = "intrinsic_zk"
     sen_m_filename_root: str = "sensitivity"

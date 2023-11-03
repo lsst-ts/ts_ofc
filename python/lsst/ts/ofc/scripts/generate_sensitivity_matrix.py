@@ -1,15 +1,15 @@
 import argparse
-from astropy.io import fits
+import pathlib
+import textwrap
+from typing import Tuple
+
 import batoid
 import batoid_rubin
 import galsim
 import numpy as np
 import ruamel.yaml
+from astropy.io import fits
 from tqdm import tqdm
-
-import textwrap
-from typing import Tuple
-import pathlib
 
 
 def get_fiducial(
@@ -24,7 +24,7 @@ def get_fiducial(
     instrument : str
         Name of the instrument. Either 'LSST' or 'ComCam'.
     band : str
-        Name of the filter. Either 'u', 'g', 'r', 'i', 'z', or 'y'.
+        Name of the filter. Either '', 'u', 'g', 'r', 'i', 'z', or 'y'.
 
     Returns
     -------
@@ -35,16 +35,20 @@ def get_fiducial(
     """
 
     # Get fiducial optical system from batoid.
-    fiducial = batoid.Optic.fromYaml(f"{instrument}_{band}.yaml")
+    if band == "":
+        fiducial = batoid.Optic.fromYaml(f"{instrument}_g_500.yaml")
+    else:
+        fiducial = batoid.Optic.fromYaml(f"{instrument}_{band}.yaml")
 
     # Get corresponding filter wavelength in um.
     wavelength = {
-        "u": 0.365,
-        "g": 0.480,
-        "r": 0.622,
-        "i": 0.754,
-        "z": 0.869,
-        "y": 0.971,
+        "U": 0.365,
+        "G": 0.480,
+        "R": 0.622,
+        "I": 0.754,
+        "Z": 0.869,
+        "Y": 0.971,
+        "": 0.5,
     }[band]
 
     return fiducial, wavelength
@@ -349,8 +353,8 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "filter",
-        choices=["r", "i", "z", "y", "g", "u"],
+        "--filter",
+        choices=["", "r", "i", "z", "y", "g", "u"],
         help="What filter to generate the sensitivity matrix for",
     )
 
@@ -365,4 +369,8 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def generate_intrinsic_zernikes() -> None:
+    main(parse_arguments())
+
+
+if __name__ == "__main__":
     main(parse_arguments())

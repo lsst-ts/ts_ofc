@@ -23,11 +23,9 @@ __all__ = ["OFCData"]
 
 import asyncio
 import logging
-
 from glob import glob
 from pathlib import Path
 
-import galsim
 import numpy as np
 import yaml
 
@@ -64,14 +62,14 @@ class OFCData(BaseOFCData):
         other files when the name is set.
     config_dir : `pathlib.Path`
         Path to the directory storing configuration files.
-    control_strategy : `string`
-        Name of the control strategy.
     dof_idx : `dict` of `string`
         Index of Degree of Freedom (DOF).
     field_idx : `dict` of `string`
         Mapping between sensor name and field index.
-    idx_dof : `dict` of `string`
-        Index of Degree of Freedom (DOF)
+    gq_points: `np.ndarray` of `float`
+        Gaussian Quadrature points for LSST field.
+    image_quality_weight : `np.ndarray` of `float`
+        Image quality weight for the Gaussian Quadrature points.
     intrinsic_zk : `dict` of `string`
         Intrinsic zernike coefficients per band per detector for a specific
         instrument configuration.
@@ -266,62 +264,6 @@ class OFCData(BaseOFCData):
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]
 
-    def get_intrinsic_zk(
-        self,
-        filter_name: str,
-        field_idx: np.ndarray | None = None,
-        rotation_angle: float = 0.0,
-    ) -> np.ndarray:
-        """Return reformated instrisic zernike coefficients.
-
-        Parameters
-        ----------
-        filter_name : `string`
-            Name of the filter to get intrinsic zernike coefficients. Must be
-            in the `intrinsic_zk` dictionary.
-        field_idx : `np.ndarray` or `None`, optional
-            Array with the field indexes to get instrisic data from (default
-            `None`). If not given, return all available data.
-        rotation_angle : `float`, optional
-            Rotation angle in degrees.
-
-        Raises
-        ------
-        RuntimeError :
-            If `filter_name` not valid.
-        """
-        if filter_name not in self.intrinsic_zk:
-            raise RuntimeError(
-                f"Invalid filter name {filter_name}. Must be one of {self.intrinsic_zk.keys()}."
-            )
-
-        if field_idx is None:
-            field_x, field_y = zip(*self.gq_field_angles)
-        else:
-            gq_points = self.gq_field_angles[field_idx, :]
-            field_x, field_y = zip(*gq_points)
-
-        # Convert rotation angle to radians
-        rotation_angle = np.deg2rad(rotation_angle)
-        
-        evaluated_zernikes = np.array(
-            [
-                zk.coef
-                for zk in galsim.zernike.DoubleZernike(
-                    self.intrinsic_zk[filter_name],
-                    # Rubin annuli
-                    uv_inner=self.config["pupil"]["R_inner"],
-                    uv_outer=self.config["pupil"]["R_outer"],
-                    xy_inner=self.config["obscuration"]["R_inner"],
-                    xy_outer=self.config["obscuration"]["R_outer"],
-                ).rotate(theta_uv=rotation_angle)(field_x, field_y)
-            ]
-        )
-
-        evaluated_zernikes *= self.eff_wavelength[filter_name]
-
-        return evaluated_zernikes[:, 4:23]
-
     async def configure_instrument(self, instrument: str) -> None:
         """Configure instrument concurrently.
 
@@ -354,6 +296,9 @@ class OFCData(BaseOFCData):
             If image quality weight file not exists in the configuration
             directory.
         """
+
+        # Set the name of the instrument. Either lsst or comcam
+        camera_type = instrument if instrument != "lsstfam" else "lsst"
 
         self.log.debug("Reading bend mode data.")
 
@@ -390,27 +335,20 @@ class OFCData(BaseOFCData):
             dof_state0 = yaml.safe_load(fp)
 
         # Read image quality weight
-        iqw_path = self.config_dir / "sample_points" / instrument / self.iqw_filename
+        gq_path = self.config_dir / "gq_points" / self.gq_filename
 
-        self.log.debug(f"Configuring image quality weight: {iqw_path}")
+        self.log.debug(f"Configuring image quality weight: {gq_path}")
 
         try:
-            with open(iqw_path) as fp:
+            with open(gq_path) as fp:
                 data = yaml.safe_load(fp)
-                # This data has an "interesting" format. The first column is
-                # the index of the sensor and the second is the weight. It kind
-                # of makes sense to use it this way because it is a detector
-                # index not just the line number. In any case, we must make
-                # sure we respect the index on the first column. This is not
-                # exactly efficient but better than risk users entering data
-                # out-of-order expecting the code to handle it and doesn't
-                image_quality_weight = np.zeros(len(data))
-                index = np.array([k for k in data.keys()], dtype=int)
-                _data = np.array([data[k] for k in data])
-                image_quality_weight[index] = _data
+            # The first two elements of each rwo correspond to the field angle,
+            # the third element is the weight.
+            gq_points = np.array([entry[:2] for entry in data])
+            image_quality_weight = np.array([entry[2] for entry in data])
         except FileNotFoundError:
             raise RuntimeError(
-                f"Could not read image quality file from instrument config directory: {iqw_path!s}. "
+                f"Could not read image quality file from instrument config directory: {gq_path!s}. "
                 "Check your instrument configuration directory integrity."
             )
 
@@ -434,25 +372,16 @@ class OFCData(BaseOFCData):
         )
 
         intrinsic_zk = dict()
-        camera_type = instrument if instrument != "lsstfam" else "lsst"
         intrinsic_zk_path = self.config_dir / "intrinsic_zernikes" / camera_type
 
         for filter_name in self.eff_wavelength.keys():
-            file_name = f"{self.intrinsic_zk_filename_root}_{filter_name.lower()}_31*.yaml"
+            file_name = (
+                f"{self.intrinsic_zk_filename_root}_{filter_name.lower()}_31*.yaml"
+            )
             intrinsic_file = Path(glob(str(intrinsic_zk_path / file_name))[0])
 
             with open(intrinsic_file) as fp:
                 intrinsic_zk[filter_name] = np.array(yaml.safe_load(fp))
-
-        self.log.debug(f"Configuring sensor mapping: {self.sensor_mapping_filename}")
-
-        with open(
-            self.config_dir
-            / "sample_points"
-            / instrument
-            / self.sensor_mapping_filename
-        ) as fp:
-            field_idx = yaml.safe_load(fp)
 
         # Load the double zernikes sensitivity matrix
         senm_file = Path(
@@ -470,12 +399,6 @@ class OFCData(BaseOFCData):
             sen_m = np.array(yaml.safe_load(fp))
 
         with open(
-            self.config_dir / "sample_points" / instrument / self.field_angles_filename
-        ) as fp:
-            gq_field_angles = np.array(yaml.safe_load(fp))
-            gq_field_angles[:, 0] *= -1
-
-        with open(
             self.config_dir / "configurations" / f"{camera_type}.yaml"
         ) as yaml_file:
             config = yaml.safe_load(yaml_file)
@@ -483,16 +406,14 @@ class OFCData(BaseOFCData):
         self.log.debug(f"done {instrument}")
         # Now all data was read successfully, time to set it up.
         self.config = config
-        self.image_quality_weight = image_quality_weight
+        self.gq_points = gq_points
         self.normalized_image_quality_weight = image_quality_weight / np.sum(
             image_quality_weight
         )
         self.dof_state0 = dof_state0
         self.y2_correction = y2_correction
         self.intrinsic_zk = intrinsic_zk
-        self.field_idx = field_idx
         self.sensitivity_matrix = sen_m
-        self.gq_field_angles = gq_field_angles
         self.start_task.set_result(instrument)
 
     async def __aenter__(self):

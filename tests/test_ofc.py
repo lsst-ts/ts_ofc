@@ -46,28 +46,12 @@ class TestOFC(unittest.TestCase):
 
         self.assertTrue(np.all(self.ofc.lv_dof == 0))
 
-    def test_pssn_data(self):
-        self.assertTrue("sensor_id" in self.ofc.pssn_data)
-        self.assertTrue("pssn" in self.ofc.pssn_data)
-        self.assertTrue(self.ofc.pssn_data["sensor_id"] is None)
-        self.assertTrue(self.ofc.pssn_data["pssn"] is None)
-
     def test_set_fwhm_data(self):
         fwhm_values = np.ones((5, 19)) * 0.2
-        sensor_id = np.arange(5)
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values)
 
-        self.assertTrue(np.all(sensor_id == self.ofc.pssn_data["sensor_id"]))
-        self.assertAlmostEqual(self.ofc.pssn_data["pssn"][0], 0.9139012, places=6)
-
-    def test_set_fwhm_data_fails(self):
-        # Passing fwhm_values with 4 columns instead of 5
-        fwhm_values = np.ones((4, 19)) * 0.2
-        sensor_id = np.arange(5)
-
-        with self.assertRaises(RuntimeError):
-            self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        assert np.allclose(self.ofc.fwhm_data, fwhm_values)
 
     def test_reset(self):
         dof = np.ones_like(self.ofc.ofc_controller.dof_state)
@@ -94,25 +78,24 @@ class TestOFC(unittest.TestCase):
         self.assertEqual(len(self.ofc.lv_dof), 50)
         self.assertEqual(np.sum(np.abs(self.ofc.lv_dof)), 0)
 
-    def test_set_pssn_gain_unconfigured(self):
+    def test_set_gain_from_fwhm_unconfigured(self):
         with self.assertRaises(RuntimeError):
-            self.ofc.set_pssn_gain()
+            self.ofc.set_gain_from_fwhm()
 
-    def test_set_pssn_gain(self):
+    def test_set_gain_from_fwhm(self):
         fwhm_values = np.ones((5, 19)) * 0.2
-        sensor_id = np.arange(5)
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values)
 
-        self.ofc.set_pssn_gain()
+        self.ofc.set_gain_from_fwhm()
 
         self.assertTrue(self.ofc.ofc_controller.gain, self.ofc.default_gain)
 
         fwhm_values = np.ones((5, 19))
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values)
 
-        self.ofc.set_pssn_gain()
+        self.ofc.set_gain_from_fwhm()
 
         self.assertTrue(self.ofc.ofc_controller.gain, 1.0)
 

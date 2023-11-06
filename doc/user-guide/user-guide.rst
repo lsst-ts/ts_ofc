@@ -44,7 +44,7 @@ The following provides an example of how one would use :py:class:`OFC <lsst.ts.o
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, field_idx=field_idx, filter_name="", gain=1.0, rot=0.0
+      wfe=wfe, field_idx=field_idx, filter_name="", gain=1.0, rotation_angle=0.0
   )
 
   # Check the output
@@ -64,11 +64,17 @@ You can check the intrinsic aberrations on the ``OFCData`` class:
 
 This is a dictionary that contains the intrinsic double zernike wavefront errors for each filter and for each sensor.
 In the case above, we used the empty filter.
-If you want to check the intrinsic aberrations for no filter simply do:
+If you want to check the intrinsic aberrations for no filter at field points given by `field_angles` simply do:
 
 .. code-block:: python
 
-  ofc_data.intrinsic_zk["r"]
+  from lsst.ts.ofc.utils import  get_field_angles
+  from lsst.ts.ofc.utils.intrinsic_zernikes import intrinsic_zernikes
+
+  sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+  intrinsic_zks = intrinsic_zernikes(
+      ofc_data, filter_name="R", sensor_names=sensor_names, rotation_angle=0.0
+  )
 
 You can also check what are the available filters with:
 
@@ -82,13 +88,14 @@ This can be done with the following:
 
 .. code-block:: python
 
-  wfe = ofc_data.get_intrinsic_zk(filter_name="r", field_idx=None, rotation_angle=0.0)  # Returns intrinsic zk for all sensors
-
-  field_idx = np.arange(wfe.shape[0])
+  sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+  wfe = intrinsic_zernikes(
+      ofc_data, filter_name="R", sensor_names=sensor_names, rotation_angle=0.0
+  )
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, field_idx=field_idx, filter_name="r", gain=1.0, rot=0.0
+      wfe=wfe, sensor_names=sensor_names, filter_name="R", gain=1.0, rot=0.0
   )
 
   # The corrections now should be all zeros
@@ -102,28 +109,15 @@ This is, for instance, how the `MTAOS addAberration command`_ works:
 
 .. _MTAOS addAberration command: https://ts-mtaos.lsst.io/user-guide/user-guide.html#adding-aberration
 
-.. code-block:: python
 
-  wfe = ofc_data.get_intrinsic_zk(filter_name="r", field_idx=None, rotation_angle=0.0)  # Returns intrinsic zk for all sensors
-
-  field_idx = np.arange(wfe.shape[0])
-
-  wfe[:,0:1] += 0.1  # add 0.1 um of defocus
-
-  # get corrections from ofc
-  m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, field_idx=field_idx, filter_name="r", gain=1.0, rot=0.0
-  )
-
-Another very useful exercise is to modify the sensitivity matrix.
 For instance, one can disable operations will all components except the Camera Hexapod by doing the following:
 
 .. code-block:: python
 
-  wfe = ofc_data.get_intrinsic_zk(filter_name="r", field_idx=None, rotation_angle=0.0)  # Returns intrinsic zk for all sensors
-
-  field_idx = np.arange(wfe.shape[0])
-
+  sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+  wfe = intrinsic_zernikes(
+      ofc_data, filter_name="R", sensor_names=sensor_names, rotation_angle=0.0
+  )
   wfe[:,0:1] += 0.1  # add 0.1 um of defocus
 
   # Disable all corrections except camera hexapod
@@ -138,7 +132,7 @@ For instance, one can disable operations will all components except the Camera H
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, field_idx=field_idx, filter_name="", gain=1.0, rot=0.0
+      wfe=wfe, sensor_names=sensor_names, filter_name="R", gain=1.0, rotation_angle=0.0
   )
 
   print(cam_hex)
@@ -178,30 +172,29 @@ The basic structure of a configuration directory is as follows:
   │   ├── M2_1um_72_force.yaml
   │   └── rotMatM2.yaml
   ├── configurations
-  │   ├── instrument_1.yaml
-  │   └── instrument_2.yaml
+  │   ├── comcam.yaml
+  │   └── lsst.yaml
+  ├── image_quality_weights
+  │   ├── comcam_weights.yaml
+  │   ├── lsst_gaussian_quadrature_weights.yaml
+  │   ├── lsst_weights.yaml
+  │   └── lsstfam_weights.yaml
   ├── sample_points
-  │   ├── instrument_mode_1
-  │   │   ├── field_xy.yaml
-  │   │   ├── img_quality_weight.yaml
-  │   │   └── sensor_name_to_field_idx.yaml
-  │   ├── instrument_mode_2
-  │   │   ├── field_xy.yaml
-  │   │   ├── img_quality_weight.yaml
-  │   │   └── sensor_name_to_field_idx.yaml
-  │   └── instrument_mode_3
-  │       ├── field_xy.yaml
-  │       ├── img_quality_weight.yaml
-  │       └── sensor_name_to_field_idx.yaml
+  │   ├── comcam_points.yaml
+  │   ├── lsst_gaussian_quadrature_points.yaml
+  │   ├── lsst_points.yaml
+  │   └── lsstfam_points.yaml
   ├── intrinsic zernikes
-  │   ├── instrument_1
+  │   ├── comcam
+  │   │   ├── intrinsic_zk__K_J.yaml
   │   │   ├── intrinsic_zk_g_K_J.yaml
   │   │   ├── intrinsic_zk_i_K_J.yaml
   │   │   ├── intrinsic_zk_r_K_J.yaml
   │   │   ├── intrinsic_zk_u_K_J.yaml
   │   │   ├── intrinsic_zk_y_K_J.yaml
   │   │   └── intrinsic_zk_z_K_J.yaml
-  │   └── instrument_2
+  │   └── lsst
+  │       ├── intrinsic_zk__K_J.yaml
   │       ├── intrinsic_zk_g_K_J.yaml
   │       ├── intrinsic_zk_i_K_J.yaml
   │       ├── intrinsic_zk_r_K_J.yaml
@@ -209,49 +202,35 @@ The basic structure of a configuration directory is as follows:
   │       ├── intrinsic_zk_y_K_J.yaml
   │       └── intrinsic_zk_z_K_J.yaml
   ├── sensitivity_matrix
-  │   ├── instrument_1_sensitivity_dz_K_J_Z.yaml
-  │   └── instrument_2_sensitivity_dz_K_J_Z.yaml
-  ├── state0inDof.yaml
-  └── y2.yaml
+  │   ├── comcam_sensitivity_dz_K_J_Z.yaml
+  │   └── lsst_sensitivity_dz_K_J_Z.yaml
+  ├── y2
+  │   ├── comcam_y2.yaml
+  │   ├── lsst_gaussian_quadrature_y2.yaml
+  │   ├── lsst_y2.yaml
+  │   └── lsstfam_y2.yaml
+  └── state0inDof.yaml
 
 Basically, a valid configuration directory will contain, at the very minimum;
 
   - one ``M1M3`` directory,
   - one ``M2`` directory,
   - one ``configurations`` directory,
+  - one ``image_quality_weights`` directory,
   - one ``sample_points`` directory,
   - one ``intrinsic zernikes`` directory,
   - one ``sensitivity_matrix`` directory,
+  - one ``y2`` directory,
   - one ``state0inDof.yaml`` file,
-  - one ``y2.yaml`` file
 
 The name of the instrument directory is used by the :py:class:`OFCData <lsst.ts.ofc.OFCData>` to determine where to read the instrument-related configuration files.
 This is done by the input argument when creating the class, e.g.;
 
 .. code-block:: python
 
-  ofc_data = OFCData("instrument_mode_1", "./ofc_config_dir/")
+  ofc_data = OFCData("lsst", "./ofc_config_dir/")
 
-Will read the instrument mode files from the ``instrument_mode_1`` directories and will retrieve the files for the corresponding instrument ``instrument_1`` directories.
-
-For instance, the directory structure of the standard configuration file (e.g. ``policy/``) is:
-
-.. code-block:: rst
-
-  policy
-  ├── M1M3
-  ├── M2
-  ├── configurations
-  ├── sample_points
-  │   ├── comcam
-  │   ├── lsst
-  │   └── lsstfam
-  ├── intrinsic zernikes
-  │   ├── comcam
-  │   └── lsst
-  └── sensitivity_matrix
-      ├── comcam
-      └── lsst
+Will read the instrument mode files from the ``lsst`` files and directories.
 
 Which means it defines the following instruments by default:
 
@@ -286,10 +265,14 @@ For each instrument the following files must be defined:
 
 For each instrument mode the following files must be defined:
 
-  - ``img_quality_weight.yaml``; weighting ratio of image quality used in the Q matrix in cost function.
-  - ``sensor_name_to_field_idx.yaml``; mapping between the sensor name and field index.
-  - ``field_xy.yaml``; field x and y in degree.
+  - ``instrument_weights.yaml``; weighting ratio of image quality used in the Q matrix in cost function.
+  - ``instrument_points.yaml``; mapping between the sensor name and sensor field position.
+  - ``instrument_y2.yaml``; the wavefront error correction between the central raft and corner wavefront sensor.
 
 The directory must also include the following files that are shared among different instruments:
   - ``state0inDof.yaml``: initial state of the optics in the basis of DOF.
-  - ``y2.yaml``: the wavefront error correction between the central raft and corner wavefront sensor.
+
+Additionally, the directory includes three additional files corresponding to the Gaussian Quadrature Points and Weights used to compute the image quality when using lsst instrument. 
+  - ``lsst_gaussian_quadrature_weights.yaml``; weighting ratio of image quality used in the Q matrix in cost function.
+  - ``lsst_gaussian_quadrature_points.yaml``; mapping between the sensor name and sensor field position.
+  - ``lsst_gaussian_quadrature_y2.yaml``; the wavefront error correction between the central raft and corner wavefront sensor.

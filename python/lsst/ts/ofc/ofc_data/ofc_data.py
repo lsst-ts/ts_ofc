@@ -327,25 +327,81 @@ class OFCData(BaseOFCData):
         with open(dof_state0_path) as fp:
             dof_state0 = yaml.safe_load(fp)
 
-        # Read image quality weight
-        # -------------------------
-        gq_path = self.config_dir / "gq_points" / self.gq_filename
+        # Read sample points
+        # ------------------
+        sample_points_path = (
+            self.config_dir / "sample_points" / f"{instrument}_points.yaml"
+        )
 
-        self.log.debug(f"Configuring image quality weight: {gq_path}")
-
+        self.log.debug(f"Configuring sample points: {sample_points_path}")
         try:
-            with open(gq_path) as fp:
-                data = yaml.safe_load(fp)
-            # The first two elements of each rwo correspond to the field angle,
-            # the third element is the weight.
-            gq_points = [(-entry[0], entry[1]) for entry in data]
-            image_quality_weight = np.array([entry[2] for entry in data])
+            with open(sample_points_path) as fp:
+                sample_points = yaml.safe_load(fp)
         except FileNotFoundError:
             raise RuntimeError(
-                "Could not read gaussian quadrature points file "
-                f"from instrument config directory: {gq_path!s}. "
+                "Could not read sample points file from instrument"
+                f"config directory: {sample_points_path!s}. "
                 "Check your instrument configuration directory integrity."
             )
+
+        # If the camera type is lsst read and set up
+        # gaussian quadrature points
+        # ------------------------------------------
+        if camera_type == "lsst":
+            gq_points_path = (
+                self.config_dir
+                / "sample_points"
+                / f"{camera_type}_gaussian_quadrature_points.yaml"
+            )
+
+            try:
+                with open(gq_points_path) as fp:
+                    gq_points = yaml.safe_load(fp)
+            except FileNotFoundError:
+                raise RuntimeError(
+                    "Could not read gaussian quadrature file "
+                    f"from instrument config directory: {gq_points_path!s}. "
+                    "Check your instrument configuration directory integrity."
+                )
+
+        # Read image quality weights
+        # --------------------------
+        image_quality_weights_path = (
+            self.config_dir / "image_quality_weights" / f"{instrument}_weights.yaml"
+        )
+
+        self.log.debug(
+            f"Configuring image quality weights: {image_quality_weights_path }"
+        )
+        try:
+            with open(image_quality_weights_path) as fp:
+                image_quality_weights = yaml.safe_load(fp)
+        except FileNotFoundError:
+            raise RuntimeError(
+                "Could not read weights file from instrument"
+                f"config directory: {image_quality_weights_path!s}. "
+                "Check your instrument configuration directory integrity."
+            )
+
+        # If the camera type is lsst read and set up
+        # gaussian quadrature weights
+        # ------------------------------------------
+        if camera_type == "lsst":
+            gq_weights_path = (
+                self.config_dir
+                / "image_quality_weights"
+                / f"{camera_type}_gaussian_quadrature_weights.yaml"
+            )
+
+            try:
+                with open(gq_weights_path) as fp:
+                    gq_weights = yaml.safe_load(fp)
+            except FileNotFoundError:
+                raise RuntimeError(
+                    "Could not read gaussian quadrature weights file "
+                    f"from instrument config directory: {gq_weights_path!s}. "
+                    "Check your instrument configuration directory integrity."
+                )
 
         # Read y2 file
         # -------------
@@ -362,12 +418,14 @@ class OFCData(BaseOFCData):
                 "Check your instrument configuration directory integrity."
             )
 
-        # If the instrument is lsst read and set up
+        # If the camera type is lsst read and set up
         # y2_correction for the gaussian quadrature points
         # ------------------------------------------------
-        if instrument == "lsst":
+        if camera_type == "lsst":
             gq_y2_path = (
-                self.config_dir / "y2" / f"{instrument}_gq{self.y2_filename_root}"
+                self.config_dir
+                / "y2"
+                / f"{camera_type}_gaussian_quadrature{self.y2_filename_root}"
             )
 
             self.log.debug(f"Configuring y2: {gq_y2_path}")
@@ -447,13 +505,13 @@ class OFCData(BaseOFCData):
 
         # Now all data was read successfully, time to set it up.
         self.config = config
-        self.gq_points = gq_points
-        self.normalized_image_quality_weight = image_quality_weight / np.sum(
-            image_quality_weight
-        )
         self.dof_state0 = dof_state0
+        self.sample_points = sample_points
+        self.gq_points = gq_points if camera_type == "lsst" else None
+        self.image_quality_weights = image_quality_weights
+        self.gq_weights = gq_weights if camera_type == "lsst" else None
         self.y2_correction = y2_correction
-        self.gq_y2_correction = gq_y2_correction if instrument == "lsst" else None
+        self.gq_y2_correction = gq_y2_correction if camera_type == "lsst" else None
         self.intrinsic_zk = intrinsic_zk
         self.sensitivity_matrix = sensitivity_matrix
         self.start_task.set_result(instrument)

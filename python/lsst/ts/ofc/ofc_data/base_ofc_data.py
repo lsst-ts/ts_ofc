@@ -144,7 +144,6 @@ class BaseOFCData:
         Max number of zernikes used (to be filtered with `zn3_idx`).
     """
 
-    gq_filename: str = "lsst_gq_points.yaml"
     y2_filename_root: str = "_y2.yaml"
     dof_state0_filename: str = "state0_in_dof.yaml"
     intrinsic_zk_filename_root: str = "intrinsic_zk"

@@ -81,7 +81,7 @@ class OFC:
         else:
             self.log = log.getChild(type(self).__name__)
 
-        self.pssn_data = dict(sensor_id=None, pssn=None)
+        self.pssn_data = dict(sensor_names=None, pssn=None)
 
         self.ofc_data = ofc_data
 
@@ -230,7 +230,7 @@ class OFC:
 
         self.lv_dof = np.zeros_like(self.ofc_controller.dof_state0)
 
-    def set_fwhm_data(self, fwhm, sensor_id):
+    def set_fwhm_data(self, fwhm, sensor_names):
         """Set the list of FWHMSensorData of each CCD of camera.
         Parameters
         ----------
@@ -238,20 +238,20 @@ class OFC:
             Array of arrays (e.g. 2-d array) which contains the FWHM data.
             Each element contains an array of fwhm (in arcsec) measurements for
             a  particular sensor.
-        sensor_id : `np.array` of `int`
-            Array with the sensor id.
+        sensor_names : `list` of `string`
+            List of sensor names.
         Raises
         ------
         RuntimeError
-            If size of `fwhm` and `sensor_id` are different.
+            If size of `fwhm` and `sensor_names` are different.
         """
 
-        if len(fwhm) != len(sensor_id):
+        if len(fwhm) != len(sensor_names):
             raise RuntimeError(
-                f"Size of fwhm ({len(fwhm)}) is different than sensor_id ({len(sensor_id)})."
+                f"Size of fwhm ({len(fwhm)}) is different than sensor_names ({len(sensor_names)})."
             )
 
-        self.pssn_data["sensor_id"] = sensor_id.copy()
+        self.pssn_data["sensor_names"] = sensor_names.copy()
         self.pssn_data["pssn"] = np.zeros(len(fwhm))
 
         for s_id, fw in enumerate(fwhm):
@@ -292,13 +292,13 @@ class OFC:
             If `pssn_data` is not properly set.
         """
 
-        if self.pssn_data["pssn"] is None or self.pssn_data["sensor_id"] is None:
+        if self.pssn_data["pssn"] is None or self.pssn_data["sensor_names"] is None:
             raise RuntimeError(
                 "PSSN data not set. Run `set_fwhm_data` with appropriate data."
             )
 
         fwhm_gq = self.ofc_controller.effective_fwhm_g4(
-            self.pssn_data["pssn"], self.pssn_data["sensor_id"]
+            self.pssn_data["pssn"], self.pssn_data["sensor_names"]
         )
 
         if fwhm_gq > self.fwhm_threshold:

@@ -30,7 +30,6 @@ class TestBaseOFCData(unittest.TestCase):
     def test_constructor(self):
         base_ofc_data = BaseOFCData()
 
-        self.assertEqual(base_ofc_data.gq_filename, "lsst_gq_points.yaml")
         self.assertEqual(base_ofc_data.y2_filename_root, "_y2.yaml")
         self.assertEqual(base_ofc_data.dof_state0_filename, "state0_in_dof.yaml")
         self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "intrinsic_zk")
@@ -38,14 +37,12 @@ class TestBaseOFCData(unittest.TestCase):
 
     def test_constructor_with_args(self):
         base_ofc_data = BaseOFCData(
-            gq_filename="new_gq_points.yaml",
             y2_filename_root="_new_y2.yaml",
             dof_state0_filename="new_state0_in_dof.yaml",
             intrinsic_zk_filename_root="new_intrinsic_zk",
             sen_m_filename_root="new_sensitivity",
         )
 
-        self.assertEqual(base_ofc_data.gq_filename, "new_gq_points.yaml")
         self.assertEqual(base_ofc_data.y2_filename_root, "_new_y2.yaml")
         self.assertEqual(base_ofc_data.dof_state0_filename, "new_state0_in_dof.yaml")
         self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "new_intrinsic_zk")

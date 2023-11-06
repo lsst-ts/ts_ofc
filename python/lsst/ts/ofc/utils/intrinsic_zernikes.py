@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["intrinsic_zernikes"]
+__all__ = ["get_intrinsic_zernikes"]
 
 import galsim
 import numpy as np
@@ -27,10 +27,10 @@ import numpy as np
 from ..ofc_data import OFCData
 
 
-def intrinsic_zernikes(
+def get_intrinsic_zernikes(
     ofc_data: OFCData,
     filter_name: str,
-    field_angles: list,
+    sensor_names: list[str],
     rotation_angle: float = 0.0,
 ) -> np.ndarray:
     """Return reformated instrisic zernike coefficients.
@@ -40,9 +40,8 @@ def intrinsic_zernikes(
     filter_name : `string`
         Name of the filter to get intrinsic zernike coefficients. Must be
         in the `intrinsic_zk` dictionary.
-    field_angles : `list` [`tuple` [`float`, `float`]]
-        List of tuples field angles in degrees.
-        [(field_x, field_y)]
+    field_angles : `list` [`string`]
+        List of sensor names.
     rotation_angle : `float`, optional
         Rotation angle in degrees.
 
@@ -56,7 +55,8 @@ def intrinsic_zernikes(
             f"Invalid filter name {filter_name}. Must be one of {ofc_data.intrinsic_zk.keys()}."
         )
 
-    # Get the field angles
+    # Get the field angles for the sensors
+    field_angles = [ofc_data.sample_points[sensor] for sensor in sensor_names]
     field_x, field_y = zip(*field_angles)
 
     # Convert rotation angle to radians

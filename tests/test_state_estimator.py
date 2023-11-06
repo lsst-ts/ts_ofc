@@ -24,7 +24,6 @@ import unittest
 
 import numpy as np
 from lsst.ts.ofc import OFCData, SensitivityMatrix, StateEstimator
-from lsst.ts.ofc.utils import get_field_angles
 
 
 class TestStateEstimator(unittest.TestCase):
@@ -51,7 +50,9 @@ class TestStateEstimator(unittest.TestCase):
 
         self.sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
-        self.field_angles = get_field_angles(self.sensor_name_list)
+        self.field_angles = [
+            self.ofc_data.sample_points[sensor] for sensor in self.sensor_name_list
+        ]
 
     def mean_squared_residual(self, new_array, reference_array):
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)

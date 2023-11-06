@@ -28,8 +28,7 @@ import numpy as np
 
 from . import SensitivityMatrix
 from .ofc_data import OFCData
-from .utils import get_field_angles
-from .utils.intrinsic_zernikes import intrinsic_zernikes
+from .utils.intrinsic_zernikes import get_intrinsic_zernikes
 
 
 class StateEstimator:
@@ -102,7 +101,7 @@ class StateEstimator:
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Get the field angles for the sensors
-        field_angles = get_field_angles(sensor_names)
+        field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
 
         # Evaluate sensitivity matrix at sensor positions
         sensitivity_matrix = dz_sensitivity_matrix.evaluate(
@@ -155,8 +154,8 @@ class StateEstimator:
         )
         y = (
             wfe[:, self.ofc_data.zn3_idx]
-            - intrinsic_zernikes(
-                self.ofc_data, filter_name, field_angles, rotation_angle
+            - get_intrinsic_zernikes(
+                self.ofc_data, filter_name, sensor_names, rotation_angle
             )[:, self.ofc_data.zn3_idx]
             - y2_correction[:, self.ofc_data.zn3_idx]
         )

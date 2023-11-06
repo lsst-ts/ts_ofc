@@ -19,14 +19,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["get_pkg_root", "get_config_dir", "rot_1d_array", "get_field_angles"]
+__all__ = ["get_pkg_root", "get_config_dir", "rot_1d_array"]
 
 import pathlib
-from typing import List, Tuple
-
-import lsst.obs.lsst as obs_lsst
-import numpy as np
-from lsst.afw.cameraGeom import FIELD_ANGLE
 
 
 def get_pkg_root():
@@ -71,53 +66,3 @@ def rot_1d_array(array, rot_mat):
     rot_array = rot_mat.dot(array2d)
 
     return rot_array.ravel()
-
-
-def get_field_angles(sensor_names: list) -> Tuple[List[float], List[float]]:
-    """Get the field angle for a given sensor name.
-
-    Parameters
-    ----------
-    sensor_names : list [str]
-        List of sensor names.
-
-    Returns
-    -------
-    field_x : list [float]
-        List of field x angles in degrees.
-    field_y : list [float]
-        List of field y angles in degrees.
-    """
-
-    # Create camera object
-    camera = obs_lsst.LsstCam().getCamera()
-
-    # Get the field angle for each sensor
-    field_list = list()
-    for name in sensor_names:
-        # If it is a wavefront corner sensor, get the center
-        # between the extra and intra focal sensors.
-        # Otherwise, get the center of the sensor.
-        if name in ["R00_SW0", "R40_SW0", "R04_SW0", "R44_SW0"]:
-            # Get center of the extra focal sensor.
-            extra_field_point = camera.get(name).getCenter(FIELD_ANGLE)
-
-            # Get center of the intra focal sensor.
-            detector_id = camera.get(name).getId() + 1
-            detector_map = camera.getIdMap()
-            intra_field_point = detector_map[detector_id].getCenter(FIELD_ANGLE)
-
-            # Compute mean between intra and extra focal sensor.
-            center_field_point = np.mean([extra_field_point, intra_field_point], axis=0)
-
-        else:
-            # Get center of the sensor.
-            center_field_point = camera.get(name).getCenter(FIELD_ANGLE)
-
-        # Switch X,Y coordinates to convert from DVCS to CCS coords.
-        field_list.append(
-            (-np.degrees(center_field_point[1]), np.degrees(center_field_point[0]))
-        )
-
-    # Return the field angles field_x and field_y
-    return field_list

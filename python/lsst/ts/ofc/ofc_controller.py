@@ -24,7 +24,6 @@ import logging
 import numpy as np
 
 from . import BendModeToForce, SensitivityMatrix
-from .utils import get_field_angles
 
 
 class OFCController:
@@ -170,7 +169,7 @@ class OFCController:
         else:
             raise ValueError(f"Gain must be in the range of [0, 1]. Got {value}.")
 
-    def effective_fwhm_g4(self, pssn, field_idx):
+    def effective_fwhm_g4(self, pssn, sensor_names):
         """Calculate the effective FWHM by Gaussian quadrature.
         FWHM: Full width at half maximum.
         FWHM = eta * FWHM_{atm} * sqrt(1/PSSN -1).
@@ -179,12 +178,12 @@ class OFCController:
         ----------
         pssn : `numpy.ndarray` or `list`
             Normalized point source sensitivity (PSSN).
-        fieldIdx : `numpy.ndarray` or `list` of `int`
-            Field index array.
+        sensor_names : `list` of `string`
+            List of sensor names.
         Returns
         -------
         `float`
-            Effective FWHM in arcsec by Gaussain quadrature.
+            Effective FWHM in arcsec by Gaussian quadrature.
         Raises
         ------
         ValueError
@@ -192,7 +191,9 @@ class OFCController:
         """
 
         # Normalized image quality weight
-        n_imqw = self.ofc_data.normalized_image_quality_weight[field_idx]
+        imqw = [self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names]
+        n_imqw = imqw / np.sum(imqw)
+
         fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1.0 / np.array(pssn) - 1.0)
         fwhm_gq = np.sum(n_imqw * fwhm)
 
@@ -412,11 +413,18 @@ class OFCController:
         # Otherwise, for full array mode instruments,
         # we will use the sensor positions with equal weights.
         if self.ofc_data.name == "lsst":
-            n_imqw = self.ofc_data.normalized_image_quality_weight
-            field_angles = self.ofc_data.gq_points
+            imqw = [self.ofc_data.gq_weights[sensor] for sensor in range(31)]
+            field_angles = [self.ofc_data.gq_points[sensor] for sensor in range(31)]
         else:
-            n_imqw = np.ones(len(sensor_names)) / len(sensor_names)
-            field_angles = get_field_angles(sensor_names)
+            imqw = [
+                self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names
+            ]
+            field_angles = [
+                self.ofc_data.sample_points[sensor] for sensor in sensor_names
+            ]
+
+        # Compute normalized image quality weights
+        n_imqw = imqw / np.sum(imqw)
 
         sensitivity_matrix = dz_sensitivity_matrix.evaluate(field_angles)
 
@@ -433,7 +441,7 @@ class OFCController:
         # we will use the sensor positions to retrieve the y2 correction.
         if self.ofc_data.name == "lsst":
             y2c = np.array(
-                [self.ofc_data.gq_y2_correction[idx + 1] for idx in range(len(n_imqw))]
+                [self.ofc_data.gq_y2_correction[idx] for idx in range(len(n_imqw))]
             )
         else:
             y2c = np.array(
@@ -515,7 +523,7 @@ class OFCController:
         dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         # Compute field angles
-        field_angles = get_field_angles(sensor_names)
+        field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
 
         # Evaluate sensitivity matrix at sensor positions
         sensitivity_matrix = dz_sensitivity_matrix.evaluate(field_angles)

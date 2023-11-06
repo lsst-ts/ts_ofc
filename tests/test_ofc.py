@@ -24,8 +24,8 @@ import unittest
 
 import numpy as np
 from lsst.ts.ofc import OFC, Correction, OFCData
-from lsst.ts.ofc.utils import CorrectionType, get_field_angles
-from lsst.ts.ofc.utils.intrinsic_zernikes import intrinsic_zernikes
+from lsst.ts.ofc.utils import CorrectionType
+from lsst.ts.ofc.utils.intrinsic_zernikes import get_intrinsic_zernikes
 
 
 class TestOFC(unittest.TestCase):
@@ -45,7 +45,6 @@ class TestOFC(unittest.TestCase):
 
         self.wfe = np.loadtxt(self.test_data_path)
         self.sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
-        self.field_angles = get_field_angles(self.sensor_name_list)
 
     def test_init_lv_dof(self):
         self.ofc.lv_dof = np.random.rand(len(self.ofc.ofc_controller.dof_state0))
@@ -55,27 +54,27 @@ class TestOFC(unittest.TestCase):
         self.assertTrue(np.all(self.ofc.lv_dof == 0))
 
     def test_pssn_data(self):
-        self.assertTrue("sensor_id" in self.ofc.pssn_data)
+        self.assertTrue("sensor_names" in self.ofc.pssn_data)
         self.assertTrue("pssn" in self.ofc.pssn_data)
-        self.assertTrue(self.ofc.pssn_data["sensor_id"] is None)
+        self.assertTrue(self.ofc.pssn_data["sensor_names"] is None)
         self.assertTrue(self.ofc.pssn_data["pssn"] is None)
 
     def test_set_fwhm_data(self):
-        fwhm_values = np.ones((5, 19)) * 0.2
-        sensor_id = np.arange(5)
+        fwhm_values = np.ones((4, 19)) * 0.2
+        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
 
-        self.assertTrue(np.all(sensor_id == self.ofc.pssn_data["sensor_id"]))
+        self.assertTrue(np.all(sensor_names == self.ofc.pssn_data["sensor_names"]))
         self.assertAlmostEqual(self.ofc.pssn_data["pssn"][0], 0.9139012, places=6)
 
     def test_set_fwhm_data_fails(self):
         # Passing fwhm_values with 4 columns instead of 5
-        fwhm_values = np.ones((4, 19)) * 0.2
-        sensor_id = np.arange(5)
+        fwhm_values = np.ones((3, 19)) * 0.2
+        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
         with self.assertRaises(RuntimeError):
-            self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+            self.ofc.set_fwhm_data(fwhm_values, sensor_names)
 
     def test_reset(self):
         dof = np.ones_like(self.ofc.ofc_controller.dof_state)
@@ -107,18 +106,18 @@ class TestOFC(unittest.TestCase):
             self.ofc.set_pssn_gain()
 
     def test_set_pssn_gain(self):
-        fwhm_values = np.ones((5, 19)) * 0.2
-        sensor_id = np.arange(5)
+        fwhm_values = np.ones((4, 19)) * 0.2
+        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
 
         self.ofc.set_pssn_gain()
 
         self.assertTrue(self.ofc.ofc_controller.gain, self.ofc.default_gain)
 
-        fwhm_values = np.ones((5, 19))
+        fwhm_values = np.ones((4, 19))
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_id)
+        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
 
         self.ofc.set_pssn_gain()
 
@@ -212,7 +211,9 @@ class TestOFC(unittest.TestCase):
 
         for filter_name in self.ofc.ofc_data.intrinsic_zk:
             with self.subTest(filter_name=filter_name):
-                wfe = intrinsic_zernikes(self.ofc_data, filter_name, self.field_angles)
+                wfe = get_intrinsic_zernikes(
+                    self.ofc_data, filter_name, self.sensor_name_list
+                )
 
                 (
                     m2_hex_corr,
@@ -255,7 +256,7 @@ class TestOFC(unittest.TestCase):
         # Set filter name, wavefront error
         filter_name = "R"
 
-        wfe = intrinsic_zernikes(self.ofc_data, filter_name, self.field_angles)
+        wfe = get_intrinsic_zernikes(self.ofc_data, filter_name, self.sensor_name_list)
         wfe[:, 0:1] += 0.1  # add 0.1 um of defocus
 
         # Calculate corrections
@@ -315,7 +316,7 @@ class TestOFC(unittest.TestCase):
         self.ofc.ofc_data.xref = "x0"
 
         # Set wavefront error
-        wfe = intrinsic_zernikes(self.ofc_data, filter_name, self.field_angles)
+        wfe = get_intrinsic_zernikes(self.ofc_data, filter_name, self.sensor_name_list)
         wfe[:, 0:1] += 0.1  # add 0.1 um of defocus
 
         # Calculate corrections

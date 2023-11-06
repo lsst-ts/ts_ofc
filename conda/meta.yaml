@@ -15,7 +15,6 @@ test:
     - scipy >=1.6
     - batoid >= 0.5
     - galsim >= 2.5
-    - obs-lsst
   source_files:
     - python
     - tests
@@ -38,5 +37,4 @@ requirements:
     - batoid >= 0.5
     - galsim >= 2.5
     - ruamel.yaml
-    - obs-lsst
 

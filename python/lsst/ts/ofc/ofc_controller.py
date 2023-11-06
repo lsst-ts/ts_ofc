@@ -170,6 +170,37 @@ class OFCController:
         else:
             raise ValueError(f"Gain must be in the range of [0, 1]. Got {value}.")
 
+    def effective_fwhm_g4(self, pssn, field_idx):
+        """Calculate the effective FWHM by Gaussian quadrature.
+        FWHM: Full width at half maximum.
+        FWHM = eta * FWHM_{atm} * sqrt(1/PSSN -1).
+        Effective GQFWHM = sum_{i} (w_{i}* FWHM_{i}).
+        Parameters
+        ----------
+        pssn : `numpy.ndarray` or `list`
+            Normalized point source sensitivity (PSSN).
+        fieldIdx : `numpy.ndarray` or `list` of `int`
+            Field index array.
+        Returns
+        -------
+        `float`
+            Effective FWHM in arcsec by Gaussain quadrature.
+        Raises
+        ------
+        ValueError
+            Input values are unphysical.
+        """
+
+        # Normalized image quality weight
+        n_imqw = self.ofc_data.normalized_image_quality_weight[field_idx]
+        fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1.0 / np.array(pssn) - 1.0)
+        fwhm_gq = np.sum(n_imqw * fwhm)
+
+        if np.isnan(fwhm_gq) or np.isinf(fwhm_gq):
+            raise ValueError("Input values are unphysical.")
+
+        return fwhm_gq
+
     def authority(self):
         """Compute the authority of the system.
 
@@ -431,6 +462,25 @@ class OFCController:
         )
 
         return uk.ravel()
+
+    def fwhm_to_pssn(self, fwhm):
+        """Convert the FWHM data to PSSN.
+        Take the array of FWHM values (nominally 1 per CCD) and convert
+        it to PSSN (nominally 1 per CCD).
+        Parameters
+        ----------
+        fwhm : `numpy.ndarray[x]`
+            An array of FWHM values with sensor information.
+        Returns
+        -------
+        pssn : `numpy.ndarray[y]`
+            An array of PSSN values.
+        """
+
+        denominator = self.ETA * self.FWHM_ATM
+        pssn = 1.0 / ((fwhm / denominator) ** 2 + 1.0)
+
+        return pssn
 
     def remove_degeneracies(
         self, uk: np.ndarray, sensor_names: list, rcond: float = 1e-7

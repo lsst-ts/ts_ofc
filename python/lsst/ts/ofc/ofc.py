@@ -48,13 +48,13 @@ class OFC:
     Attributes
     ----------
     default_gain : `float`
-        Default gain, used when setting gain in
-        `set_gain_from_fwhm()` when fwhm is above `fwhm_threshold`.
+        Default gain, used when setting gain in `set_pssn_gain()` when fwhm is
+        above `fwhm_threshold`.
     dof_order : `tuple`
         Order of the degrees of freedom.
     fwhm_threshold : `float`
         Full width half maximum threshold when estimating gain with
-        `set_gain_from_fwhm()`.
+        `set_pssn_gain()`.
     log : `logging.Logger`
         Logger class used for logging operations.
     lv_dof : `np.ndarray`
@@ -63,8 +63,8 @@ class OFC:
         Instance of `OFCController` class.
     ofc_data : `OFCData`
         OFC data container.
-    fwhm_data : `dict`
-        Full Width Half Maximum data.
+    pssn_data : `dict`
+        Normalized point source sensitivity data.
     state_estimator : `StateEstimator`
         Instance of `StateEstimator`.
 
@@ -75,13 +75,13 @@ class OFC:
     PSSN: Normalized point source sensitivity.
     """
 
-    def __init__(self, ofc_data: OFCData, log: logging.Logger = None) -> None:
+    def __init__(self, ofc_data: OFCData, log: logging.Logger | None = None) -> None:
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:
             self.log = log.getChild(type(self).__name__)
 
-        self.fwhm_data = None
+        self.pssn_data = dict(sensor_id=None, pssn=None)
 
         self.ofc_data = ofc_data
 
@@ -104,7 +104,7 @@ class OFC:
     def calculate_corrections(
         self,
         wfe: np.ndarray,
-        sensor_names: list,
+        sensor_names: list[str],
         filter_name: str,
         gain: float,
         rotation_angle: float,
@@ -149,7 +149,7 @@ class OFC:
             )
         # Set the gain value
         if gain < 0.0:
-            self.set_gain_from_fwhm()
+            self.set_pssn_gain()
         else:
             self.ofc_controller.gain = gain
 
@@ -230,17 +230,34 @@ class OFC:
 
         self.lv_dof = np.zeros_like(self.ofc_controller.dof_state0)
 
-    def set_fwhm_data(self, fwhm) -> None:
+    def set_fwhm_data(self, fwhm, sensor_id):
         """Set the list of FWHMSensorData of each CCD of camera.
-
         Parameters
         ----------
         fwhm : `np.ndarray`
+            Array of arrays (e.g. 2-d array) which contains the FWHM data.
             Each element contains an array of fwhm (in arcsec) measurements for
-            a particular sensor.
+            a  particular sensor.
+        sensor_id : `np.array` of `int`
+            Array with the sensor id.
+        Raises
+        ------
+        RuntimeError
+            If size of `fwhm` and `sensor_id` are different.
         """
 
-        self.fwhm_data = fwhm
+        if len(fwhm) != len(sensor_id):
+            raise RuntimeError(
+                f"Size of fwhm ({len(fwhm)}) is different than sensor_id ({len(sensor_id)})."
+            )
+
+        self.pssn_data["sensor_id"] = sensor_id.copy()
+        self.pssn_data["pssn"] = np.zeros(len(fwhm))
+
+        for s_id, fw in enumerate(fwhm):
+            self.pssn_data["pssn"][s_id] = np.average(
+                self.ofc_controller.fwhm_to_pssn(fwhm)
+            )
 
     def reset(self) -> list[Correction]:
         """Reset the OFC calculation state, which is the aggregated DOF now.
@@ -266,25 +283,23 @@ class OFC:
 
         return self.get_all_corrections()
 
-    def set_gain_from_fwhm(self) -> None:
-        """Set the gain value based on the FWHM, which comes from the FWHM by
+    def set_pssn_gain(self):
+        """Set the gain value based on the PSSN, which comes from the FWHM by
         DM team.
-
         Raises
         ------
         RuntimeError
-            If `fwhm_data` is not properly set.
+            If `pssn_data` is not properly set.
         """
 
-        if self.fwhm_data is None:
+        if self.pssn_data["pssn"] is None or self.pssn_data["sensor_id"] is None:
             raise RuntimeError(
-                "FWHM data not set. Run `set_fwhm_data` with appropriate data."
+                "PSSN data not set. Run `set_fwhm_data` with appropriate data."
             )
 
-        fwhm_gq = np.mean(self.fwhm_data)
-
-        if np.isnan(fwhm_gq) or np.isinf(fwhm_gq):
-            raise ValueError("FWHM values are unphysical.")
+        fwhm_gq = self.ofc_controller.effective_fwhm_g4(
+            self.pssn_data["pssn"], self.pssn_data["sensor_id"]
+        )
 
         if fwhm_gq > self.fwhm_threshold:
             self.ofc_controller.gain = 1.0

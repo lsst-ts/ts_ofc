@@ -13,6 +13,8 @@ test:
   requires:
     - ts-conda-build =0.3
     - scipy >=1.6
+    - batoid >=0.5
+    - galsim >=2.5
   source_files:
     - python
     - tests
@@ -32,3 +34,7 @@ requirements:
     - setuptools
     - setuptools_scm
     - scipy >=1.6
+    - batoid >=0.5
+    - galsim >=2.5
+    - ruamel.yaml
+

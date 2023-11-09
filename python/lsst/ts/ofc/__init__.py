@@ -26,8 +26,8 @@ try:
 except ModuleNotFoundError:
     pass
 
-from .camrot import *
 from .bend_mode_to_force import *
+from .sensitivity_matrix import *
 from .state_estimator import *
 from .ofc_controller import *
 from .correction import *

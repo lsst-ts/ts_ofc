@@ -21,12 +21,16 @@
 import unittest
 
 import numpy as np
-from lsst.ts.ofc import CamRot
+from lsst.ts.ofc import OFCData
 from lsst.ts.ofc.utils import get_config_dir, get_pkg_root, rot_1d_array
+from lsst.ts.ofc.utils.intrinsic_zernikes import get_intrinsic_zernikes
 
 
 class TestUtils(unittest.TestCase):
     """Test the OFCCalculation class."""
+
+    def setUp(self):
+        self.ofc_data = OFCData("lsst")
 
     def test_get_pkg_root(self):
         pkg_root = get_pkg_root()
@@ -41,15 +45,21 @@ class TestUtils(unittest.TestCase):
     def test_rot_1d_array(self):
         vec = np.array([1.0, 0.0])
 
+        def compute_rot_mat(rot):
+            """Return rotation matrix."""
+            rot_rad = np.deg2rad(rot)
+            c, s = np.cos(rot_rad), np.sin(rot_rad)
+            return np.array(((c, -s), (s, c)))
+
         angle = 0.0
-        rot_mat = CamRot.rot_mat(angle)
+        rot_mat = compute_rot_mat(angle)
         rot_vec = rot_1d_array(vec, rot_mat)
 
         self.assertEqual(vec[0], rot_vec[0])
         self.assertEqual(vec[1], rot_vec[1])
 
         angle = 45.0
-        rot_mat = CamRot.rot_mat(angle)
+        rot_mat = compute_rot_mat(angle)
         rot_vec = rot_1d_array(vec, rot_mat)
 
         expected_value = np.sin(np.radians(angle))
@@ -57,11 +67,25 @@ class TestUtils(unittest.TestCase):
         self.assertAlmostEqual(rot_vec[1], expected_value)
 
         angle = 90.0
-        rot_mat = CamRot.rot_mat(angle)
+        rot_mat = compute_rot_mat(angle)
         rot_vec = rot_1d_array(vec, rot_mat)
 
         self.assertAlmostEqual(rot_vec[0], vec[1])
         self.assertAlmostEqual(rot_vec[1], vec[0])
+
+    def test_get_intrinsic_zernikes(self):
+        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+
+        for filter_name in self.ofc_data.eff_wavelength:
+            with self.subTest(filter_name=filter_name):
+                intrinsic_zk = get_intrinsic_zernikes(
+                    self.ofc_data, filter_name, sensor_names
+                )
+                self.assertTrue(isinstance(intrinsic_zk, np.ndarray))
+                self.assertEqual(len(intrinsic_zk), 4)
+
+        with self.assertRaises(RuntimeError):
+            get_intrinsic_zernikes(self.ofc_data, "bad_filter_name", sensor_names)
 
 
 if __name__ == "__main__":

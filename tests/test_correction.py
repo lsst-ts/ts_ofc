@@ -26,8 +26,8 @@ from lsst.ts.ofc import Correction
 from lsst.ts.ofc.utils import CorrectionType
 
 
-class TestCamRot(unittest.TestCase):
-    """Test the CamRot class."""
+class TestCorrection(unittest.TestCase):
+    """Test the Correction class."""
 
     def test_position_init_as_array(self):
         values = np.random.rand(6)

@@ -23,7 +23,7 @@ import logging
 
 import numpy as np
 
-from . import BendModeToForce
+from . import BendModeToForce, SensitivityMatrix
 
 
 class OFCController:
@@ -70,6 +70,9 @@ class OFCController:
             self.log = log.getChild(type(self).__name__)
 
         self.ofc_data = ofc_data
+
+        # Constuct the double zernike sensitivity matrix
+        self.dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         self.m1m3_bmf = BendModeToForce("M1M3", self.ofc_data)
         self.m2_bmf = BendModeToForce("M2", self.ofc_data)
@@ -169,7 +172,7 @@ class OFCController:
         else:
             raise ValueError(f"Gain must be in the range of [0, 1]. Got {value}.")
 
-    def effective_fwhm_g4(self, pssn, field_idx):
+    def effective_fwhm_g4(self, pssn, sensor_names):
         """Calculate the effective FWHM by Gaussian quadrature.
 
         FWHM: Full width at half maximum.
@@ -180,22 +183,32 @@ class OFCController:
         ----------
         pssn : `numpy.ndarray` or `list`
             Normalized point source sensitivity (PSSN).
-        fieldIdx : `numpy.ndarray` or `list` of `int`
-            Field index array.
+        sensor_names : `list` of `string`
+            List of sensor names.
 
         Returns
         -------
         `float`
-            Effective FWHM in arcsec by Gaussain quadrature.
+            Effective FWHM in arcsec by Gaussian quadrature.
 
         Raises
         ------
         ValueError
             Input values are unphysical.
+        ValueError
+            Image quality weights sum is zero. Please check your weights.
         """
 
         # Normalized image quality weight
-        n_imqw = self.ofc_data.normalized_image_quality_weight[field_idx]
+        imqw = [self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names]
+
+        if np.sum(imqw) == 0:
+            raise ValueError(
+                "Image quality weights sum is zero. Please check your weights."
+            )
+
+        n_imqw = imqw / np.sum(imqw)
+
         fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1.0 / np.array(pssn) - 1.0)
         fwhm_gq = np.sum(n_imqw * fwhm)
 
@@ -308,7 +321,12 @@ class OFCController:
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
-    def uk_gain(self, filter_name, dof_state):
+    def uk_gain(
+        self,
+        filter_name: str,
+        dof_state: np.ndarray,
+        sensor_names: list[str] | None = None,
+    ) -> np.ndarray:
         """Estimate uk in the basis of degree of freedom (DOF) with gain
         compensation.
 
@@ -318,16 +336,33 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
+        sensor_names : `list` of `string`
+            List of sensor names.
 
         Returns
         -------
         uk : `numpy.ndarray`
             Calculated uk in the basis of DOF.
+
+        Raises
+        ------
+        RuntimeError
+            If `sensor_names` is not provided for full array mode instruments.
         """
 
-        return self.gain * self.uk(filter_name, dof_state)
+        if (self.ofc_data.name != "lsst") and (sensor_names is None):
+            raise RuntimeError(
+                "sensor_names must be provided for full array mode instruments."
+            )
 
-    def uk(self, filter_name, dof_state):
+        return self.gain * self.uk(filter_name, dof_state, sensor_names)
+
+    def uk(
+        self,
+        filter_name: str,
+        dof_state: np.ndarray,
+        sensor_names: list[str] | None = None,
+    ) -> np.ndarray:
         """Estimate the offset (`uk`) of degree of freedom (DOF) at time `k+1`
         based on the wavefront error (`yk`) at time `k`.
 
@@ -340,6 +375,8 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
+        sensor_names : `list` of `string`
+            List of sensor names.
 
         Returns
         -------
@@ -350,7 +387,16 @@ class OFCController:
         ------
         RuntimeError
             If `xref` strategy is not valid.
+        RuntimeError
+            If `sensor_names` is not provided for full array mode instruments.
+        ValueError
+            If image quality weights sum is zero.
         """
+        if self.ofc_data.name != "lsst" and sensor_names is None:
+            raise RuntimeError(
+                "sensor_names must be provided for full array mode instruments."
+            )
+
         if self.ofc_data.xref not in self.ofc_data.xref_list:
             raise RuntimeError(
                 f"Unspecified reference frame {self.ofc_data.xref}. "
@@ -377,23 +423,65 @@ class OFCController:
 
         _dof_state = dof_state.reshape(-1, 1)
 
-        n_imqw = self.ofc_data.normalized_image_quality_weight
-        sen_m = self.ofc_data.sensitivity_matrix[
-            np.ix_(
-                np.arange(self.ofc_data.sensitivity_matrix.shape[0]),
-                np.arange(self.ofc_data.sensitivity_matrix.shape[1]),
-                self.ofc_data.dof_idx,
-            )
-        ]
+        # Evaluate sensitivity matrix at sensor positions
+        # If the instrument is LSST, we will use the Gaussian
+        # Quadrature points to evaluate the sensitivity matrix.
+        # Otherwise, for full array mode LSST or Comcam,
+        # we will use the sensor positions 189 or 9 with weights.
+        if self.ofc_data.name == "lsst":
+            imqw = [
+                self.ofc_data.gq_weights[sensor]
+                for sensor in range(len(self.ofc_data.gq_weights))
+            ]
+            field_angles = [
+                self.ofc_data.gq_points[sensor]
+                for sensor in range(len(self.ofc_data.gq_weights))
+            ]
+        else:
+            imqw = [
+                self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names
+            ]
+            field_angles = [
+                self.ofc_data.sample_points[sensor] for sensor in sensor_names
+            ]
 
-        y2c = self.ofc_data.y2_correction[np.arange(len(n_imqw))]
+        # Compute normalized image quality weights
+        if np.sum(imqw) == 0:
+            raise ValueError(
+                "Image quality weights sum is zero. Please check your weights."
+            )
+
+        n_imqw = imqw / np.sum(imqw)
+
+        # Evaluate sensitivity matrix at sensor positions
+        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(field_angles)
+
+        # Select sensitivity matrix only at used degrees of freedom
+        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
+
+        # Select sensitivity matrix only at used degrees of freedom
+        sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
+
+        # Calculate the y2 correction.
+        # If the instrument is LSST, we will use the Gaussian
+        # Quadrature points to evaluate the y2 correction.
+        # Otherwise, for full array mode instruments,
+        # we will use the sensor positions to retrieve the y2 correction.
+        if self.ofc_data.name == "lsst":
+            y2c = np.array(
+                [self.ofc_data.gq_y2_correction[idx] for idx in range(len(n_imqw))]
+            )
+        else:
+            y2c = np.array(
+                [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
+            )
 
         qx = 0
         q_mat = 0
-        for a_mat, wgt, y2k in zip(sen_m, n_imqw, y2c):
+        for sen_mat, wgt, y2k in zip(sensitivity_matrix, n_imqw, y2c):
             y2k = y2k.reshape(-1, 1)
-            qx += wgt * a_mat.T.dot(cc_mat).dot(a_mat.dot(_dof_state) + y2k)
-            q_mat += wgt * a_mat.T.dot(cc_mat).dot(a_mat)
+            qx += wgt * sen_mat.T.dot(cc_mat).dot(sen_mat.dot(_dof_state) + y2k)
+            q_mat += wgt * sen_mat.T.dot(cc_mat).dot(sen_mat)
 
         # Calculate the F matrix.
         #

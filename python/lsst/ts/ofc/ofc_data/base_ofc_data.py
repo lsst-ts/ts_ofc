@@ -41,7 +41,7 @@ def default_eff_wavelenght():
         "I": 0.754,
         "Z": 0.868,
         "Y": 0.973,
-        "": 0.5,  # Reference effective wavelenght.
+        "": 0.5,
     }
 
 
@@ -132,10 +132,7 @@ class BaseOFCData:
         +5900 um to -5900 um.
     sen_m_filename_root : `string`
         Filename root string for the sensitivity matrix M.
-    sensor_mapping_filename : `string`
-        Name of the file with the mapping between the sensor name and field
-        index.
-    y2_filename : `string`
+    y2_filename_root : `string`
         Name of the file where `y2_correction` is read from.
     zn3_idx : `np.array` of `bool`
         Index of annular Zernike polynomials (z3-z22) (`True`: in use, `False`:
@@ -147,21 +144,20 @@ class BaseOFCData:
         Max number of zernikes used (to be filtered with `zn3_idx`).
     """
 
-    iqw_filename: str = "imgQualWgt.yaml"
-    y2_filename: str = "y2.yaml"
-    sensor_mapping_filename: str = "sensorNameToFieldIdx.yaml"
-    dof_state0_filename: str = "state0inDof.yaml"
-    intrinsic_zk_filename_root: str = "intrinsicZn"
-    sen_m_filename_root: str = "senM"
-
-    zn3_idx_in_intrinsic_zn_file: int = 3
+    y2_filename_root: str = "_y2.yaml"
+    dof_state0_filename: str = "state0_in_dof.yaml"
+    intrinsic_zk_filename_root: str = "intrinsic_zk"
+    sen_m_filename_root: str = "sensitivity"
 
     eff_wavelength: dict = field(default_factory=default_eff_wavelenght)
 
-    # Index of annular Zernike polynomials (z3-z22)
-    zn3_idx: np.array = field(default_factory=default_zn3_idx)
+    zn3_idx_in_intrinsic_zn_file: int = 3
 
     znmax: int = 22  # Max number of zernikes used (to be filtered with zn3Idx)
+    znmin: int = 4  # Min number of zernikes used (to be filtered with zn3Idx)
+
+    # Index of annular Zernike polynomials (z3-z22)
+    zn3_idx: np.array = field(default_factory=default_zn3_idx)
 
     # Control strategy
     control_strategy: str = "optiPSSN"

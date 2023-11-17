@@ -1,4 +1,30 @@
 #####################################
+Camera Rotation with Double Zernikes
+#####################################
+
+The way we deal with rotation in the updated code differs from the previous approach.
+It is important to understand that when we rotate the camera, there are two rotations that come into play:
+- Rotation of the field angle
+- Rotation of the sensor relative to the reference coordinate system.
+
+We therefore need to be careful to distinguish between these two rotations.
+
+Rotation of the sensor
+============================
+
+To deal with the rotation of the sensor, we derotate the zernikes obtained with the Wavefront Estimation Pipeline (WEP) code. 
+We do that by using the **galsim.Zernike** object. Since WEP provides zernike coefficients Z4-Z22, we add zeros to zernikes Z1-Z3 and then rotate them using the **galsim.Zernike** object rotation method.
+This ensures that whatever zernikes we use in state_estimator are derotated.
+
+
+Rotation of the field angle
+============================
+
+To account for the fact that after we have rotated the camera we are looking at another field angle position, we leverage the **DoubleZernike** object available in galsim.
+In this mode we use the double zernike sensitivity matrix and the **DoubleZernike** class in galsim, to compute the sensitivity matrix and the intrinsic zernikes at the rotated field angle. 
+
+
+#####################################
 Camera Rotation and Degree of Freedom
 #####################################
 

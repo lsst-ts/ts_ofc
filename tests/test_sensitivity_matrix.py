@@ -65,19 +65,67 @@ class TestSensitivityMatrix(unittest.TestCase):
             # which we have excluded from the unrotated_sensitivity_matrix.
             self.gq_sensitivity_matrix = self.gq_sensitivity_matrix[:31, ...]
 
+            # Because the old sensitivity matrix was in the Zemax Coordinate
+            # System we need to swap the following zernikes:
+            swap = np.array([5, 8, 10, 13, 15, 16, 18, 20])
+            self.gq_sensitivity_matrix[:, swap - self.ofc_data.znmin] *= -1
+
+            # Similarly, we need to swap the following gaussian
+            # quadrature points because the old sensitivity matrix
+            # was in the Zemax Coordinate System and therefore
+            # there is a flip in the x direction. So the following
+            # swap, flips those GQ points that have opposite x sign.
+            swap_gq = [
+                0,
+                4,
+                3,
+                2,
+                1,
+                6,
+                5,
+                10,
+                9,
+                8,
+                7,
+                12,
+                11,
+                16,
+                15,
+                14,
+                13,
+                18,
+                17,
+                22,
+                21,
+                20,
+                19,
+                24,
+                23,
+                28,
+                27,
+                26,
+                25,
+                30,
+                29,
+            ]
+            self.gq_sensitivity_matrix = self.gq_sensitivity_matrix[swap_gq, :]
+
     def mean_squared_residual(self, new_array, reference_array):
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
 
     def test_dz_sensitivity_matrix(self):
         # Check that the sensitivity matrix for dz is the same as the one
-        # that we had before the last ts_ofc refactor.
-        for dof in np.arange(50):
+        # that we had before the last ts_ofc refactor and before the bending
+        # modes were updated.
+        # This means that we will check that the sensitivity matrix is the same
+        # Only for the hexapod degrees of freedom which were not changed.
+        for dof in np.arange(10):
             assert (
                 self.mean_squared_residual(
                     self.unrotated_sensitivity_matrix[..., dof],
                     self.gq_sensitivity_matrix[..., dof],
                 )
-                < 2e-3
+                < 2e-4
             )
 
     def test_rotation(self):

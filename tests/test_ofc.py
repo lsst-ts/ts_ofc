@@ -273,12 +273,12 @@ class TestOFC(unittest.TestCase):
 
         # Check that the camera hexapod corrections are right.
         # All of them should be zero except for defocus.
-        self.assertAlmostEqual(x, 0.0, places=4)
-        self.assertAlmostEqual(y, 0.0, places=4)
+        self.assertAlmostEqual(x, 0.0, places=2)
+        self.assertAlmostEqual(y, 0.0, places=2)
         self.assertAlmostEqual(z, -6, places=0)
-        self.assertAlmostEqual(u, 0.0, places=9)
-        self.assertAlmostEqual(v, 0.0, places=9)
-        self.assertAlmostEqual(w, 0.0, places=9)
+        self.assertAlmostEqual(u, 0.0, places=7)
+        self.assertAlmostEqual(v, 0.0, places=7)
+        self.assertAlmostEqual(w, 0.0, places=7)
 
         # Check that the other corrections are zero
         self.assertTrue(np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr())))

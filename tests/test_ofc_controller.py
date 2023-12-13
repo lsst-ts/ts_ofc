@@ -31,7 +31,7 @@ class TestOFCController(unittest.TestCase):
     def setUp(self):
         self.ofc_data = OFCData("lsst")
         # Set small motion penalty to allow for larger corrections
-        self.ofc_data.motion_penalty = 0.0001
+        self.ofc_data.motion_penalty = 0.00001
         self.ofc_controller = OFCController(self.ofc_data)
 
         test_dof_state0 = np.zeros(50)
@@ -48,7 +48,7 @@ class TestOFCController(unittest.TestCase):
         self.ofc_data.xref = "x0"
 
         sum_uk = np.zeros(50)
-        for _ in range(3):
+        for _ in range(5):
             uk = self.ofc_controller.uk(
                 self.filter_name,
                 self.ofc_controller.dof_state0 + sum_uk,

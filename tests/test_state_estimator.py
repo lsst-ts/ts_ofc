@@ -32,7 +32,7 @@ class TestStateEstimator(unittest.TestCase):
     def setUp(self):
         self.ofc_data = OFCData("lsst")
 
-        self.estimator = StateEstimator(self.ofc_data, rcond=5e-4)
+        self.estimator = StateEstimator(self.ofc_data, rcond=1e-5)
 
         self.wfe = np.loadtxt(
             pathlib.Path(__file__).parent.absolute()
@@ -63,7 +63,7 @@ class TestStateEstimator(unittest.TestCase):
             field_angles, rotation_angle
         )
 
-        # Select sensitivity matrix only at used degrees of freedom
+        # Select sensitivity matrix only at used zernikes
         sensitivity_matrix = sensitivity_matrix[
             :, self.dz_sensitivity_matrix.ofc_data.zn3_idx, :
         ]

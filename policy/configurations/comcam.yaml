@@ -13,11 +13,11 @@ obscuration:
 
 # Wavelenghts for different filters
 wavelengths:
-  U: 0.365 # micron
-  G: 0.480 # micron
-  R: 0.622 # micron
-  I: 0.754 # micron
-  Z: 0.869 # micron
-  Y: 0.971 # micron
+  u: 0.365 # micron
+  g: 0.480 # micron
+  r: 0.622 # micron
+  i: 0.754 # micron
+  z: 0.869 # micron
+  y: 0.971 # micron
   ref: 0.5 # micron
   

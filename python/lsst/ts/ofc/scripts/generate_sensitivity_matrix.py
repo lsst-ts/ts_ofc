@@ -20,7 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
-import pathlib
 import textwrap
 from typing import Tuple
 
@@ -32,6 +31,8 @@ import ruamel.yaml
 import yaml
 from astropy.io import fits
 from tqdm import tqdm
+
+from ..utils import get_config_dir
 
 
 def get_fiducial(
@@ -55,8 +56,8 @@ def get_fiducial(
     """
 
     # Get fiducial optical system from batoid.
-    if band == "":
-        fiducial = batoid.Optic.fromYaml(f"{instrument}_g_500.yaml")
+    if band == "ref":
+        fiducial = batoid.Optic.fromYaml(f"{instrument}_g.yaml")
     else:
         fiducial = batoid.Optic.fromYaml(f"{instrument}_{band}.yaml")
 
@@ -168,8 +169,7 @@ def get_intrinsic_zk(
     dz0 : np.ndarray
         Intrinsic double zernike coefficients.
     """
-
-    wavelength = config["wavelenghts"][band]
+    wavelength = config["wavelengths"][band]
     fiducial = get_fiducial(instrument, band)
 
     return double_zernike(
@@ -219,16 +219,11 @@ def get_sensitivity_dz(
     sensitivity_matrix = np.empty((ndof, kmax + 1, jmax + 1))
 
     # Get fiducial telescope and wavelength
-    wavelength = config["wavelenghts"][band]
+    wavelength = config["wavelengths"][band]
     fiducial = get_fiducial(instrument, band)
 
     # Compute the intrinsic double zernike coefficients
     dz0 = get_intrinsic_zk(config, instrument, band, jmax, kmax)
-
-    # TODO: DM-41629 Remove this once batoid is fixed
-    # Swap the zernikes that are flipped in batoid
-    swap = [2, 5, 8, 10, 13, 15, 16, 18, 20]
-    dz0[:, swap] *= -1
 
     # For each dof, compute the sensitivity matrix
     for idof in tqdm(range(ndof)):
@@ -250,9 +245,6 @@ def get_sensitivity_dz(
             jmax=jmax,
             kmax=kmax,
         )
-
-        # Swap the zernikes that are flipped in batoid
-        dz1[:, swap] *= -1
 
         # Compute the sensitivity matrix by subtracting the
         # intrinisc from the perturbed double zernikes
@@ -345,7 +337,7 @@ def main(args: argparse.Namespace) -> None:
     """
 
     # Load configuration
-    config_dir = pathlib.Path(__file__).resolve().parents[1] / "policy"
+    config_dir = get_config_dir()
     try:
         with open(
             config_dir / "configurations" / f"{args.instrument.lower()}.yaml"

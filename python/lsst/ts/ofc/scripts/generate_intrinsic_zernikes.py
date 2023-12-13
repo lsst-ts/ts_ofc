@@ -20,7 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
-import pathlib
 import textwrap
 
 import numpy as np
@@ -28,6 +27,8 @@ import ruamel.yaml
 import yaml
 from astropy.io import fits
 from generate_sensitivity_matrix import get_intrinsic_zk
+
+from ..utils import get_config_dir
 
 
 def save_intrinsic_zk(
@@ -104,7 +105,7 @@ def main(args: argparse.Namespace) -> None:
     """
 
     # Load configuration file
-    config_dir = pathlib.Path(__file__).resolve().parents[1] / "policy"
+    config_dir = get_config_dir()
 
     try:
         with open(
@@ -126,11 +127,6 @@ def main(args: argparse.Namespace) -> None:
         rings=15,
         spokes=55,
     )
-
-    # TODO: DM-41629 Remove this once batoid is fixed
-    # Swap corresponding zernike that are flipped in batoid
-    swap = [2, 5, 8, 10, 13, 15, 16, 18, 20]
-    intrinsic[:, swap] *= -1
 
     # Save the intrinsic double zernikes
     save_intrinsic_zk(args.filter, intrinsic, args.path, kmax=args.kmax)
@@ -172,8 +168,4 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def generate_intrinsic_zernikes() -> None:
-    main(parse_arguments())
-
-
-if __name__ == "__main__":
     main(parse_arguments())

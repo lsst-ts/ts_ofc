@@ -6,6 +6,16 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-3.0.1:
+
+v3.0.1
+======
+
+* Removed Zemax Coordinate System, which is substituted by the Camera Coordinate System. 
+* Updated the bending modes used to the new uncorrupted bending modes.
+* Updated sensitivity matrix and intrinsic zernikes for the new coordinate system and new bending modes.
+* Removed old unused test data.
+
 .. _lsst.ts.ofc-3.0.0:
 
 v3.0.0

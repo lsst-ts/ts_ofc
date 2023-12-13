@@ -84,9 +84,7 @@ class SensitivityMatrix:
                             xy_outer=self.ofc_data.config["obscuration"][
                                 "radius_outer"
                             ],
-                        ).rotate(theta_uv=rotation_angle)(
-                            field_x, field_y
-                        )  # TODO: DM-41629 Remove once we remove the ZCS from ts_ofc
+                        ).rotate(theta_uv=rotation_angle)(field_x, field_y)
                     ]
                 )
                 for dof_idx in np.arange(self.ofc_data.sensitivity_matrix.shape[2])

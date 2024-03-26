@@ -6,7 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-3.0.2:
+
+v3.0.2
+======
 .. _lsst.ts.ofc-3.0.1:
+
+* Update the version of ts-conda-build to 0.4 in the conda recipe.
 
 v3.0.1
 ======

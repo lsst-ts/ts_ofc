@@ -11,7 +11,7 @@ build:
 
 test:
   requires:
-    - ts-conda-build =0.3
+    - ts-conda-build =0.4
     - scipy >=1.6
     - batoid >=0.5
     - galsim >=2.5

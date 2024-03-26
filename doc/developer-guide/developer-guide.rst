@@ -17,6 +17,7 @@ Important classes:
 * :py:class:`BaseOFCData <lsst.ts.ofc.ofc_data.BaseOFCData>` a `python data class`_ that contains the static data for the ofc operation.
 * :py:class:`OFCData <lsst.ts.ofc.ofc_data.OFCData>` a data container class that inherits ``BaseOFCData`` and handles the dynamic data for ofc operations.
   This includes reading and storing data from files and higher level data manipulation.
+* :py:class:`SensitivityMatrix <lsst.ts.ofc.SensitivityMatrix>` calculates the sensitivity matrix at the given sensors and camera rotation angle.
 * :py:class:`StateEstimator <lsst.ts.ofc.StateEstimator>` contains facilities to estimate the state of the system.
 * :py:class:`OFCController <lsst.ts.ofc.OFCController>` calculates the degrees of freedom (DoF) offset by minimizing the cost function.
 * :py:class:`OFC <lsst.ts.ofc.OFC>` is the main class of the system, responsible for managing the conversion of wavefront errors into corrections.

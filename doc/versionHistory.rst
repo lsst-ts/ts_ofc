@@ -6,13 +6,24 @@
 Version History
 ##################
 
+=======
+.. _lsst.ts.ofc-3.1.0:
+
+v3.1.0
+======
+
+* Update sensitivity matrix and intrinsic zernikes up to zk 28.
+* Add zn_selected to select the zernikes to be used.
+* Updated alpha values for image quality matrix.
+
 .. _lsst.ts.ofc-3.0.2:
 
 v3.0.2
 ======
-.. _lsst.ts.ofc-3.0.1:
 
 * Update the version of ts-conda-build to 0.4 in the conda recipe.
+
+.. _lsst.ts.ofc-3.0.1:
 
 v3.0.1
 ======

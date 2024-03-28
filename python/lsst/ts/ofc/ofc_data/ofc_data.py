@@ -87,6 +87,12 @@ class OFCData(BaseOFCData):
         Available reference point strategies.
     y2_correction : `np.ndarray` of `float`
         Y2 correction.
+    zn_idx : `np.ndarray` of `int`
+        Zernike indices used.
+    zn_selected : `np.ndarray` of `int`
+        Zernike indices selected in Zernike Noll Index.
+    zn_idx_mask : `np.ndarray` of `bool`
+        Mask to select Zernike indices.
 
     Raises
     ------
@@ -148,6 +154,9 @@ class OFCData(BaseOFCData):
         if name is not None:
             self.name = name
 
+        # Rotation matrix for the hexapod
+        # That converts DOF to correction applied to hexapod
+        # The signs are very important!
         rot_mat_hexapod: np.ndarray = np.array(
             [
                 [0.0, 0.0, -1.0, 0.0, 0.0, 0.0],
@@ -182,8 +191,12 @@ class OFCData(BaseOFCData):
         self._dof_idx = np.arange(
             sum([self.comp_dof_idx[comp]["idxLength"] for comp in self.comp_dof_idx])
         )
-
         self._dof_idx_mask = np.ones_like(self._dof_idx, dtype=bool)
+
+        # Zernike indices used
+        self._zn_idx = np.arange(self.znmax - self.znmin + 1, dtype=int)
+        self._zn_idx_mask = np.ones_like(self._zn_idx, dtype=bool)
+        self._zn_selected = np.arange(self.znmin, self.znmax + 1, dtype=int)
 
         # Control strategy
         self._xref = None
@@ -227,6 +240,33 @@ class OFCData(BaseOFCData):
     @property
     def xref_list(self):
         return {"x00", "x0", "0"}
+
+    # Properties to access the Zernike indices
+    @property
+    def zn_idx(self):
+        """Zernike indices used."""
+        return self._zn_idx[self.zn_idx_mask]
+
+    @property
+    def zn_idx_mask(self):
+        """Mask to select Zernike indices."""
+        return self._zn_idx_mask
+
+    @property
+    def zn_selected(self):
+        """Zernike indices selected in Zernike Noll Index."""
+        return self._zn_selected
+
+    @zn_selected.setter
+    def zn_selected(self, value):
+        # Check if any element in the value vector is
+        # smaller or larger than zmin and zmax
+        if np.any(np.array(value) < self.znmin) or np.any(np.array(value) > self.znmax):
+            raise ValueError(
+                f"Zernike index must be between {self.znmin} and {self.znmax}."
+            )
+        self._zn_selected = value
+        self._zn_idx_mask = np.isin(self._zn_idx, self._zn_selected - self.znmin)
 
     @property
     def dof_idx(self):
@@ -364,6 +404,11 @@ class OFCData(BaseOFCData):
         # everthing went fine. Otherwise you can leave the class in a broken
         # state.
 
+        # Read alpha values
+        # -----------------
+        alpha_path = self.config_dir / "alpha_values.yaml"
+        alpha = np.array(self.load_yaml_file(alpha_path))
+
         # Read dof_state0
         # ---------------
         dof_state0_path = self.config_dir / self.dof_state0_filename
@@ -481,6 +526,7 @@ class OFCData(BaseOFCData):
         self.log.debug(f"Done configuring {instrument}")
 
         # Now all data was read successfully, time to set it up.
+        self.alpha = alpha
         self.config = config
         self.dof_state0 = dof_state0
         self.sample_points = sample_points

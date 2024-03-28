@@ -112,7 +112,7 @@ class StateEstimator:
         )
 
         # Select sensitivity matrix only at used degrees of freedom
-        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
+        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn_idx, :]
 
         # Reshape sensitivity matrix to dimensions
         # (#zk * #sensors, # dofs) = (19 * #sensors, 50)
@@ -162,11 +162,11 @@ class StateEstimator:
             [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
         )
         y = (
-            wfe[:, self.ofc_data.zn3_idx]
+            wfe[:, self.ofc_data.zn_idx]
             - get_intrinsic_zernikes(
                 self.ofc_data, filter_name, sensor_names, rotation_angle
-            )[:, self.ofc_data.zn3_idx]
-            - y2_correction[:, self.ofc_data.zn3_idx]
+            )[:, self.ofc_data.zn_idx]
+            - y2_correction[:, self.ofc_data.zn_idx]
         )
 
         # Reshape wavefront error to dimensions

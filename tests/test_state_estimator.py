@@ -65,7 +65,7 @@ class TestStateEstimator(unittest.TestCase):
 
         # Select sensitivity matrix only at used zernikes
         sensitivity_matrix = sensitivity_matrix[
-            :, self.dz_sensitivity_matrix.ofc_data.zn3_idx, :
+            :, self.dz_sensitivity_matrix.ofc_data.zn_idx, :
         ]
 
         # Reshape sensitivity matrix to dimensions
@@ -104,8 +104,8 @@ class TestStateEstimator(unittest.TestCase):
 
     def test_dof_state_trim_zn_dof(self):
         # Set zernike indices to Z4-Z9
-        self.estimator.ofc_data.zn3_idx = np.arange(5)
-        self.dz_sensitivity_matrix.ofc_data.zn3_idx = np.arange(5)
+        self.estimator.ofc_data.zn_selected = np.arange(4, 10)
+        self.dz_sensitivity_matrix.ofc_data.zn_selected = np.arange(4, 10)
 
         # Compute sensitivity matrix
         sensitivity_matrix = self.compute_sensitivity_matrix(
@@ -139,7 +139,7 @@ class TestStateEstimator(unittest.TestCase):
 
     def test_dof_state_not_enough_zk(self):
         # Set zernike indices to Z4-Z8
-        self.estimator.ofc_data.zn3_idx = np.arange(4)
+        self.estimator.ofc_data.zn_selected = np.arange(4, 8)
 
         # Set used Degrees of Freedom
         new_comp_dof_idx = dict(

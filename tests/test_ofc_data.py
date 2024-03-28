@@ -66,6 +66,25 @@ class TestOFCData(unittest.TestCase):
         with self.assertRaises(AttributeError):
             self.ofc_data.dof_idx = np.zeros_like(self.ofc_data.dof_idx)
 
+    def test_selected_zn_idx(self):
+        self.assertTrue(isinstance(self.ofc_data.zn_selected, np.ndarray))
+
+        # Check ability to set the selected_zn_idx
+        new_zn_selected = np.array([4, 5, 10, 20, 25])
+        self.ofc_data.zn_selected = new_zn_selected
+        self.assertEqual(len(self.ofc_data.zn_idx), 5)
+        np.testing.assert_array_equal(
+            self.ofc_data.zn_idx, new_zn_selected - self.ofc_data.znmin
+        )
+
+        # Check that selecting zernikes below znmin limit raises an error
+        with self.assertRaises(ValueError):
+            self.ofc_data.zn_selected = [1, 2, 3]
+
+        # Check that selecting zernikes above znmax limit raises an error
+        with self.assertRaises(ValueError):
+            self.ofc_data.zn_selected = [29, 30]
+
     def test_comp_dof_idx(self):
         self.assertTrue(isinstance(self.ofc_data.comp_dof_idx, dict))
 

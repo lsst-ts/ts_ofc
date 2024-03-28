@@ -56,15 +56,14 @@ def save_intrinsic_zk(
 
     # Save yaml file with header and content shown as legacy yaml files.
     with open(
-        f"{path}/intrinsic_zk_{filter_name}_{kmax + 1}_23.yaml", "w"
+        f"{path}/intrinsic_zk_{filter_name}_{kmax + 1}_29.yaml", "w"
     ) as yaml_file:
         yaml_file.write(
             f"--- \n \
             \n # Intrinsic Zk for the {filter_name} band. \
             \n # The first dimension has the kmax = 31, corresponds to number of Zernike \
             \n # polynomials used to measure wavefront variation accross the pupil. \
-            \n # The second dimension has the jmax = 23, corresponds to number of Zernike \
-            \n # the other 22 elements, are jmax = 22 which corresponds to number of Zernike \
+            \n # The second dimension has the jmax = 29, corresponds to number of Zernike \
             \n # polynomials used to measure wavefront variation accross the field. \
             \n # The first element in that dimension is meaningless. \
             \n # Units are (Zk in um)/ (wavelength in um) \
@@ -84,9 +83,9 @@ def save_intrinsic_zk(
     # Save fits file
     prihdr = fits.Header()
     prihdr["Content"] = "Intrinsic zernikes (k, j)"
-    prihdr["Dim"] = "(31,23)"
+    prihdr["Dim"] = "(31,29)"
     hdu = fits.PrimaryHDU(intrinsic_zk, header=prihdr)
-    hdu.writeto(f"{path}/intrinsic_zk_{filter_name}_31_23.fits", overwrite=True)
+    hdu.writeto(f"{path}/intrinsic_zk_{filter_name}_31_29.fits", overwrite=True)
 
 
 def main(args: argparse.Namespace) -> None:
@@ -122,7 +121,7 @@ def main(args: argparse.Namespace) -> None:
         config,
         args.instrument,
         args.filter,
-        jmax=22,
+        jmax=28,
         kmax=args.kmax,
         rings=15,
         spokes=55,

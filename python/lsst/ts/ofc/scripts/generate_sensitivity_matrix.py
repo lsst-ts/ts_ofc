@@ -57,7 +57,10 @@ def get_fiducial(
 
     # Get fiducial optical system from batoid.
     if band == "ref":
-        fiducial = batoid.Optic.fromYaml(f"{instrument}_g.yaml")
+        if instrument == "ComCam":
+            fiducial = batoid.Optic.fromYaml(f"{instrument}_g.yaml")
+        else:
+            fiducial = batoid.Optic.fromYaml(f"{instrument}_g_500.yaml")
     else:
         fiducial = batoid.Optic.fromYaml(f"{instrument}_{band}.yaml")
 
@@ -189,7 +192,7 @@ def get_sensitivity_dz(
     instrument: str,
     band: str,
     ndof: int = 50,
-    jmax: int = 22,
+    jmax: int = 28,
     kmax: int = 30,
 ) -> np.ndarray:
     """Get the double zernike sensitivity matrix
@@ -276,15 +279,15 @@ def save_sensitivity_matrix(
 
     # Save yaml file with header and content shown as legacy yaml files.
     with open(
-        f"{path}/{instrument.lower()}_sensitivity_dz_31_23_50.yaml", "w"
+        f"{path}/{instrument.lower()}_sensitivity_dz_31_29_50.yaml", "w"
     ) as yaml_file:
         yaml_file.write(
             "--- \n \
             \n # Sensitivity matrix for the r band. \
-            \n # Dimensions: (31,23,50) \
+            \n # Dimensions: (31,29,50) \
             \n # The first dimension has the kmax = 31, corresponds to number of Zernike \
             \n # polynomials used to measure wavefront variation accross the pupil. \
-            \n # The second dimension has the jmax = 23, corresponds to number of Zernike \
+            \n # The second dimension has the jmax = 29, corresponds to number of Zernike \
             \n # polynomials used to measure wavefront variation accross the field. \
             \n # The third dimension is 50 degree of freedom (DOF) \
             \n # polynomials used to measure wavefront variation accross the field. \
@@ -314,10 +317,10 @@ def save_sensitivity_matrix(
     # Save fits file
     prihdr = fits.Header()
     prihdr["Content"] = "Sensitivity matrix (k, j, dof)"
-    prihdr["Dim"] = "(31,23,50)"
+    prihdr["Dim"] = "(31,29,50)"
     hdu = fits.PrimaryHDU(sensitivity_matrix, header=prihdr)
     hdu.writeto(
-        f"{path}/{instrument.lower()}_sensitivity_dz_31_23_50.fits", overwrite=True
+        f"{path}/{instrument.lower()}_sensitivity_dz_31_29_50.fits", overwrite=True
     )
 
 
@@ -384,4 +387,8 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def generate_intrinsic_zernikes() -> None:
+    main(parse_arguments())
+
+
+if __name__ == "__main__":
     main(parse_arguments())

@@ -412,10 +412,7 @@ class OFCController:
         #         = x.T * (A.T * C.T * C * A) * x = x.T * Q * x
         # CCmat is C.T *C above.
 
-        cc_mat = (
-            2.0 * np.pi / self.ofc_data.eff_wavelength[filter_name]
-        ) ** 2.0 * self.ofc_data.alpha[self.ofc_data.zn3_idx]
-        cc_mat = np.diag(cc_mat)
+        cc_mat = np.diag(self.ofc_data.alpha[self.ofc_data.zn_idx])
 
         # Calculate the Qx.
         #
@@ -457,7 +454,7 @@ class OFCController:
         sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(field_angles)
 
         # Select sensitivity matrix only at used degrees of freedom
-        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn3_idx, :]
+        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn_idx, :]
 
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]

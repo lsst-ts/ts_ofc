@@ -20,5 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from .generate_alpha_values import *
 from .generate_intrinsic_zernikes import *
 from .generate_sensitivity_matrix import *

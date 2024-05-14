@@ -6,7 +6,13 @@
 Version History
 ##################
 
-=======
+.. _lsst.ts.ofc-3.1.1:
+
+v3.1.1
+======
+
+* Update Jenkins to do daily and weekly builds.
+
 .. _lsst.ts.ofc-3.1.0:
 
 v3.1.0

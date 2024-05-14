@@ -10,11 +10,16 @@ pipeline {
         docker {
           image 'lsstts/develop-env:develop'
           args "--entrypoint=''"
+          alwaysPull true
         }
     }
 
     options {
       disableConcurrentBuilds()
+    }
+
+    triggers {
+        cron(env.BRANCH_NAME == 'develop' ? '0 4 * * *' : '')
     }
 
     environment {

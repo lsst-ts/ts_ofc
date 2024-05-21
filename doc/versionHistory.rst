@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-3.1.2:
+
+v3.1.2
+======
+
+* Move class diagrams to mermaid from plantUML.
+
 .. _lsst.ts.ofc-3.1.1:
 
 v3.1.1
@@ -34,7 +41,7 @@ v3.0.2
 v3.0.1
 ======
 
-* Removed Zemax Coordinate System, which is substituted by the Camera Coordinate System. 
+* Removed Zemax Coordinate System, which is substituted by the Camera Coordinate System.
 * Updated the bending modes used to the new uncorrupted bending modes.
 * Updated sensitivity matrix and intrinsic zernikes for the new coordinate system and new bending modes.
 * Removed old unused test data.
@@ -50,7 +57,7 @@ Major refactor of ofc code to allow camera rotation.
 * Added ability to evaluate sensitivity matrix and intrinsic zernikes at the rotated field position.
     * Added double zernikes sensitivity matrix for lsst and comcam.
     * Added double zernikes intrinsic zernikes for lsst and comcam.
-* Policy folder was simplified since lsstfam and lsst share all double zernike files. 
+* Policy folder was simplified since lsstfam and lsst share all double zernike files.
 * Added scripts to generate sensitivity matrix and intrinsic files from batoid package.
 
 .. _lsst.ts.ofc-2.1.1:

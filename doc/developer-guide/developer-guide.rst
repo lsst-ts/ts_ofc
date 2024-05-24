@@ -24,7 +24,7 @@ Important classes:
 
 .. _python data class: https://docs.python.org/3.8/library/dataclasses.html
 
-.. uml:: ../uml/ofc_class.uml
+.. mermaid:: ../uml/ofc_class.mmd
     :caption: OFC Class diagram.
 
 

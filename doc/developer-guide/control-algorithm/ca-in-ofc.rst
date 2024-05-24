@@ -96,10 +96,11 @@ This means :math:`\textbf{Q} = \textbf{A}^{T}\textbf{C}^{T}\textbf{C}\textbf{A}`
 The matrix :math:`\textbf{C}^{T}\textbf{C}` is chosen to be:
 
 .. math::
-    \textbf{C}^{T}\text{C} \equiv \left( \frac{2\pi}{\lambda(\ell)} \right)^{2} \text{diag}(\vec\alpha)^{2},
+    \textbf{C}^{T}\text{C} \equiv \text{diag}(\vec\alpha),
 
 where :math:`\vec{\alpha}` is the alpha value of normalized point source sensitivity (PSSN) in the basis :math:`\mathbb{Z}`.
-:math:`\lambda(\ell)` is the effective wavelength under different filter band :math:`\ell`.
+The values are computed by fitting :math:`1 - PSSN = \alpha_k \delta_k^2`, where :math:`\delta_k` is the Zernike coefficient perturbation in microns. 
+The units of :math:`\alpha_k` are in :math:`\mu m^{-2}`.
 
 We can rewrite the matrix :math:`\textbf{F}` as:
 

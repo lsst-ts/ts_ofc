@@ -10,6 +10,7 @@ pipeline {
         docker {
           image 'lsstts/develop-env:develop'
           args "--entrypoint=''"
+          alwaysPull true
         }
     }
 
@@ -17,13 +18,15 @@ pipeline {
       disableConcurrentBuilds()
     }
 
+    triggers {
+        cron(env.BRANCH_NAME == 'develop' ? '0 4 * * *' : '')
+    }
+
     environment {
         // Position of LSST stack directory
         LSST_STACK = "/opt/lsst/software/stack"
         // saluser home directory
         SALUSER_HOME = "/home/saluser"
-        // PlantUML url
-        PLANTUML_URL = "https://github.com/plantuml/plantuml/releases/download/v1.2022.1/plantuml-1.2022.1.jar"
         // Pipeline stack Version
         STACK_VERSION = "current"
         // XML report path
@@ -78,8 +81,6 @@ pipeline {
               withEnv(["WORK_HOME=${env.WORKSPACE}"]) {
                 def RESULT = sh returnStatus: true, script: """
                   source ${env.LSST_STACK}/loadLSST.bash
-
-                  curl ${env.PLANTUML_URL} -o ${env.SALUSER_HOME}/plantuml.jar
 
                   pip install sphinxcontrib-plantuml
 

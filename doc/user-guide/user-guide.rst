@@ -40,11 +40,11 @@ The following provides an example of how one would use :py:class:`OFC <lsst.ts.o
 
   # create some data to process:
   wfe = np.zeros((4,19))
-  field_idx = np.arange(4)
+  sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, field_idx=field_idx, filter_name="", gain=1.0, rotation_angle=0.0
+      wfe=wfe, sensor_names=sensor_names, filter_name="", gain=1.0, rotation_angle=0.0
   )
 
   # Check the output

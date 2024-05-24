@@ -45,51 +45,6 @@ def default_eff_wavelenght():
     }
 
 
-def default_alpha():
-    """Default alpha coefficient for the normalized point-source sensitivity
-
-    Returns
-    -------
-    `np.array` of `float`
-        Alpha coefficient for the normalized point-source sensitivity (PSSN).
-    """
-    return np.array(
-        [
-            6.6906168e-03,
-            9.4460611e-04,
-            9.4460611e-04,
-            6.1240430e-03,
-            6.1240430e-03,
-            1.7516747e-03,
-            1.7516747e-03,
-            4.9218300e-02,
-            9.4518035e-03,
-            9.4518035e-03,
-            3.0979027e-03,
-            3.0979027e-03,
-            4.5078901e-02,
-            4.5078901e-02,
-            1.2438449e-02,
-            1.2438449e-02,
-            4.5678764e-03,
-            4.5678764e-03,
-            3.6438430e-01,
-        ]
-    )
-
-
-def default_zn3_idx():
-    """Index of annular Zernike polynomials (z3-z22)
-
-    Returns
-    -------
-    `np.array` of `int`
-        Index of annular Zernike polynomials.
-    """
-
-    return np.arange(19)
-
-
 def default_rb_stroke():
     """Default allowed moving range of rigid body of M2 hexapod and Camera.
 
@@ -137,11 +92,10 @@ class BaseOFCData:
     zn3_idx : `np.array` of `bool`
         Index of annular Zernike polynomials (z3-z22) (`True`: in use, `False`:
         not in use).
-    zn3_idx_in_intrinsic_zn_file : `int`
-        Specify where the zernike data starts when reading the intrinsic
-        zernike coefficients.
     znmax : `int`
         Max number of zernikes used (to be filtered with `zn3_idx`).
+    znmin : `int`
+        Min number of zernikes used (to be filtered with `zn3_idx`).
     """
 
     y2_filename_root: str = "_y2.yaml"
@@ -151,13 +105,8 @@ class BaseOFCData:
 
     eff_wavelength: dict = field(default_factory=default_eff_wavelenght)
 
-    zn3_idx_in_intrinsic_zn_file: int = 3
-
-    znmax: int = 22  # Max number of zernikes used (to be filtered with zn3Idx)
+    znmax: int = 28  # Max number of zernikes used (to be filtered with zn3Idx)
     znmin: int = 4  # Min number of zernikes used (to be filtered with zn3Idx)
-
-    # Index of annular Zernike polynomials (z3-z22)
-    zn3_idx: np.array = field(default_factory=default_zn3_idx)
 
     # Control strategy
     control_strategy: str = "optiPSSN"
@@ -177,17 +126,10 @@ class BaseOFCData:
     m2_actuator_penalty: float = 134.0
 
     # penalty on control motion as a whole
-    # default below is 0.001, meaning 1N force is as bad as 0.001 increase
-    # in pssn use 0, if you accept whatever motion needed to produce best
-    # image quality use 1e100, if you absolutely hate anything that moves
-    motion_penalty: float = 0.001
-
-    # Normalized point-source sensitivity (PSSN) information
-    # PSSN ~ 1 - alpha * delta^2
-    # Eq (7.1) in Normalized Point Source Sensitivity for LSST
-    # (document-17242). It is noted that there are 19 terms of alpha value
-    # here for z4-z22 to use.
-    alpha: np.ndarray = field(default_factory=default_alpha)
+    # default below is 0.01, meaning 1N force is as bad as 0.01 increase
+    # in pssn. Use 0 if you accept whatever motion needed to produce best
+    # image quality; use 1e100, if you absolutely hate anything that moves.
+    motion_penalty: float = 0.01
 
     # Allowed moving range of rigid body of M2 hexapod and Camera hexapod
     # in the unit of um. e.g. rbStroke[0] means the M2 piston is allowed to

@@ -122,7 +122,9 @@ class TestSensitivityMatrix(unittest.TestCase):
         for dof in np.arange(10):
             assert (
                 self.mean_squared_residual(
-                    self.unrotated_sensitivity_matrix[..., dof],
+                    self.unrotated_sensitivity_matrix[
+                        ..., : self.gq_sensitivity_matrix.shape[1], dof
+                    ],
                     self.gq_sensitivity_matrix[..., dof],
                 )
                 < 2e-4

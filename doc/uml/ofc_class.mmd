@@ -1,6 +1,7 @@
-@startuml
-package "ofc_data" #DDDDDD {
-  OFCData --|> BaseOFCData
+classDiagram
+namespace ofc_data {
+  class OFCData
+  class BaseOFCData
 }
 
 class OFC
@@ -13,4 +14,4 @@ OFC *-- SensitivityMatrix
 OFC *-- StateEstimator
 OFC *-- OFCController
 OFC ..> Correction
-@enduml
+BaseOFCData <|-- OFCData

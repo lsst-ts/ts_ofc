@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-3.1.3:
+
+v3.1.3
+======
+
+* Update to use ts_jenkins_shared_library.
+
 .. _lsst.ts.ofc-3.1.2:
 
 v3.1.2

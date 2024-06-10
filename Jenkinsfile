@@ -1,4 +1,4 @@
-@Library('JenkinsShared')_
+@Library('JenkinsShared@tickets/DM-44299_2')_
 DevelopPipeline(
     name: "ts_ofc",
     module_name: "lsst.ts.ofc",

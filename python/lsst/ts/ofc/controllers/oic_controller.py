@@ -19,212 +19,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = ["OICController"]
+
 import logging
 
 import numpy as np
 
-from . import BendModeToForce, SensitivityMatrix
+from .. import BendModeToForce, OFCData, SensitivityMatrix
+from . import BaseController
 
 
-class OFCController:
-    """Optical Feedback Control Controller.
+class OICController(BaseController):
+    """Optimal Integral Controller (OIC)"""
 
-    This class is mainly used to determine the offset (`uk`) of degree of
-    freedom (DOF) at time `k+1` based on the wavefront error (`yk`) at time
-    `k`.
-
-    Parameters
-    ----------
-    ofc_data : `OFCData`
-        Data container.
-    log : `logging.Logger` or `None`
-        Optional logging class to be used for logging operations. If `None`,
-        creates a new logger.
-
-    Attributes
-    ----------
-    dof_state : `np.array`
-        State of telescope in the basis of degrees of freedom.
-    dof_state0 : `np.array`
-        Initial state of telescope in the basis of degrees of freedom.
-    log : `logging.Logger`
-        Logger class used for logging operations.
-    m1m3_bmf : `BendModeToForce`
-        Class to convert bend mode to forces for M1M3.
-    m2_bmf : `BendModeToForce`
-        Class to convert bend mode to forces for M2.
-    ofc_data : `OFCData`
-        OFC data container.
-    """
-
-    # Eta in FWHM calculation.
-    ETA = 1.086
-
-    # FWHM in atmosphere.
-    FWHM_ATM = 0.6
-
-    def __init__(self, ofc_data, log=None):
-        if log is None:
-            self.log = logging.getLogger(type(self).__name__)
-        else:
-            self.log = log.getChild(type(self).__name__)
-
-        self.ofc_data = ofc_data
+    def __init__(self, ofc_data: OFCData, log: logging.Logger | None = None) -> None:
+        # Initialize base class
+        super().__init__(ofc_data, log)
 
         # Constuct the double zernike sensitivity matrix
         self.dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
+        self.fwhm_threshold = 0.2
+        self.default_gain = 0.7
+
         self.m1m3_bmf = BendModeToForce("M1M3", self.ofc_data)
         self.m2_bmf = BendModeToForce("M2", self.ofc_data)
 
-        self._gain = 0
-
-        self.dof_state0 = np.zeros(len(self.ofc_data.dof_idx))
-
-        for comp in self.ofc_data.comp_dof_idx:
-            start_idx = self.ofc_data.comp_dof_idx[comp]["startIdx"]
-            end_idx = (
-                self.ofc_data.comp_dof_idx[comp]["startIdx"]
-                + self.ofc_data.comp_dof_idx[comp]["idxLength"]
-            )
-
-            state0name = self.ofc_data.comp_dof_idx[comp]["state0name"]
-
-            if "Hexapod" in state0name:
-                self.dof_state0[start_idx:end_idx] = np.array(
-                    [
-                        self.ofc_data.dof_state0[state0name][axis_name]
-                        for axis_name in ["dZ", "dX", "dY", "rX", "rY"]
-                    ]
-                )
-            else:
-                self.dof_state0[start_idx:end_idx] = np.array(
-                    [
-                        self.ofc_data.dof_state0[state0name][f"mode{mode_idx+1}"]
-                        for mode_idx in range(
-                            self.ofc_data.comp_dof_idx[comp]["idxLength"]
-                        )
-                    ]
-                )
-
-        self.dof_state = self.dof_state0.copy()
-
-    def reset_dof_state(self):
-        """Initialize the state to the state 0 in the basis of degree of
-        freedom (DOF).
-        """
-
-        self.dof_state = self.dof_state0.copy()
-
-    def aggregate_state(self, dof, dof_idx):
-        """Aggregate the calculated degree of freedom (DOF) in the state.
-
-        Parameters
-        ----------
-        dof : `numpy.ndarray` or `list`
-            Calculated DOF.
-        dof_idx : `numpy.ndarray` or `list` of `int`
-            Index array of degree of freedom.
-        """
-
-        self.dof_state[dof_idx] += dof
-
-    @property
-    def aggregated_state(self):
-        """Returns the aggregated state.
-
-        Returns
-        -------
-        `np.ndarray`
-            Aggregated state.
-        """
-        return self.dof_state[self.ofc_data.dof_idx]
-
-    @property
-    def gain(self):
-        """Get the gain value.
-
-        Returns
-        -------
-        gain : `float`
-            Gain value in the feedback.
-        """
-
-        return self._gain
-
-    @gain.setter
-    def gain(self, value):
-        """Set the gain value.
-
-        Parameters
-        ----------
-        value : `float`
-            Gain value in the feedback. It should be in the range of 0 and 1.
-
-        Raises
-        ------
-        ValueError
-            if value is not in the range of [0, 1].
-        """
-
-        if 0.0 <= value <= 1.0:
-            self._gain = value
-        else:
-            raise ValueError(f"Gain must be in the range of [0, 1]. Got {value}.")
-
-    def effective_fwhm_g4(self, pssn, sensor_names):
-        """Calculate the effective FWHM by Gaussian quadrature.
-
-        FWHM: Full width at half maximum.
-        FWHM = eta * FWHM_{atm} * sqrt(1/PSSN -1).
-        Effective GQFWHM = sum_{i} (w_{i}* FWHM_{i}).
-
-        Parameters
-        ----------
-        pssn : `numpy.ndarray` or `list`
-            Normalized point source sensitivity (PSSN).
-        sensor_names : `list` of `string`
-            List of sensor names.
-
-        Returns
-        -------
-        `float`
-            Effective FWHM in arcsec by Gaussian quadrature.
-
-        Raises
-        ------
-        ValueError
-            Input values are unphysical.
-        ValueError
-            Image quality weights sum is zero. Please check your weights.
-        """
-
-        # Normalized image quality weight
-        imqw = [self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names]
-
-        if np.sum(imqw) == 0:
-            raise ValueError(
-                "Image quality weights sum is zero. Please check your weights."
-            )
-
-        n_imqw = imqw / np.sum(imqw)
-
-        fwhm = self.ETA * self.FWHM_ATM * np.sqrt(1.0 / np.array(pssn) - 1.0)
-        fwhm_gq = np.sum(n_imqw * fwhm)
-
-        if np.isnan(fwhm_gq) or np.isinf(fwhm_gq):
-            raise ValueError("Input values are unphysical.")
-
-        return fwhm_gq
-
-    def authority(self):
+    def authority(self) -> np.ndarray:
         """Compute the authority of the system.
 
         Returns
         -------
         authority : `np.array`
         """
-
         # Rigid Body Stroke - Authority
         rbs_authority = self.ofc_data.rb_stroke[0] / self.ofc_data.rb_stroke
 
@@ -242,7 +69,9 @@ class OFCController:
 
         return authority
 
-    def calc_uk_x00(self, mat_f, qx, mat_h):
+    def calc_uk_x00(
+        self, mat_f: np.ndarray, qx: np.ndarray, mat_h: np.ndarray
+    ) -> np.ndarray:
         """Calculate uk by referencing to "x00".
         The offset will only trace the relative changes of offset without
         regarding the real value.
@@ -254,6 +83,8 @@ class OFCController:
             Matrix F.
         qx : `numpy.ndarray`
             qx array.
+        mat_h : `numpy.ndarray`
+            Matrix H.
 
         Returns
         -------
@@ -270,7 +101,7 @@ class OFCController:
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
-    def calc_uk_x0(self, mat_f, qx, **kwargs):
+    def calc_uk_x0(self, mat_f: np.ndarray, qx: np.ndarray, **kwargs) -> np.ndarray:
         """Calculate uk by referencing to "x0".
 
         The offset will only trace the previous one.
@@ -292,9 +123,11 @@ class OFCController:
         uk : `numpy.ndarray`
             Calculated uk in the basis of degree of freedom (DOF).
         """
-        return -mat_f.dot(qx)
+        return mat_f.dot(qx)
 
-    def calc_uk_0(self, mat_f, qx, mat_h):
+    def calc_uk_0(
+        self, mat_f: np.ndarray, qx: np.ndarray, mat_h: np.ndarray
+    ) -> np.ndarray:
         """Calculate uk by referencing to "0".
 
         The offset will trace the real value and target for 0.
@@ -321,42 +154,6 @@ class OFCController:
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
-    def uk_gain(
-        self,
-        filter_name: str,
-        dof_state: np.ndarray,
-        sensor_names: list[str] | None = None,
-    ) -> np.ndarray:
-        """Estimate uk in the basis of degree of freedom (DOF) with gain
-        compensation.
-
-        Parameters
-        ----------
-        filter_name : `string`
-            Name of the filter.
-        dof_state : `numpy.ndarray`
-            Optical state in the basis of DOF.
-        sensor_names : `list` of `string`
-            List of sensor names.
-
-        Returns
-        -------
-        uk : `numpy.ndarray`
-            Calculated uk in the basis of DOF.
-
-        Raises
-        ------
-        RuntimeError
-            If `sensor_names` is not provided for full array mode instruments.
-        """
-
-        if (self.ofc_data.name != "lsst") and (sensor_names is None):
-            raise RuntimeError(
-                "sensor_names must be provided for full array mode instruments."
-            )
-
-        return self.gain * self.uk(filter_name, dof_state, sensor_names)
-
     def uk(
         self,
         filter_name: str,
@@ -375,7 +172,7 @@ class OFCController:
             Name of the filter.
         dof_state : `numpy.ndarray`
             Optical state in the basis of DOF.
-        sensor_names : `list` of `string`
+        sensor_names : `list` [`string`]
             List of sensor names.
 
         Returns
@@ -498,24 +295,70 @@ class OFCController:
 
         return uk.ravel()
 
-    def fwhm_to_pssn(self, fwhm):
-        """Convert the FWHM data to PSSN.
-
-        Take the array of FWHM values (nominally 1 per CCD) and convert
-        it to PSSN (nominally 1 per CCD).
+    def control_step(
+        self,
+        filter_name: str,
+        dof_state: np.ndarray,
+        sensor_names: list[str] | None = None,
+    ) -> np.ndarray:
+        """Estimate uk in the basis of degree of freedom (DOF) with gain
+        compensation.
 
         Parameters
         ----------
-        fwhm : `numpy.ndarray[x]`
-            An array of FWHM values with sensor information.
+        filter_name : `string`
+            Name of the filter.
+        dof_state : `numpy.ndarray`
+            Optical state in the basis of DOF.
+        sensor_names : `list` [`string`] or `None`
+            List of sensor names.
 
         Returns
         -------
-        pssn : `numpy.ndarray[y]`
-            An array of PSSN values.
+        control_effort : `numpy.ndarray`
+            Calculated uk in the basis of DOF.
+
+        Raises
+        ------
+        RuntimeError
+            If `sensor_names` is not provided for full array mode instruments.
         """
 
-        denominator = self.ETA * self.FWHM_ATM
-        pssn = 1.0 / ((fwhm / denominator) ** 2 + 1.0)
+        if (self.ofc_data.name != "lsst") and (sensor_names is None):
+            raise RuntimeError(
+                "sensor_names must be provided for full array mode instruments."
+            )
 
-        return pssn
+        correction = self.uk(filter_name, dof_state, sensor_names)
+
+        # Initialize the control effort with the proportional term
+        if self.kp < 0.0 or self.kp is None:
+            self.set_pssn_gain()
+
+        control_effort = self.calculate_pid_step(correction)
+
+        return control_effort
+
+    def set_pssn_gain(self) -> None:
+        """Set the gain value based on the PSSN, which comes from the FWHM by
+        DM team.
+
+        Raises
+        ------
+        RuntimeError
+            If `pssn_data` is not properly set.
+        """
+
+        if self.pssn_data["pssn"] is None or self.pssn_data["sensor_names"] is None:
+            raise RuntimeError(
+                "PSSN data not set. Run `set_fwhm_data` with appropriate data."
+            )
+
+        fwhm_gq = self.effective_fwhm_g4(
+            self.pssn_data["pssn"], self.pssn_data["sensor_names"]
+        )
+
+        if fwhm_gq > self.fwhm_threshold:
+            self.kp = 1.0
+        else:
+            self.kp = self.default_gain

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of ts_ofc.
 #
 # Developed for Vera Rubin Observatory.
@@ -19,17 +18,39 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-# isort: skip_file
 
-try:
-    from .version import *
-except ModuleNotFoundError:
-    pass
+import numpy as np
 
-from .bend_mode_to_force import *
-from .sensitivity_matrix import *
-from .state_estimator import *
-from .correction import *
-from .ofc_data import OFCData
-from .ofc import *
-from .controllers import *
+from . import BaseController
+
+__all__ = ["PIDController"]
+
+
+class PIDController(BaseController):
+    """PID controller."""
+
+    def control_step(
+        self,
+        filter_name: str,
+        dof_state: np.ndarray,
+        sensor_names: list[str] | None = None,
+    ) -> np.ndarray:
+        """Estimate the control offset for the given DOF state.
+
+        Parameters
+        ----------
+        filter_name : `string`
+            Name of the filter.
+        dof_state : `numpy.ndarray`
+            Optical state in the basis of DOF.
+        sensor_names : `list` [`string`]
+            List of sensor names.
+
+        Returns
+        -------
+        control_effort : `numpy.ndarray`
+            Calculated control_effort in the basis of DOF.
+        """
+        control_effort = self.calculate_pid_step(dof_state)
+
+        return control_effort

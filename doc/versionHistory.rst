@@ -6,6 +6,15 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-3.2.0:
+
+v3.2.0
+======
+
+* Add PIDController as alternative control strategy.
+* Move current control strategy to OICController (optimal integral controller).
+* Add PID option to OICController output.
+
 .. _lsst.ts.ofc-3.1.3:
 
 v3.1.3

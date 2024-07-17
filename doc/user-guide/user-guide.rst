@@ -44,7 +44,7 @@ The following provides an example of how one would use :py:class:`OFC <lsst.ts.o
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, sensor_names=sensor_names, filter_name="", gain=1.0, rotation_angle=0.0
+      wfe=wfe, sensor_names=sensor_names, filter_name="", rotation_angle=0.0
   )
 
   # Check the output
@@ -95,7 +95,7 @@ This can be done with the following:
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, sensor_names=sensor_names, filter_name="R", gain=1.0, rotation_angle=0.0
+      wfe=wfe, sensor_names=sensor_names, filter_name="R", rotation_angle=0.0
   )
 
   # The corrections now should be all zeros
@@ -132,7 +132,7 @@ For instance, one can disable operations will all components except the Camera H
 
   # get corrections from ofc
   m2_hex, cam_hex, m1m3, m2 = ofc.calculate_corrections(
-      wfe=wfe, sensor_names=sensor_names, filter_name="R", gain=1.0, rotation_angle=0.0
+      wfe=wfe, sensor_names=sensor_names, filter_name="R", rotation_angle=0.0
   )
 
   print(cam_hex)
@@ -173,6 +173,8 @@ The basic structure of a configuration directory is as follows:
   │   └── rotMatM2.yaml
   ├── configurations
   │   ├── comcam.yaml
+  │   ├── pid_controller.yaml
+  │   ├── oic_controller.yaml
   │   └── lsst.yaml
   ├── image_quality_weights
   │   ├── comcam_weights.yaml
@@ -276,3 +278,7 @@ Additionally, the directory includes three additional files corresponding to the
   - ``lsst_gaussian_quadrature_weights.yaml``; weighting ratio of image quality used in the Q matrix in cost function.
   - ``lsst_gaussian_quadrature_points.yaml``; mapping between the sensor name and sensor field position.
   - ``lsst_gaussian_quadrature_y2.yaml``; the wavefront error correction between the central raft and corner wavefront sensor.
+
+Finally, there are also different configurations for the controller. These configurations can be modified to try different gains.
+  - ``pid_controller.yaml``; configuration file for the PID controller.
+  - ``oic_controller.yaml``; configuration file for the OIC controller.

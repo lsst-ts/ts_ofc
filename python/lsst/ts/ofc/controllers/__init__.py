@@ -19,17 +19,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-# isort: skip_file
 
-try:
-    from .version import *
-except ModuleNotFoundError:
-    pass
-
-from .bend_mode_to_force import *
-from .sensitivity_matrix import *
-from .state_estimator import *
-from .correction import *
-from .ofc_data import OFCData
-from .ofc import *
-from .controllers import *
+from .base_controller import *
+from .oic_controller import *
+from .pid_controller import *

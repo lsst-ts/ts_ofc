@@ -30,7 +30,11 @@ The solution is:
 
 where :math:`\vec{x}_{k}` is the least norm solution of optical state.
 
-To evaluate :math:`\vec{u}`, the cost function (:math:`J(\vec{u})`) at time :math:`k+1` is defined to be:
+
+Optimal Integral Controller (OIC)
+==================================
+
+To evaluate :math:`\vec{u}`, the OIC approach uses a cost function (:math:`J(\vec{u})`) at time :math:`k+1` defined to be:
 
 .. math::
 
@@ -151,3 +155,10 @@ x00
 
 For the feedback control, instead of sending the full correction, it is usually to sent a ratio of offset.
 So the final correction will be :math:`g\vec{u}` instead of :math:`\vec{u}`.
+
+
+Proportional-Integral-Derivative Controller (PID)
+===================================================
+
+The PID controller is a feedback control loop that calculates the offset of DOF based on the error between the desired setpoint and the estimated optical state. 
+This is a standard controller that works well when using a reduced basis of DOF where the degenerate combinations of Degrees of Freedom have been removed.

@@ -65,16 +65,14 @@ class BaseOFCData:
     ----------
     alpha : `np.array` of `float`
         Alpha coefficient for the normalized point-source sensitivity (PSSN).
-    control_strategy : `string`
-        Name of the control strategy.
+    controller_filename : `string`
+        Name of the file where the controller is saved.
     dof_state0_filename : `string`
         Name of the file with the initial degrees of freedom.
     eff_wavelength : `dict` of `string`
         Effective wavelength in um for each filter.
     intrinsic_zk_filename_root : `string`
         Filename root string for the intrinsic zernike coefficients.
-    iqw_filename : `str`
-        Image quality weight filename.
     m1m3_actuator_penalty : `float`
         M1M3 actuator penalty factor.
     m2_actuator_penalty : `float`
@@ -89,15 +87,13 @@ class BaseOFCData:
         Filename root string for the sensitivity matrix M.
     y2_filename_root : `string`
         Name of the file where `y2_correction` is read from.
-    zn3_idx : `np.array` of `bool`
-        Index of annular Zernike polynomials (z3-z22) (`True`: in use, `False`:
-        not in use).
     znmax : `int`
-        Max number of zernikes used (to be filtered with `zn3_idx`).
+        Max number of zernikes used.
     znmin : `int`
-        Min number of zernikes used (to be filtered with `zn3_idx`).
+        Min number of zernikes used.
     """
 
+    # Filenames
     y2_filename_root: str = "_y2.yaml"
     dof_state0_filename: str = "state0_in_dof.yaml"
     intrinsic_zk_filename_root: str = "intrinsic_zk"
@@ -105,11 +101,9 @@ class BaseOFCData:
 
     eff_wavelength: dict = field(default_factory=default_eff_wavelenght)
 
+    # Used zernikes
     znmax: int = 28  # Max number of zernikes used (to be filtered with zn3Idx)
     znmin: int = 4  # Min number of zernikes used (to be filtered with zn3Idx)
-
-    # Control strategy
-    control_strategy: str = "optiPSSN"
 
     # M1M3 actuator penalty factor
     # how many microns of M2 piston does 1N rms force correspond to

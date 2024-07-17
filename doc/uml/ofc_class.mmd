@@ -6,12 +6,15 @@ namespace ofc_data {
 
 class OFC
 StateEstimator *-- OFCData
-OFCController *-- OFCData
-OFCController "1" *-- "2" BendModeToForce
+BaseController *-- OFCData
+OICController "1" *-- "2" BendModeToForce
 BendModeToForce *-- OFCData
 OFC *-- OFCData
 OFC *-- SensitivityMatrix
 OFC *-- StateEstimator
-OFC *-- OFCController
+OFC *-- OICController
+OFC *-- PIDController
 OFC ..> Correction
 BaseOFCData <|-- OFCData
+BaseController <|-- OICController
+BaseController <|-- PIDController

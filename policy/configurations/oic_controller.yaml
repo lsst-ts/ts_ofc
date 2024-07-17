@@ -1,0 +1,32 @@
+# Description: Optimal Integral Controller (OIC) configuration file
+#
+# Name: OIC
+# xref is the reference to the controller, it can be ['x0', 'x00', '0']
+# kp is the proportional gain
+# ki is the integral gain defined as ki = kp*T/T_i
+# kd is the derivative gain defined as kd = kp*T_d/T
+# For more details on the controller gains and the values of T, T_i, and T_d, 
+# please refer to the report https://www.betzler.physik.uni-osnabrueck.de/Manuskripte/Elektronik-Praktikum/p3/doc2558.pdf
+# derivative_filter_coeff is the coefficient of the derivative filter
+# setpoint is the setpoint for each degree of freedom (array of 50 elements)
+
+description: Optimal Integral Controller (OIC)
+
+name: OIC
+xref: x00 
+kp: 1.0
+ki: 0
+kd: 0
+derivative_filter_coeff: 1.0
+setpoint: [
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0
+]

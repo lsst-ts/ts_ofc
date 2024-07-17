@@ -61,6 +61,8 @@ class OFCData(BaseOFCData):
         other files when the name is set.
     config_dir : `pathlib.Path`
         Path to the directory storing configuration files.
+    controller_filename : `string`
+        Controller configuration filename.
     dof_idx : `dict` of `string`
         Index of Degree of Freedom (DOF).
     field_idx : `dict` of `string`
@@ -81,8 +83,6 @@ class OFCData(BaseOFCData):
         Sensitivity matrix M.
     start_task : `asyncio.Future`
         Asyncio future that tracks whether the class is setup and ready or not.
-    xref : `string`
-        Define how the control strategy will handle the reference point.
     xref_list : `list` of `string`
         Available reference point strategies.
     y2_correction : `np.ndarray` of `float`
@@ -149,6 +149,9 @@ class OFCData(BaseOFCData):
 
         self.start_task.set_result(None)
 
+        # Initialize controller configuration
+        self._controller_filename = "oic_controller.yaml"
+
         # Set the name of the instrument. This reads the instrument-related
         # configuration files.
         if name is not None:
@@ -197,9 +200,6 @@ class OFCData(BaseOFCData):
         self._zn_idx = np.arange(self.znmax - self.znmin + 1, dtype=int)
         self._zn_idx_mask = np.ones_like(self._zn_idx, dtype=bool)
         self._zn_selected = np.arange(self.znmin, self.znmax + 1, dtype=int)
-
-        # Control strategy
-        self._xref = None
 
     @property
     def name(self):
@@ -303,6 +303,22 @@ class OFCData(BaseOFCData):
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]
 
+    @property
+    def controller_filename(self) -> str:
+        """Controller configuration filename.
+
+        Returns
+        -------
+        `string`
+            Controller configuration filename.
+        """
+        return self._controller_filename
+
+    @controller_filename.setter
+    def controller_filename(self, value):
+        self._controller_filename = value
+        self.configure_controller()
+
     def load_yaml_file(self, file_path: str) -> dict:
         """Load yaml file.
 
@@ -376,9 +392,17 @@ class OFCData(BaseOFCData):
             If sensitivity matrix file does not exist.
         RuntimeError
             If configuration file does not exist.
-
+        RuntimeError
+            If controller configuration file does not exist.
+        ValueError
+            If controller name is missing in the controller configuration.
+        ValueError
+            If controller name is not PID or OIC.
+        ValueError
+            If required key is missing in the PID controller configuration.
+        ValueError
+            If required key is missing in the OIC controller configuration.
         """
-
         # Set the name of the instrument. Either lsst or comcam
         camera_type = instrument if (instrument != "lsstfam") else "lsst"
 
@@ -523,9 +547,12 @@ class OFCData(BaseOFCData):
 
         config = self.load_yaml_file(configuration_path)
 
-        self.log.debug(f"Done configuring {instrument}")
+        # Read configuration file for controller
+        # ---------------------------------------
+        self.configure_controller()
 
         # Now all data was read successfully, time to set it up.
+        # ------------------------------------------------------
         self.alpha = alpha
         self.config = config
         self.dof_state0 = dof_state0
@@ -538,6 +565,44 @@ class OFCData(BaseOFCData):
         self.intrinsic_zk = intrinsic_zk
         self.sensitivity_matrix = sensitivity_matrix
         self.start_task.set_result(instrument)
+
+        self.log.debug(f"Done configuring {instrument}")
+
+    def configure_controller(self):
+        """Refresh the controller configuration based
+        on the current controller_filename.
+        """
+        if Path(self.controller_filename).is_absolute():
+            controller_path = Path(self.controller_filename)
+        else:
+            controller_path = (
+                self.config_dir / "configurations" / self.controller_filename
+            )
+
+        self.controller = self.load_yaml_file(controller_path)
+
+        if "name" not in self.controller:
+            raise ValueError(
+                "Required key 'name' is missing in the controller configuration."
+            )
+
+        if self.controller["name"] not in ["PID", "OIC"]:
+            raise ValueError("Controller 'name' must be either 'PID' or 'OIC'.")
+
+        if self.controller["name"] == "PID":
+            for key in ["kp", "ki", "kd", "setpoint"]:
+                if key not in self.controller:
+                    raise ValueError(
+                        f"Required key '{key}' is missing in the PID controller configuration."
+                    )
+        elif self.controller["name"] == "OIC":
+            for key in ["kp", "ki", "kd", "setpoint", "xref"]:
+                if key not in self.controller:
+                    raise ValueError(
+                        f"Required key '{key}' is missing in the OIC controller configuration."
+                    )
+
+            self.xref = self.controller["xref"]
 
     async def __aenter__(self):
         return self

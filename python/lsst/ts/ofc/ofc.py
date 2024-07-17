@@ -25,7 +25,8 @@ import logging
 
 import numpy as np
 
-from . import BendModeToForce, Correction, OFCController, StateEstimator
+from . import BendModeToForce, Correction, StateEstimator
+from .controllers import OICController, PIDController
 from .ofc_data import OFCData
 from .utils import CorrectionType
 
@@ -59,8 +60,8 @@ class OFC:
         Logger class used for logging operations.
     lv_dof : `np.ndarray`
         Last visit degrees of freedom.
-    ofc_controller : `OFCController`
-        Instance of `OFCController` class.
+    controller : `PIDController` or `OICController`
+        Controller class.
     ofc_data : `OFCData`
         OFC data container.
     pssn_data : `dict`
@@ -70,7 +71,6 @@ class OFC:
 
     Notes
     -----
-
     FWHM: Full width at half maximum.
     PSSN: Normalized point source sensitivity.
     """
@@ -81,23 +81,20 @@ class OFC:
         else:
             self.log = log.getChild(type(self).__name__)
 
-        self.pssn_data = dict(sensor_names=None, pssn=None)
-
         self.ofc_data = ofc_data
 
         self.state_estimator = StateEstimator(self.ofc_data)
 
-        self.ofc_controller = OFCController(self.ofc_data)
-
-        self.fwhm_threshold = 0.2
-
-        self.default_gain = 0.7
+        if self.ofc_data.controller["name"] == "PID":
+            self.controller = PIDController(self.ofc_data)
+        elif self.ofc_data.controller["name"] == "OIC":
+            self.controller = OICController(self.ofc_data)
 
         # Truncation of degenerate modes after correction calculation
         self.rcond_degeneracy = 1e-3
 
         # Last visit dof
-        self.lv_dof = self.ofc_controller.dof_state.copy()
+        self.lv_dof = self.controller.dof_state.copy()
 
         self.dof_order = ("m2HexPos", "camHexPos", "M1M3Bend", "M2Bend")
 
@@ -106,7 +103,6 @@ class OFC:
         wfe: np.ndarray,
         sensor_names: list[str],
         filter_name: str,
-        gain: float,
         rotation_angle: float,
     ) -> list[Correction]:
         """Calculate the Hexapod, M1M3, and M2 corrections from the FWHM
@@ -124,9 +120,6 @@ class OFC:
             Name of the filter used in the observations. This must be a valid
             entry in the `ofc_data.intrinsic_zk` and `ofc_data.eff_wavelength`
             dictionaries.
-        gain : `float`
-            User provided gain. If < 0, calculate gain based on point source
-            sensitivity normalized (PSSN).
         rotation_angle : `float`
             Camera rotator angle (in degrees) during the observations.
 
@@ -147,24 +140,19 @@ class OFC:
                 f"Number of wavefront errors ({len(wfe)}) must be the same as "
                 f"number of sensors ({len(sensor_names)})."
             )
-        # Set the gain value
-        if gain < 0.0:
-            self.set_pssn_gain()
-        else:
-            self.ofc_controller.gain = gain
 
         optical_state = self.state_estimator.dof_state(
             filter_name, wfe, sensor_names, rotation_angle
         )
 
         # Calculate the uk based on the control algorithm
-        uk = self.ofc_controller.uk_gain(filter_name, optical_state, sensor_names)
+        uk = self.controller.control_step(filter_name, optical_state, sensor_names)
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)
 
         # Aggregate the rotated uk
-        self.ofc_controller.aggregate_state(uk, self.ofc_data.dof_idx)
+        self.controller.aggregate_state(uk, self.ofc_data.dof_idx)
 
         return self.get_all_corrections()
 
@@ -201,7 +189,7 @@ class OFC:
         end_idx = start_idx + self.ofc_data.comp_dof_idx[dof_comp]["idxLength"]
         dof_idx = np.arange(start_idx, end_idx)
 
-        dof = self.ofc_controller.dof_state[dof_idx]
+        dof = self.controller.dof_state[dof_idx]
 
         if isinstance(self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"], float):
             trans_dof = self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"] * dof
@@ -223,7 +211,7 @@ class OFC:
     def init_lv_dof(self) -> None:
         """Initialize last visit degree of freedom."""
 
-        self.lv_dof = np.zeros_like(self.ofc_controller.dof_state0)
+        self.lv_dof = np.zeros_like(self.controller.dof_state0)
 
     def set_fwhm_data(self, fwhm, sensor_names):
         """Set the list of FWHMSensorData of each CCD of camera.
@@ -235,24 +223,9 @@ class OFC:
             a  particular sensor.
         sensor_names : `list` of `string`
             List of sensor names.
-        Raises
-        ------
-        RuntimeError
-            If size of `fwhm` and `sensor_names` are different.
         """
-
-        if len(fwhm) != len(sensor_names):
-            raise RuntimeError(
-                f"Size of fwhm ({len(fwhm)}) is different than sensor_names ({len(sensor_names)})."
-            )
-
-        self.pssn_data["sensor_names"] = sensor_names.copy()
-        self.pssn_data["pssn"] = np.zeros(len(fwhm))
-
-        for s_id, fw in enumerate(fwhm):
-            self.pssn_data["pssn"][s_id] = np.average(
-                self.ofc_controller.fwhm_to_pssn(fwhm)
-            )
+        # Delegate the call to the controller's set_fwhm_data
+        self.controller.set_fwhm_data(fwhm, sensor_names)
 
     def reset(self) -> list[Correction]:
         """Reset the OFC calculation state, which is the aggregated DOF now.
@@ -273,34 +246,10 @@ class OFC:
             The figure offset for the MT M2.
         """
 
-        self.ofc_controller.reset_dof_state()
+        self.controller.reset_dof_state()
         self.init_lv_dof()
 
         return self.get_all_corrections()
-
-    def set_pssn_gain(self):
-        """Set the gain value based on the PSSN, which comes from the FWHM by
-        DM team.
-
-        Raises
-        ------
-        RuntimeError
-            If `pssn_data` is not properly set.
-        """
-
-        if self.pssn_data["pssn"] is None or self.pssn_data["sensor_names"] is None:
-            raise RuntimeError(
-                "PSSN data not set. Run `set_fwhm_data` with appropriate data."
-            )
-
-        fwhm_gq = self.ofc_controller.effective_fwhm_g4(
-            self.pssn_data["pssn"], self.pssn_data["sensor_names"]
-        )
-
-        if fwhm_gq > self.fwhm_threshold:
-            self.ofc_controller.gain = 1.0
-        else:
-            self.ofc_controller.gain = self.default_gain
 
     def set_last_visit_dof(self, dof) -> None:
         """Set the state (or degree of freedom, DOF) correction from the last
@@ -312,7 +261,7 @@ class OFC:
             Calculated degrees of freedom.
         """
 
-        lv_dof = np.zeros_like(self.ofc_controller.dof_state0)
+        lv_dof = np.zeros_like(self.controller.dof_state0)
 
         lv_dof[self.ofc_data.dof_idx] = dof
 

@@ -66,6 +66,14 @@ class TestOFCData(unittest.TestCase):
         with self.assertRaises(AttributeError):
             self.ofc_data.dof_idx = np.zeros_like(self.ofc_data.dof_idx)
 
+    def test_change_controller_configuration(self):
+        ofc_data = OFCData("lsst")
+        initial_kd = ofc_data.controller["kd"]
+
+        ofc_data.controller_filename = "pid_controller.yaml"
+
+        self.assertNotEqual(ofc_data.controller["kd"], initial_kd)
+
     def test_selected_zn_idx(self):
         self.assertTrue(isinstance(self.ofc_data.zn_selected, np.ndarray))
 

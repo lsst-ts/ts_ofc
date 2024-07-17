@@ -47,17 +47,11 @@ class TestOFC(unittest.TestCase):
         self.sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
     def test_init_lv_dof(self):
-        self.ofc.lv_dof = np.random.rand(len(self.ofc.ofc_controller.dof_state0))
+        self.ofc.lv_dof = np.random.rand(len(self.ofc.controller.dof_state0))
 
         self.ofc.init_lv_dof()
 
         self.assertTrue(np.all(self.ofc.lv_dof == 0))
-
-    def test_pssn_data(self):
-        self.assertTrue("sensor_names" in self.ofc.pssn_data)
-        self.assertTrue("pssn" in self.ofc.pssn_data)
-        self.assertTrue(self.ofc.pssn_data["sensor_names"] is None)
-        self.assertTrue(self.ofc.pssn_data["pssn"] is None)
 
     def test_set_fwhm_data(self):
         fwhm_values = np.ones((4, 19)) * 0.2
@@ -65,8 +59,12 @@ class TestOFC(unittest.TestCase):
 
         self.ofc.set_fwhm_data(fwhm_values, sensor_names)
 
-        self.assertTrue(np.all(sensor_names == self.ofc.pssn_data["sensor_names"]))
-        self.assertAlmostEqual(self.ofc.pssn_data["pssn"][0], 0.9139012, places=6)
+        self.assertTrue(
+            np.all(sensor_names == self.ofc.controller.pssn_data["sensor_names"])
+        )
+        self.assertAlmostEqual(
+            self.ofc.controller.pssn_data["pssn"][0], 0.9139012, places=6
+        )
 
     def test_set_fwhm_data_fails(self):
         # Passing fwhm_values with 4 columns instead of 5
@@ -77,8 +75,8 @@ class TestOFC(unittest.TestCase):
             self.ofc.set_fwhm_data(fwhm_values, sensor_names)
 
     def test_reset(self):
-        dof = np.ones_like(self.ofc.ofc_controller.dof_state)
-        self.ofc.ofc_controller.aggregate_state(dof, self.ofc.ofc_data.dof_idx)
+        dof = np.ones_like(self.ofc.controller.dof_state)
+        self.ofc.controller.aggregate_state(dof, self.ofc.ofc_data.dof_idx)
         self.ofc.set_last_visit_dof(dof)
 
         (
@@ -101,37 +99,15 @@ class TestOFC(unittest.TestCase):
         self.assertEqual(len(self.ofc.lv_dof), 50)
         self.assertEqual(np.sum(np.abs(self.ofc.lv_dof)), 0)
 
-    def test_set_pssn_gain_unconfigured(self):
-        with self.assertRaises(RuntimeError):
-            self.ofc.set_pssn_gain()
-
-    def test_set_pssn_gain(self):
-        fwhm_values = np.ones((4, 19)) * 0.2
-        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
-
-        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
-
-        self.ofc.set_pssn_gain()
-
-        self.assertTrue(self.ofc.ofc_controller.gain, self.ofc.default_gain)
-
-        fwhm_values = np.ones((4, 19))
-
-        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
-
-        self.ofc.set_pssn_gain()
-
-        self.assertTrue(self.ofc.ofc_controller.gain, 1.0)
-
     def test_calculate_corrections(self):
-        gain = 1.0
         filter_name = "R"
         rotation_angle = 0.0
 
         self.ofc.ofc_data.xref = "0"
 
-        self.ofc.ofc_controller.dof_state0[45] = 0.1
-        self.ofc.ofc_controller.reset_dof_state()
+        self.ofc_data.controller["kp"] = 1  # gain
+        self.ofc.controller.dof_state0[45] = 0.1
+        self.ofc.controller.reset_dof_state()
 
         (
             m2_hex_corr,
@@ -142,7 +118,6 @@ class TestOFC(unittest.TestCase):
             wfe=self.wfe,
             sensor_names=self.sensor_name_list,
             filter_name=filter_name,
-            gain=gain,
             rotation_angle=rotation_angle,
         )
 
@@ -166,7 +141,7 @@ class TestOFC(unittest.TestCase):
         for idx, computed_value, expected_value in zip(
             np.arange(10, 50),
             self.ofc.lv_dof[10:],
-            self.ofc.ofc_controller.dof_state0[10:],
+            self.ofc.controller.dof_state0[10:],
         ):
             with self.subTest(
                 correction=f"Correction DOF {idx}",
@@ -194,7 +169,7 @@ class TestOFC(unittest.TestCase):
         state_correction = self.ofc.lv_dof
 
         self.assertTrue(isinstance(self.ofc.lv_dof, np.ndarray))
-        self.assertEqual(len(self.ofc.lv_dof), len(self.ofc.ofc_controller.dof_state0))
+        self.assertEqual(len(self.ofc.lv_dof), len(self.ofc.controller.dof_state0))
 
         delta = np.sum(np.abs(state_correction - rearanged_dof))
         self.assertEqual(delta, 0)
@@ -203,6 +178,7 @@ class TestOFC(unittest.TestCase):
         """Check that if we send intrinsic correction to the ofc we get zero
         for all corrections.
         """
+        self.ofc_data.controller["kp"] = 1  # gain
 
         for filter_name in self.ofc.ofc_data.intrinsic_zk:
             with self.subTest(filter_name=filter_name):
@@ -219,7 +195,6 @@ class TestOFC(unittest.TestCase):
                     wfe=wfe,
                     sensor_names=self.sensor_name_list,
                     filter_name=filter_name,
-                    gain=1.0,
                     rotation_angle=0.0,
                 )
                 self.assertTrue(
@@ -244,6 +219,9 @@ class TestOFC(unittest.TestCase):
             M2Bend=np.zeros(20, dtype=bool),
         )
         self.ofc.ofc_data.comp_dof_idx = new_comp_dof_idx
+        self.ofc.controller.reset_history()
+
+        self.ofc_data.controller["kp"] = 1  # gain
 
         # Check that the number of degrees of freedom used is 5
         self.assertEqual(len(self.ofc.ofc_data.dof_idx), 5)
@@ -264,7 +242,6 @@ class TestOFC(unittest.TestCase):
             wfe=wfe,
             sensor_names=self.sensor_name_list,
             filter_name=filter_name,
-            gain=1.0,
             rotation_angle=0.0,
         )
 
@@ -304,11 +281,11 @@ class TestOFC(unittest.TestCase):
         self.assertAlmostEqual(correction[5], 2 * correction0[5])
 
     def _calculate_cam_hex_correction(self):
-        gain = 1.0
         filter_name = "R"
         rotation_angle = 0.0
 
         self.ofc.ofc_data.xref = "x0"
+        self.ofc_data.controller["kp"] = 1  # gain
 
         # Set wavefront error
         wfe = get_intrinsic_zernikes(self.ofc_data, filter_name, self.sensor_name_list)
@@ -319,7 +296,6 @@ class TestOFC(unittest.TestCase):
             wfe=wfe,
             sensor_names=self.sensor_name_list,
             filter_name=filter_name,
-            gain=gain,
             rotation_angle=rotation_angle,
         )
 

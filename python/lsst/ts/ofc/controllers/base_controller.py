@@ -132,7 +132,7 @@ class BaseController:
         self.filtered_derivative = np.zeros(len(self.ofc_data.dof_idx))
 
         # Initialize PSSN data
-        self.pssn_data = dict(sensor_names=None, pssn=None)
+        self.pssn_data: dict = dict(sensor_names=[], pssn=[])
 
     @property
     def kp(self) -> float:
@@ -195,7 +195,7 @@ class BaseController:
         self.dof_state = self.dof_state0.copy()
 
     def aggregate_state(
-        self, dof: np.ndarray | list, dof_idx: np.ndarray | list[int]
+        self, dof: np.ndarray[float] | list, dof_idx: np.ndarray[int] | list[int]
     ) -> None:
         """Aggregate the calculated degree of freedom (DOF) in the state.
 
@@ -209,12 +209,12 @@ class BaseController:
         self.dof_state[dof_idx] += dof
 
     @property
-    def aggregated_state(self) -> np.ndarray:
+    def aggregated_state(self) -> np.ndarray[float]:
         """Returns the aggregated state.
 
         Returns
         -------
-        `np.ndarray`
+        `np.ndarray[float]`
             Aggregated state.
         """
         return self.dof_state[self.ofc_data.dof_idx]
@@ -233,9 +233,9 @@ class BaseController:
     def control_step(
         self,
         filter_name: str,
-        dof_state: np.ndarray,
+        dof_state: np.ndarray[float],
         sensor_names: list[str] | None = None,
-    ) -> np.ndarray:
+    ) -> np.ndarray[float]:
         """Estimate uk in the basis of degree of freedom (DOF).
 
         Parameters
@@ -254,13 +254,13 @@ class BaseController:
         """
         raise NotImplementedError("Child class should implement this.")
 
-    def calculate_pid_step(self, state: np.ndarray) -> np.ndarray:
+    def calculate_pid_step(self, state: np.ndarray[float]) -> np.ndarray[float]:
         """
         Calculate the control signal using PID controller.
 
         Parameters
         ----------
-        state : `np.ndarray`
+        state : `np.ndarray[float]`
             State of the system.
 
         Returns
@@ -288,7 +288,9 @@ class BaseController:
 
         return uk
 
-    def effective_fwhm_g4(self, pssn: np.ndarray, sensor_names: list[str]) -> float:
+    def effective_fwhm_g4(
+        self, pssn: np.ndarray[float], sensor_names: list[str]
+    ) -> float:
         """Calculate the effective FWHM by Gaussian quadrature.
 
         FWHM: Full width at half maximum.
@@ -333,7 +335,7 @@ class BaseController:
 
         return fwhm_gq
 
-    def fwhm_to_pssn(self, fwhm: np.ndarray) -> np.ndarray:
+    def fwhm_to_pssn(self, fwhm: np.ndarray[float]) -> np.ndarray[float]:
         """Convert the FWHM data to PSSN.
 
         Take the array of FWHM values (nominally 1 per CCD) and convert
@@ -355,11 +357,11 @@ class BaseController:
 
         return pssn
 
-    def set_fwhm_data(self, fwhm: np.ndarray, sensor_names: list[str]) -> None:
+    def set_fwhm_data(self, fwhm: np.ndarray[float], sensor_names: list[str]) -> None:
         """Set the list of FWHMSensorData of each CCD of camera.
         Parameters
         ----------
-        fwhm : `np.ndarray`
+        fwhm : `np.ndarray[float]`
             Array of arrays (e.g. 2-d array) which contains the FWHM data.
             Each element contains an array of fwhm (in arcsec) measurements for
             a  particular sensor.

@@ -28,7 +28,8 @@ from lsst.ts.ofc import OFCData, PIDController
 class TestPIDController(unittest.TestCase):
     """Test the PIDController class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Set up the test case."""
         self.ofc_data = OFCData("lsst")
         self.ofc_data.controller_filename = "pid_controller.yaml"
         self.pid_controller = PIDController(self.ofc_data)
@@ -43,7 +44,7 @@ class TestPIDController(unittest.TestCase):
         self.dof_state = np.ones(50)
         self.dof_state[:10] = 0.5
 
-    def test_control_step_response(self):
+    def test_control_step_response(self) -> None:
         """Test control outputs based on a simple input and PID settings."""
         expected_uk = self.calculate_expected_uk(self.dof_state)
 
@@ -56,8 +57,19 @@ class TestPIDController(unittest.TestCase):
             err_msg="PID control output does not match expected values.",
         )
 
-    def calculate_expected_uk(self, dof_state):
-        """Calculate expected control output for given DOF state."""
+    def calculate_expected_uk(self, dof_state: np.ndarray) -> np.ndarray:
+        """Calculate expected control output for given DOF state.
+
+        Parameters
+        ----------
+        dof_state : np.ndarray
+            DOF state.
+
+        Returns
+        -------
+        np.ndarray
+            Expected control output.
+        """
         integral = self.pid_controller.integral.copy()
         error = self.pid_controller.setpoint - dof_state
         integral += error
@@ -70,7 +82,7 @@ class TestPIDController(unittest.TestCase):
 
         return uk
 
-    def test_subset_of_dofs(self):
+    def test_subset_of_dofs(self) -> None:
         """Test control output for a subset of DOFs."""
         new_comp_dof_idx = dict(
             m2HexPos=np.zeros(5, dtype=bool),
@@ -87,7 +99,7 @@ class TestPIDController(unittest.TestCase):
 
         self.assertEqual(len(uk), 5)
 
-    def test_reset_history(self):
+    def test_reset_history(self) -> None:
         """Test resetting the history of the controller."""
         uk = self.pid_controller.control_step(self.filter_name, self.dof_state)
         self.pid_controller.aggregate_state(uk, self.ofc_data.dof_idx)
@@ -124,7 +136,7 @@ class TestPIDController(unittest.TestCase):
             - self.pid_controller.dof_state[self.pid_controller.ofc_data.dof_idx],
         )
 
-    def test_derivative_filter(self):
+    def test_derivative_filter(self) -> None:
         """Test derivative filter."""
         self.pid_controller.derivative_filter_coeff = 0.5
         initial_state = 0.7 * np.ones(50)
@@ -144,7 +156,7 @@ class TestPIDController(unittest.TestCase):
             "Derivative calculation does not match expected.",
         )
 
-    def test_integral_behavior(self):
+    def test_integral_behavior(self) -> None:
         """Test integral behavior over multiple steps."""
         initial_state = 0.7 * np.ones(50)
         self.pid_controller.control_step(self.filter_name, initial_state)
@@ -156,7 +168,7 @@ class TestPIDController(unittest.TestCase):
             "Integral not accumulating correctly.",
         )
 
-    def test_derivative_behavior(self):
+    def test_derivative_behavior(self) -> None:
         """Test derivative impact on control step."""
         initial_state = 0.7 * np.ones(50)
         self.pid_controller.control_step(self.filter_name, initial_state)

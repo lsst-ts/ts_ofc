@@ -28,7 +28,8 @@ from lsst.ts.ofc import OFCData, OICController
 class TestOICController(unittest.TestCase):
     """Test the OICController class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Set up the test case."""
         self.ofc_data = OFCData("lsst")
 
         # Set small motion penalty to allow for larger corrections
@@ -45,7 +46,8 @@ class TestOICController(unittest.TestCase):
 
         self.filter_name = "R"
 
-    def test_uk_nogain_x0(self):
+    def test_uk_nogain_x0(self) -> None:
+        """Test the uk method with x0 reference."""
         self.ofc_data.xref = "x0"
 
         sum_uk = np.zeros(50)
@@ -66,10 +68,27 @@ class TestOICController(unittest.TestCase):
         assert self.mean_squared_residual(sum_uk[25], 1.5) < 5e-2
         assert self.mean_squared_residual(sum_uk[45], 1.5) < 5e-2
 
-    def mean_squared_residual(self, new_array, reference_array):
+    def mean_squared_residual(
+        self, new_array: np.ndarray, reference_array: np.ndarray
+    ) -> float:
+        """Compute the mean squared residual between two arrays.
+
+        Parameters
+        ----------
+        new_array : np.ndarray
+            New array.
+        reference_array : np.ndarray
+            Reference array.
+
+        Returns
+        -------
+        float
+            Mean squared residual.
+        """
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
 
-    def test_uk_nogain_0(self):
+    def test_uk_nogain_0(self) -> None:
+        """Test the uk method with 0 reference."""
         self.ofc_data.xref = "0"
         uk = self.controller.uk(self.filter_name, self.controller.dof_state0)
 
@@ -79,7 +98,8 @@ class TestOICController(unittest.TestCase):
         # Check for ref "0" our corrections is minus the initial DOF state
         assert self.mean_squared_residual(uk, self.controller.dof_state0) < 1e-6
 
-    def test_uk_nogain_x00(self):
+    def test_uk_nogain_x00(self) -> None:
+        """Test the uk method with x00 reference."""
         self.ofc_data.xref = "x00"
         uk = self.controller.uk(self.filter_name, self.controller.dof_state0)
 
@@ -93,21 +113,25 @@ class TestOICController(unittest.TestCase):
 
         assert self.mean_squared_residual(uk_ref0, uk) < 1e-6
 
-    def test_all_xref_ok(self):
+    def test_all_xref_ok(self) -> None:
+        """Test all xref methods are available."""
         for xref in self.ofc_data.xref_list:
             self.assertTrue(hasattr(self.controller, f"calc_uk_{xref}"))
 
-    def test_gain(self):
+    def test_gain(self) -> None:
+        """Test the gain property."""
         for gain in {0.0, 0.25, 0.5, 0.75, 1.0}:
             with self.subTest(gain=gain):
                 self.controller.kp = gain
                 self.assertEqual(self.controller.kp, gain)
 
-    def test_set_pssn_gain_unconfigured(self):
+    def test_set_pssn_gain_unconfigured(self) -> None:
+        """Test setting the PSSN gain without FWHM data."""
         with self.assertRaises(RuntimeError):
             self.controller.set_pssn_gain()
 
-    def test_set_pssn_gain(self):
+    def test_set_pssn_gain(self) -> None:
+        """Test setting the PSSN gain."""
         fwhm_values = np.ones((4, 19)) * 0.2
         sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
@@ -125,11 +149,12 @@ class TestOICController(unittest.TestCase):
 
         self.assertTrue(self.controller.kp, 1.0)
 
-    def test_pssn_data(self):
+    def test_pssn_data(self) -> None:
+        """Test the pssn_data property."""
         self.assertTrue("sensor_names" in self.controller.pssn_data)
         self.assertTrue("pssn" in self.controller.pssn_data)
-        self.assertTrue(self.controller.pssn_data["sensor_names"] is None)
-        self.assertTrue(self.controller.pssn_data["pssn"] is None)
+        self.assertTrue(self.controller.pssn_data["sensor_names"] == [])
+        self.assertTrue(self.controller.pssn_data["pssn"] == [])
 
 
 if __name__ == "__main__":

@@ -32,9 +32,9 @@ class PIDController(BaseController):
     def control_step(
         self,
         filter_name: str,
-        dof_state: np.ndarray,
+        dof_state: np.ndarray[float],
         sensor_names: list[str] | None = None,
-    ) -> np.ndarray:
+    ) -> np.ndarray[float]:
         """Estimate the control offset for the given DOF state.
 
         Parameters

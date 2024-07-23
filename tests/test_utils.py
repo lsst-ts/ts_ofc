@@ -29,23 +29,23 @@ from lsst.ts.ofc.utils.intrinsic_zernikes import get_intrinsic_zernikes
 class TestUtils(unittest.TestCase):
     """Test the OFCCalculation class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.ofc_data = OFCData("lsst")
 
-    def test_get_pkg_root(self):
+    def test_get_pkg_root(self) -> None:
         pkg_root = get_pkg_root()
 
         self.assertTrue(pkg_root.exists())
 
-    def test_get_config_dir(self):
+    def test_get_config_dir(self) -> None:
         config_dir = get_config_dir()
 
         self.assertTrue(config_dir.exists())
 
-    def test_rot_1d_array(self):
+    def test_rot_1d_array(self) -> None:
         vec = np.array([1.0, 0.0])
 
-        def compute_rot_mat(rot):
+        def compute_rot_mat(rot: float) -> np.ndarray:
             """Return rotation matrix."""
             rot_rad = np.deg2rad(rot)
             c, s = np.cos(rot_rad), np.sin(rot_rad)
@@ -73,7 +73,7 @@ class TestUtils(unittest.TestCase):
         self.assertAlmostEqual(rot_vec[0], vec[1])
         self.assertAlmostEqual(rot_vec[1], vec[0])
 
-    def test_get_intrinsic_zernikes(self):
+    def test_get_intrinsic_zernikes(self) -> None:
         sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
         for filter_name in self.ofc_data.eff_wavelength:

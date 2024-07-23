@@ -29,49 +29,56 @@ from lsst.ts.ofc.utils import CorrectionType
 class TestCorrection(unittest.TestCase):
     """Test the Correction class."""
 
-    def test_position_init_as_array(self):
+    def test_position_init_as_array(self) -> None:
+        """Test the position correction initialization with an array."""
         values = np.random.rand(6)
         correction = Correction(values)
 
         self.assertEqual(correction.correction_type, CorrectionType.POSITION)
         self.assertTrue(np.all(correction() == values))
 
-    def test_position_init_as_args(self):
+    def test_position_init_as_args(self) -> None:
+        """Test the position correction initialization with args."""
         values = np.random.rand(6)
         correction = Correction(*values)
 
         self.assertEqual(correction.correction_type, CorrectionType.POSITION)
         self.assertTrue(np.all(correction() == values))
 
-    def test_bend_72_init_as_array(self):
+    def test_bend_72_init_as_array(self) -> None:
+        """Test the bend 72 correction initialization with an array."""
         values = np.random.rand(72)
         correction = Correction(values)
 
         self.assertEqual(correction.correction_type, CorrectionType.FORCE)
         self.assertTrue(np.all(correction() == values))
 
-    def test_bend_72_init_as_args(self):
+    def test_bend_72_init_as_args(self) -> None:
+        """Test the bend 72 correction initialization with args."""
         values = np.random.rand(72)
         correction = Correction(*values)
 
         self.assertEqual(correction.correction_type, CorrectionType.FORCE)
         self.assertTrue(np.all(correction() == values))
 
-    def test_bend_156_init_as_array(self):
+    def test_bend_156_init_as_array(self) -> None:
+        """Test the bend 156 correction initialization with an array."""
         values = np.random.rand(156)
         correction = Correction(values)
 
         self.assertEqual(correction.correction_type, CorrectionType.FORCE)
         self.assertTrue(np.all(correction() == values))
 
-    def test_bend_156_init_as_args(self):
+    def test_bend_156_init_as_args(self) -> None:
+        """Test the bend 156 correction initialization with args."""
         values = np.random.rand(156)
         correction = Correction(*values)
 
         self.assertEqual(correction.correction_type, CorrectionType.FORCE)
         self.assertTrue(np.all(correction() == values))
 
-    def test_unknown_init_as_array(self):
+    def test_unknown_init_as_array(self) -> None:
+        """Test the unknown correction initialization with an array."""
         n_values_1 = np.random.randint(low=1, high=6)
         n_values_2 = np.random.randint(low=7, high=72)
         n_values_3 = np.random.randint(low=73, high=156)
@@ -85,7 +92,8 @@ class TestCorrection(unittest.TestCase):
                 self.assertEqual(correction.correction_type, CorrectionType.UNKNOWN)
                 self.assertTrue(np.all(correction() == values))
 
-    def test_unknown_init_as_args(self):
+    def test_unknown_init_as_args(self) -> None:
+        """Test the unknown correction initialization with args."""
         n_values_1 = np.random.randint(low=1, high=6)
         n_values_2 = np.random.randint(low=7, high=72)
         n_values_3 = np.random.randint(low=73, high=156)

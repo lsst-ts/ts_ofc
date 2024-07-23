@@ -43,7 +43,7 @@ class SensitivityMatrix:
         self,
         field_angles: list,
         rotation_angle: float = 0.0,
-    ) -> np.ndarray:
+    ) -> np.ndarray[float]:
         """Evaluate the sensitivity matrix for a given rotation angle.
 
         Parameters

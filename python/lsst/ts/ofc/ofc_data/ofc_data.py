@@ -23,6 +23,7 @@ __all__ = ["OFCData"]
 
 import asyncio
 import logging
+import typing
 from pathlib import Path
 
 import numpy as np
@@ -100,8 +101,14 @@ class OFCData(BaseOFCData):
         If input `config_dir` does not exists.
     """
 
-    def __init__(self, name=None, config_dir=None, log=None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        name: str | None = None,
+        config_dir: str | None = None,
+        log: logging.Logger | None = None,
+        **kwargs: dict[str, typing.Any],
+    ) -> None:
+        super().__init__(**kwargs)  # type: ignore
 
         # Set logger
         if log is None:
@@ -141,7 +148,7 @@ class OFCData(BaseOFCData):
         # create a new event loops and try again.
         try:
             self._configure_lock = asyncio.Lock()
-            self.start_task = asyncio.Future()
+            self.start_task: asyncio.Future = asyncio.Future()
         except RuntimeError:
             asyncio.set_event_loop(asyncio.new_event_loop())
             self._configure_lock = asyncio.Lock()
@@ -202,7 +209,7 @@ class OFCData(BaseOFCData):
         self._zn_selected = np.arange(self.znmin, self.znmax + 1, dtype=int)
 
     @property
-    def name(self):
+    def name(self) -> str | None:
         if not self.start_task.done() or self.start_task.result() is None:
             raise RuntimeError(
                 "Class not setup or still loading instrument files."
@@ -211,7 +218,20 @@ class OFCData(BaseOFCData):
         return self.start_task.result()
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str) -> None:
+        """Set the name of the instrument.
+
+        Parameters
+        ----------
+        value : `string`
+            Name of the instrument.
+
+        Raises
+        ------
+        RuntimeError
+            If instrument being configured. Cannot interrupt process. Wait for
+            `start_task` to complete before setting instrument again.
+        """
         if not self.start_task.done():
             raise RuntimeError(
                 "Instrument being configured. Cannot interrupt process. "
@@ -222,14 +242,34 @@ class OFCData(BaseOFCData):
             self._configure_instrument(value)
 
     @property
-    def xref(self):
+    def xref(self) -> str:
+        """Reference point strategy.
+
+        Returns
+        -------
+        `string`
+            Reference point strategy.
+        """
         if self._xref is None:
             return "x00"
         else:
             return self._xref
 
     @xref.setter
-    def xref(self, value):
+    def xref(self, value: str) -> None:
+        """Set the reference point strategy.
+
+        Parameters
+        ----------
+        value : `string`
+            Reference point strategy.
+
+        Raises
+        ------
+        ValueError
+            If value is not in the list of available reference
+            point strategies.
+        """
         if value in self.xref_list:
             self._xref = value
         else:
@@ -238,27 +278,41 @@ class OFCData(BaseOFCData):
             )
 
     @property
-    def xref_list(self):
+    def xref_list(self) -> set[str]:
+        """Available reference point strategies."""
         return {"x00", "x0", "0"}
 
     # Properties to access the Zernike indices
     @property
-    def zn_idx(self):
+    def zn_idx(self) -> np.ndarray[int]:
         """Zernike indices used."""
         return self._zn_idx[self.zn_idx_mask]
 
     @property
-    def zn_idx_mask(self):
+    def zn_idx_mask(self) -> np.ndarray[bool]:
         """Mask to select Zernike indices."""
         return self._zn_idx_mask
 
     @property
-    def zn_selected(self):
+    def zn_selected(self) -> np.ndarray[int]:
         """Zernike indices selected in Zernike Noll Index."""
         return self._zn_selected
 
     @zn_selected.setter
-    def zn_selected(self, value):
+    def zn_selected(self, value: np.ndarray[int]) -> None:
+        """Set the Zernike indices selected in Zernike Noll Index.
+
+        Parameters
+        ----------
+        value : `np.ndarray`
+            Zernike indices selected in Zernike Noll Index.
+
+        Raises
+        ------
+        ValueError
+            If any element in the value vector is smaller or larger than
+            `znmin` and `znmax`.
+        """
         # Check if any element in the value vector is
         # smaller or larger than zmin and zmax
         if np.any(np.array(value) < self.znmin) or np.any(np.array(value) > self.znmax):
@@ -269,19 +323,38 @@ class OFCData(BaseOFCData):
         self._zn_idx_mask = np.isin(self._zn_idx, self._zn_selected - self.znmin)
 
     @property
-    def dof_idx(self):
+    def dof_idx(self) -> np.ndarray[int]:
+        """Index of Degree of Freedom (DOF)."""
         return self._dof_idx[self.dof_idx_mask]
 
     @property
-    def dof_idx_mask(self):
+    def dof_idx_mask(self) -> np.ndarray[bool]:
+        """Mask to select Degree of Freedom (DOF)."""
         return self._dof_idx_mask
 
     @property
-    def comp_dof_idx(self):
+    def comp_dof_idx(self) -> dict:
+        """Index of Degree of Freedom (DOF) per component."""
         return self._comp_dof_idx
 
     @comp_dof_idx.setter
-    def comp_dof_idx(self, value):
+    def comp_dof_idx(self, value: dict) -> None:
+        """Set the index of Degree of Freedom (DOF) per component.
+
+        Parameters
+        ----------
+        value : `dict`
+            Index of Degree of Freedom (DOF) per component.
+
+        Raises
+        ------
+        ValueError
+            If value is not a dictionary with the expected keys.
+        RuntimeError
+            If size of input vector is different than expected.
+        RuntimeError
+            If input is not a numpy array of type bool.
+        """
         if not isinstance(value, dict):
             raise ValueError(
                 f"comp_dof_idx must be a dictionary with {self.comp_dof_idx.keys()} entries."
@@ -315,16 +388,23 @@ class OFCData(BaseOFCData):
         return self._controller_filename
 
     @controller_filename.setter
-    def controller_filename(self, value):
+    def controller_filename(self, value: str) -> None:
+        """Set the controller configuration filename.
+
+        Parameters
+        ----------
+        value : `string`
+            Controller configuration filename.
+        """
         self._controller_filename = value
         self.configure_controller()
 
-    def load_yaml_file(self, file_path: str) -> dict:
+    def load_yaml_file(self, file_path: Path | str) -> dict:
         """Load yaml file.
 
         Parameters
         ----------
-        file_path : `string`
+        file_path : `pathlib.Path` or `string`
             Path to the yaml file.
 
         Returns
@@ -360,7 +440,7 @@ class OFCData(BaseOFCData):
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, self._configure_instrument, instrument)
 
-    def _configure_instrument(self, instrument):
+    def _configure_instrument(self, instrument: str) -> None:
         """Configure OFCData instrument.
 
         Parameters
@@ -568,7 +648,7 @@ class OFCData(BaseOFCData):
 
         self.log.debug(f"Done configuring {instrument}")
 
-    def configure_controller(self):
+    def configure_controller(self) -> None:
         """Refresh the controller configuration based
         on the current controller_filename.
         """
@@ -604,8 +684,8 @@ class OFCData(BaseOFCData):
 
             self.xref = self.controller["xref"]
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "OFCData":
         return self
 
-    async def __aexit__(self, type, value, traceback):
-        await self.close()
+    async def __aexit__(self, type: object, value: object, traceback: object) -> None:
+        pass

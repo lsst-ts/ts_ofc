@@ -26,7 +26,7 @@ import logging
 import numpy as np
 
 from . import BendModeToForce, Correction, StateEstimator
-from .controllers import OICController, PIDController
+from .controllers import BaseController, OICController, PIDController
 from .ofc_data import OFCData
 from .utils import CorrectionType
 
@@ -58,7 +58,7 @@ class OFC:
         `set_pssn_gain()`.
     log : `logging.Logger`
         Logger class used for logging operations.
-    lv_dof : `np.ndarray`
+    lv_dof : `np.ndarray[float]`
         Last visit degrees of freedom.
     controller : `PIDController` or `OICController`
         Controller class.
@@ -86,7 +86,7 @@ class OFC:
         self.state_estimator = StateEstimator(self.ofc_data)
 
         if self.ofc_data.controller["name"] == "PID":
-            self.controller = PIDController(self.ofc_data)
+            self.controller: BaseController = PIDController(self.ofc_data)
         elif self.ofc_data.controller["name"] == "OIC":
             self.controller = OICController(self.ofc_data)
 
@@ -100,7 +100,7 @@ class OFC:
 
     def calculate_corrections(
         self,
-        wfe: np.ndarray,
+        wfe: np.ndarray[float],
         sensor_names: list[str],
         filter_name: str,
         rotation_angle: float,
@@ -110,7 +110,7 @@ class OFC:
 
         Parameters
         ----------
-        wfe : `np.ndarray`
+        wfe : `np.ndarray[float]`
             An array of arrays (e.g. 2-d array) with wavefront erros. Each
             element contains an array of wavefront errors (in um) for a
             particular detector/field.
@@ -213,11 +213,11 @@ class OFC:
 
         self.lv_dof = np.zeros_like(self.controller.dof_state0)
 
-    def set_fwhm_data(self, fwhm, sensor_names):
+    def set_fwhm_data(self, fwhm: np.ndarray[float], sensor_names: list[str]) -> None:
         """Set the list of FWHMSensorData of each CCD of camera.
         Parameters
         ----------
-        fwhm : `np.ndarray`
+        fwhm : `np.ndarray[float]`
             Array of arrays (e.g. 2-d array) which contains the FWHM data.
             Each element contains an array of fwhm (in arcsec) measurements for
             a  particular sensor.
@@ -251,7 +251,7 @@ class OFC:
 
         return self.get_all_corrections()
 
-    def set_last_visit_dof(self, dof) -> None:
+    def set_last_visit_dof(self, dof: np.ndarray[float]) -> None:
         """Set the state (or degree of freedom, DOF) correction from the last
         visit.
 

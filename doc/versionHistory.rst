@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-3.2.1:
+
+v3.2.1
+======
+
+* Add mypy type checking to ts_ofc.
+
 .. _lsst.ts.ofc-3.2.0:
 
 v3.2.0

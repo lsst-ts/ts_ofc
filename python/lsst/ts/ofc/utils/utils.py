@@ -23,30 +23,32 @@ __all__ = ["get_pkg_root", "get_config_dir", "rot_1d_array"]
 
 import pathlib
 
+import numpy as np
 
-def get_pkg_root():
+
+def get_pkg_root() -> pathlib.Path:
     """Return the root directory of this package.
 
     Returns
     -------
-    `pathlib.PosixPath`
+    `pathlib.Path`
         Path to the package root.
     """
     return pathlib.Path(__file__).resolve().parents[5]
 
 
-def get_config_dir():
+def get_config_dir() -> pathlib.Path:
     """Return the path to the ``policy`` dir within this package.
 
     Returns
     -------
-    `pathlib.PosixPath`
+    `pathlib.Path`
         Path to the package config directory.
     """
     return get_pkg_root() / "policy"
 
 
-def rot_1d_array(array, rot_mat):
+def rot_1d_array(array: np.ndarray[float], rot_mat: np.ndarray[float]) -> np.ndarray:
     """Rotate 1D array from one basis to another.
 
     Parameters

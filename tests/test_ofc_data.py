@@ -30,26 +30,31 @@ STD_TIMEOUT = 30
 class TestOFCDataConstructor(unittest.TestCase):
     """Test the OFCData class when not using asyncio."""
 
-    def test_comcam(self):
+    def test_comcam(self) -> None:
+        """Test the OFCData class with the comcam instrument."""
         ofc_data = OFCData("comcam")
 
         self.assertEqual(ofc_data.name, "comcam")
 
-    def test_lsst(self):
+    def test_lsst(self) -> None:
+        """Test the OFCData class with the lsst instrument."""
         ofc_data = OFCData("lsst")
         self.assertEqual(ofc_data.name, "lsst")
 
-    def test_lsstfam(self):
+    def test_lsstfam(self) -> None:
+        """Test the OFCData class with the lsstfam instrument."""
         ofc_data = OFCData("lsstfam")
 
         self.assertEqual(ofc_data.name, "lsstfam")
 
 
 class TestOFCData(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
+        """Set up the test case."""
         self.ofc_data = OFCData("lsst")
 
-    def test_xref(self):
+    def test_xref(self) -> None:
+        """Test the xref property."""
         self.assertEqual(self.ofc_data.xref, "x00")
 
         for xref in self.ofc_data.xref_list:
@@ -59,14 +64,16 @@ class TestOFCData(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.ofc_data.xref = "bad_xref"
 
-    def test_dof_idx(self):
+    def test_dof_idx(self) -> None:
+        """Test the dof_idx property."""
         self.assertTrue(isinstance(self.ofc_data.dof_idx, np.ndarray))
         self.assertEqual(len(self.ofc_data.dof_idx), 50)
 
         with self.assertRaises(AttributeError):
             self.ofc_data.dof_idx = np.zeros_like(self.ofc_data.dof_idx)
 
-    def test_change_controller_configuration(self):
+    def test_change_controller_configuration(self) -> None:
+        """Test changing the controller configuration."""
         ofc_data = OFCData("lsst")
         initial_kd = ofc_data.controller["kd"]
 
@@ -74,7 +81,8 @@ class TestOFCData(unittest.TestCase):
 
         self.assertNotEqual(ofc_data.controller["kd"], initial_kd)
 
-    def test_selected_zn_idx(self):
+    def test_selected_zn_idx(self) -> None:
+        """Test the selected_zn_idx property."""
         self.assertTrue(isinstance(self.ofc_data.zn_selected, np.ndarray))
 
         # Check ability to set the selected_zn_idx
@@ -93,7 +101,8 @@ class TestOFCData(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.ofc_data.zn_selected = [29, 30]
 
-    def test_comp_dof_idx(self):
+    def test_comp_dof_idx(self) -> None:
+        """Test the comp_dof_idx property."""
         self.assertTrue(isinstance(self.ofc_data.comp_dof_idx, dict))
 
         for comp in {"m2HexPos", "camHexPos", "M1M3Bend", "M2Bend"}:
@@ -133,7 +142,8 @@ class TestOFCData(unittest.TestCase):
 class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):
     """Test the OFCData class when not using asyncio."""
 
-    async def test_comcam(self):
+    async def test_comcam(self) -> None:
+        """Test the OFCData class with the comcam instrument."""
         ofc_data = OFCData()
 
         with self.assertRaises(RuntimeError):
@@ -143,7 +153,8 @@ class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(ofc_data.name, "comcam")
 
-    async def test_lsst(self):
+    async def test_lsst(self) -> None:
+        """Test the OFCData class with the lsst instrument."""
         ofc_data = OFCData()
 
         with self.assertRaises(RuntimeError):
@@ -153,7 +164,8 @@ class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(ofc_data.name, "lsst")
 
-    async def test_lsstfam(self):
+    async def test_lsstfam(self) -> None:
+        """Test the OFCData class with the lsstfam instrument."""
         ofc_data = OFCData()
 
         with self.assertRaises(RuntimeError):

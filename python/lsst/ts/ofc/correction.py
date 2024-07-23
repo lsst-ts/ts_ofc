@@ -69,7 +69,7 @@ class Correction:
         156: CorrectionType.FORCE,
     }
 
-    def __init__(self, *args):
+    def __init__(self, *args: object) -> None:
         self.correction = np.copy(np.array(args, dtype=float).flatten())
 
         if len(self.correction) in self.size_to_correction_type:
@@ -77,10 +77,10 @@ class Correction:
         else:
             self.correction_type = CorrectionType.UNKNOWN
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.correction_type!s}::{self.correction.round(3)}"
 
-    def __call__(self):
+    def __call__(self) -> np.ndarray[float]:
         """Calling a correction object will return the correction."""
         return self.correction
 

@@ -22,6 +22,7 @@
 __all__ = ["OICController"]
 
 import logging
+import typing
 
 import numpy as np
 
@@ -45,7 +46,7 @@ class OICController(BaseController):
         self.m1m3_bmf = BendModeToForce("M1M3", self.ofc_data)
         self.m2_bmf = BendModeToForce("M2", self.ofc_data)
 
-    def authority(self) -> np.ndarray:
+    def authority(self) -> np.ndarray[float]:
         """Compute the authority of the system.
 
         Returns
@@ -70,8 +71,8 @@ class OICController(BaseController):
         return authority
 
     def calc_uk_x00(
-        self, mat_f: np.ndarray, qx: np.ndarray, mat_h: np.ndarray
-    ) -> np.ndarray:
+        self, mat_f: np.ndarray[float], qx: np.ndarray[float], mat_h: np.ndarray[float]
+    ) -> np.ndarray[float]:
         """Calculate uk by referencing to "x00".
         The offset will only trace the relative changes of offset without
         regarding the real value.
@@ -101,7 +102,12 @@ class OICController(BaseController):
 
         return self.calc_uk_x0(mat_f=mat_f, qx=_qx)
 
-    def calc_uk_x0(self, mat_f: np.ndarray, qx: np.ndarray, **kwargs) -> np.ndarray:
+    def calc_uk_x0(
+        self,
+        mat_f: np.ndarray[float],
+        qx: np.ndarray[float],
+        **kwargs: dict[str, typing.Any],
+    ) -> np.ndarray[float]:
         """Calculate uk by referencing to "x0".
 
         The offset will only trace the previous one.
@@ -114,7 +120,7 @@ class OICController(BaseController):
             Matrix F.
         qx : `numpy.ndarray`
             qx array.
-        kwargs : `dict`
+        kwargs : `dict[str, typing.Any]`
             Additional keyword arguments. This is mainly added to provide
             similar interaface to other `calc_uk_*` methods.
 
@@ -126,8 +132,8 @@ class OICController(BaseController):
         return mat_f.dot(qx)
 
     def calc_uk_0(
-        self, mat_f: np.ndarray, qx: np.ndarray, mat_h: np.ndarray
-    ) -> np.ndarray:
+        self, mat_f: np.ndarray[float], qx: np.ndarray[float], mat_h: np.ndarray[float]
+    ) -> np.ndarray[float]:
         """Calculate uk by referencing to "0".
 
         The offset will trace the real value and target for 0.
@@ -157,9 +163,9 @@ class OICController(BaseController):
     def uk(
         self,
         filter_name: str,
-        dof_state: np.ndarray,
+        dof_state: np.ndarray[float],
         sensor_names: list[str] | None = None,
-    ) -> np.ndarray:
+    ) -> np.ndarray[float]:
         """Estimate the offset (`uk`) of degree of freedom (DOF) at time `k+1`
         based on the wavefront error (`yk`) at time `k`.
 
@@ -188,6 +194,11 @@ class OICController(BaseController):
             If `sensor_names` is not provided for full array mode instruments.
         ValueError
             If image quality weights sum is zero.
+        RuntimeError
+            If Gaussian Quadrature points and weights are not provided for LSST
+            instrument.
+        RuntimeError
+            If sensor names are not provided for full array mode instruments.
         """
         if self.ofc_data.name != "lsst" and sensor_names is None:
             raise RuntimeError(
@@ -222,7 +233,21 @@ class OICController(BaseController):
         # Quadrature points to evaluate the sensitivity matrix.
         # Otherwise, for full array mode LSST or Comcam,
         # we will use the sensor positions 189 or 9 with weights.
+        # Calculate the y2 correction.
+        # If the instrument is LSST, we will use the Gaussian
+        # Quadrature points to evaluate the y2 correction.
+        # Otherwise, for full array mode instruments,
+        # we will use the sensor positions to retrieve the y2 correction.
         if self.ofc_data.name == "lsst":
+            if (
+                self.ofc_data.gq_points is None
+                or self.ofc_data.gq_weights is None
+                or self.ofc_data.gq_y2_correction is None
+            ):
+                raise RuntimeError(
+                    "gq_points and gq_weights must be provided for LSST instrument."
+                )
+
             imqw = [
                 self.ofc_data.gq_weights[sensor]
                 for sensor in range(len(self.ofc_data.gq_weights))
@@ -231,13 +256,24 @@ class OICController(BaseController):
                 self.ofc_data.gq_points[sensor]
                 for sensor in range(len(self.ofc_data.gq_weights))
             ]
+            y2c = np.array(
+                [self.ofc_data.gq_y2_correction[idx] for idx in range(len(imqw))]
+            )
         else:
+            if sensor_names is None:
+                raise RuntimeError(
+                    "sensor_names must be provided for full array mode instruments."
+                )
+
             imqw = [
                 self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names
             ]
             field_angles = [
                 self.ofc_data.sample_points[sensor] for sensor in sensor_names
             ]
+            y2c = np.array(
+                [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
+            )
 
         # Compute normalized image quality weights
         if np.sum(imqw) == 0:
@@ -255,20 +291,6 @@ class OICController(BaseController):
 
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
-
-        # Calculate the y2 correction.
-        # If the instrument is LSST, we will use the Gaussian
-        # Quadrature points to evaluate the y2 correction.
-        # Otherwise, for full array mode instruments,
-        # we will use the sensor positions to retrieve the y2 correction.
-        if self.ofc_data.name == "lsst":
-            y2c = np.array(
-                [self.ofc_data.gq_y2_correction[idx] for idx in range(len(n_imqw))]
-            )
-        else:
-            y2c = np.array(
-                [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
-            )
 
         qx = 0
         q_mat = 0
@@ -298,9 +320,9 @@ class OICController(BaseController):
     def control_step(
         self,
         filter_name: str,
-        dof_state: np.ndarray,
+        dof_state: np.ndarray[float],
         sensor_names: list[str] | None = None,
-    ) -> np.ndarray:
+    ) -> np.ndarray[float]:
         """Estimate uk in the basis of degree of freedom (DOF) with gain
         compensation.
 
@@ -349,7 +371,9 @@ class OICController(BaseController):
             If `pssn_data` is not properly set.
         """
 
-        if self.pssn_data["pssn"] is None or self.pssn_data["sensor_names"] is None:
+        if (len(self.pssn_data["pssn"]) == 0) or (
+            len(self.pssn_data["sensor_names"]) == 0
+        ):
             raise RuntimeError(
                 "PSSN data not set. Run `set_fwhm_data` with appropriate data."
             )

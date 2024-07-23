@@ -23,6 +23,7 @@ __all__ = ["BendModeToForce"]
 
 import numpy as np
 
+from .ofc_data import OFCData
 from .utils import rot_1d_array
 
 
@@ -45,7 +46,7 @@ class BendModeToForce:
     RCOND : `float`
         Cutoff for small singular values, used when computing pseudo-inverse
         matrix.
-    rot_mat : `np.ndarray`
+    rot_mat : `np.ndarray[float]`
         Rotation matrix.
 
     Raises
@@ -59,7 +60,7 @@ class BendModeToForce:
 
     RCOND = 1e-4
 
-    def __init__(self, component, ofc_data):
+    def __init__(self, component: str, ofc_data: OFCData) -> None:
         self.component = component
 
         self.ofc_data = ofc_data
@@ -94,7 +95,7 @@ class BendModeToForce:
             :, usecols
         ]
 
-    def force(self, dof):
+    def force(self, dof: np.ndarray[float]) -> np.ndarray[float]:
         """Calculate the actuator forces in N based on the degree of freedom
         (DOF).
 
@@ -111,7 +112,7 @@ class BendModeToForce:
 
         return rot_1d_array(dof, self.rot_mat)
 
-    def bending_mode(self, force):
+    def bending_mode(self, force: np.ndarray[float]) -> np.ndarray[float]:
         """Compute the bending mode.
 
         Parameters

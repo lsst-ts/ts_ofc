@@ -31,7 +31,8 @@ from lsst.ts.ofc import OFCData, SensitivityMatrix
 class TestSensitivityMatrix(unittest.TestCase):
     """Test the SensitivityMatrix class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Set up the test case."""
         self.ofc_data = OFCData("lsst")
 
         self.sensitivity_matrix = SensitivityMatrix(self.ofc_data)
@@ -110,10 +111,27 @@ class TestSensitivityMatrix(unittest.TestCase):
             ]
             self.gq_sensitivity_matrix = self.gq_sensitivity_matrix[swap_gq, :]
 
-    def mean_squared_residual(self, new_array, reference_array):
+    def mean_squared_residual(
+        self, new_array: np.ndarray, reference_array: np.ndarray
+    ) -> float:
+        """Compute the mean squared residual between two arrays.
+
+        Parameters
+        ----------
+        new_array : np.ndarray
+            New array.
+        reference_array : np.ndarray
+            Reference array.
+
+        Returns
+        -------
+        float
+            Mean squared residual.
+        """
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
 
-    def test_dz_sensitivity_matrix(self):
+    def test_dz_sensitivity_matrix(self) -> None:
+        """Test the dz sensitivity matrix with legacy values."""
         # Check that the sensitivity matrix for dz is the same as the one
         # that we had before the last ts_ofc refactor and before the bending
         # modes were updated.
@@ -130,7 +148,8 @@ class TestSensitivityMatrix(unittest.TestCase):
                 < 2e-4
             )
 
-    def test_rotation(self):
+    def test_rotation(self) -> None:
+        """Test the rotation of the sensitivity matrix."""
         angles = [20, 60, 45, 90, 180, 270]
 
         # Define  degrees of freedom that excite zernikes across the field

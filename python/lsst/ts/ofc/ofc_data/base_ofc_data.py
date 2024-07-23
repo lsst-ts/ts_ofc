@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 
-def default_eff_wavelenght():
+def default_eff_wavelenght() -> dict:
     """Default effective wavelenght.
 
     Returns
@@ -45,7 +45,7 @@ def default_eff_wavelenght():
     }
 
 
-def default_rb_stroke():
+def default_rb_stroke() -> np.ndarray:
     """Default allowed moving range of rigid body of M2 hexapod and Camera.
 
     Returns
@@ -131,7 +131,7 @@ class BaseOFCData:
     rb_stroke: np.ndarray = field(default_factory=default_rb_stroke)
 
     @property
-    def delta(self):
+    def delta(self) -> np.ndarray:
         """Delta coefficient for the normalized point-source sensitivity
         (PSSN).
 

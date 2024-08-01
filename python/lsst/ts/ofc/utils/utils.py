@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["get_pkg_root", "get_config_dir", "rot_1d_array"]
+__all__ = ["get_pkg_root", "get_config_dir", "get_filter_name", "rot_1d_array"]
 
 import pathlib
 
@@ -46,6 +46,25 @@ def get_config_dir() -> pathlib.Path:
         Path to the package config directory.
     """
     return get_pkg_root() / "policy"
+
+
+def get_filter_name(filter_name: str) -> str:
+    """Return the filter name in the format used by the OFC.
+
+    Parameters
+    ----------
+    filter_name : `str`
+        Filter name.
+
+    Returns
+    -------
+    `str`
+        Filter name in the format used by the OFC.
+    """
+    if "_" in filter_name:
+        return filter_name.split("_")[0].upper()
+    else:
+        return filter_name.upper()
 
 
 def rot_1d_array(array: np.ndarray[float], rot_mat: np.ndarray[float]) -> np.ndarray:

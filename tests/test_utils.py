@@ -22,7 +22,12 @@ import unittest
 
 import numpy as np
 from lsst.ts.ofc import OFCData
-from lsst.ts.ofc.utils import get_config_dir, get_pkg_root, rot_1d_array
+from lsst.ts.ofc.utils import (
+    get_config_dir,
+    get_filter_name,
+    get_pkg_root,
+    rot_1d_array,
+)
 from lsst.ts.ofc.utils.intrinsic_zernikes import get_intrinsic_zernikes
 
 
@@ -41,6 +46,16 @@ class TestUtils(unittest.TestCase):
         config_dir = get_config_dir()
 
         self.assertTrue(config_dir.exists())
+
+    def test_get_filter_name(self) -> None:
+        filter_name = "r_01"
+        self.assertEqual(get_filter_name(filter_name), "R")
+
+        filter_name = "r"
+        self.assertEqual(get_filter_name(filter_name), "R")
+
+        filter_name = "R"
+        self.assertEqual(get_filter_name(filter_name), "R")
 
     def test_rot_1d_array(self) -> None:
         vec = np.array([1.0, 0.0])

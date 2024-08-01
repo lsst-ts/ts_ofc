@@ -28,7 +28,7 @@ import numpy as np
 from . import BendModeToForce, Correction, StateEstimator
 from .controllers import BaseController, OICController, PIDController
 from .ofc_data import OFCData
-from .utils import CorrectionType
+from .utils import CorrectionType, get_filter_name
 
 
 class OFC:
@@ -117,9 +117,7 @@ class OFC:
         sensor_names: `list`
             List of sensor names.
         filter_name : `string`
-            Name of the filter used in the observations. This must be a valid
-            entry in the `ofc_data.intrinsic_zk` and `ofc_data.eff_wavelength`
-            dictionaries.
+            Name of the filter used in the observations.
         rotation_angle : `float`
             Camera rotator angle (in degrees) during the observations.
 
@@ -140,6 +138,9 @@ class OFC:
                 f"Number of wavefront errors ({len(wfe)}) must be the same as "
                 f"number of sensors ({len(sensor_names)})."
             )
+
+        # Process filter name to be in the correct format.
+        filter_name = get_filter_name(filter_name)
 
         optical_state = self.state_estimator.dof_state(
             filter_name, wfe, sensor_names, rotation_angle

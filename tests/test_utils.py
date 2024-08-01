@@ -28,7 +28,7 @@ from lsst.ts.ofc.utils import (
     get_pkg_root,
     rot_1d_array,
 )
-from lsst.ts.ofc.utils.intrinsic_zernikes import get_intrinsic_zernikes
+from lsst.ts.ofc.utils.ofc_data_helpers import get_intrinsic_zernikes, get_sensor_names
 
 
 class TestUtils(unittest.TestCase):
@@ -87,6 +87,13 @@ class TestUtils(unittest.TestCase):
 
         self.assertAlmostEqual(rot_vec[0], vec[1])
         self.assertAlmostEqual(rot_vec[1], vec[0])
+
+    def test_get_sensor_names(self) -> None:
+        expected_sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+        sensor_names = get_sensor_names(self.ofc_data, [191, 195, 199, 203])
+
+        self.assertTrue(isinstance(sensor_names, list))
+        self.assertEqual(sensor_names, expected_sensor_names)
 
     def test_get_intrinsic_zernikes(self) -> None:
         sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]

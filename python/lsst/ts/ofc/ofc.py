@@ -140,13 +140,10 @@ class OFC:
                 f"number of sensors ({len(sensor_ids)})."
             )
 
-<<<<<<< HEAD
         # Process filter name to be in the correct format.
         filter_name = get_filter_name(filter_name)
-=======
         # Get sensor names from sensor ids
         sensor_names = get_sensor_names(ofc_data=self.ofc_data, sensor_ids=sensor_ids)
->>>>>>> 2854cf7 (Change calculate corrections to expect sensor_ids instead of sensor_names)
 
         optical_state = self.state_estimator.dof_state(
             filter_name, wfe, sensor_names, rotation_angle

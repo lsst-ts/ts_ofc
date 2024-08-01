@@ -504,6 +504,11 @@ class OFCData(BaseOFCData):
 
         self.log.debug(f"Configuring {instrument}")
 
+        # Sensor id to name mapping
+        self.sensor_id_to_name = self.load_yaml_file(
+            self.config_dir / "sensor_ids_to_names.yaml"
+        )
+
         # Load all data to local variables and only set them at the end if
         # everthing went fine. Otherwise you can leave the class in a broken
         # state.

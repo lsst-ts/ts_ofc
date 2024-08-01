@@ -6,27 +6,6 @@
 Version History
 ##################
 
-.. _lsst.ts.ofc-3.2.3:
-
-v3.2.3
-======
-
-* Change `ofc.calculate_corrections()` to expect sensor_ids instead of sensor_names.
-
-.. _lsst.ts.ofc-3.2.2:
-
-v3.2.2
-======
-
-* Allow filter names to be passed as 'r_01', 'r' or 'R'.
-
-.. _lsst.ts.ofc-3.2.1:
-
-v3.2.1
-======
-
-* Add mypy type checking to ts_ofc.
-
 .. _lsst.ts.ofc-3.2.0:
 
 v3.2.0
@@ -35,6 +14,9 @@ v3.2.0
 * Add PIDController as alternative control strategy.
 * Move current control strategy to OICController (optimal integral controller).
 * Add PID option to OICController output.
+* Add mypy type checking to ts_ofc.
+* Allow filter names to be passed as 'r_01', 'r' or 'R'.
+* Change `ofc.calculate_corrections()` to expect sensor_ids instead of sensor_names.
 
 .. _lsst.ts.ofc-3.1.3:
 

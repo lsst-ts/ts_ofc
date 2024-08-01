@@ -29,6 +29,7 @@ from . import BendModeToForce, Correction, StateEstimator
 from .controllers import BaseController, OICController, PIDController
 from .ofc_data import OFCData
 from .utils import CorrectionType, get_filter_name
+from .utils.ofc_data_helpers import get_sensor_names
 
 
 class OFC:
@@ -101,7 +102,7 @@ class OFC:
     def calculate_corrections(
         self,
         wfe: np.ndarray[float],
-        sensor_names: list[str],
+        sensor_ids: np.ndarray[int],
         filter_name: str,
         rotation_angle: float,
     ) -> list[Correction]:
@@ -114,8 +115,8 @@ class OFC:
             An array of arrays (e.g. 2-d array) with wavefront erros. Each
             element contains an array of wavefront errors (in um) for a
             particular detector/field.
-        sensor_names: `list`
-            List of sensor names.
+        sensor_ids: np.ndarray[int]
+            List of sensor ids.
         filter_name : `string`
             Name of the filter used in the observations.
         rotation_angle : `float`
@@ -133,14 +134,19 @@ class OFC:
             If size of `wfe` is different than `sensor_names`.
         """
 
-        if len(wfe) != len(sensor_names):
+        if len(wfe) != len(sensor_ids):
             RuntimeError(
                 f"Number of wavefront errors ({len(wfe)}) must be the same as "
-                f"number of sensors ({len(sensor_names)})."
+                f"number of sensors ({len(sensor_ids)})."
             )
 
+<<<<<<< HEAD
         # Process filter name to be in the correct format.
         filter_name = get_filter_name(filter_name)
+=======
+        # Get sensor names from sensor ids
+        sensor_names = get_sensor_names(ofc_data=self.ofc_data, sensor_ids=sensor_ids)
+>>>>>>> 2854cf7 (Change calculate corrections to expect sensor_ids instead of sensor_names)
 
         optical_state = self.state_estimator.dof_state(
             filter_name, wfe, sensor_names, rotation_angle
@@ -214,7 +220,9 @@ class OFC:
 
         self.lv_dof = np.zeros_like(self.controller.dof_state0)
 
-    def set_fwhm_data(self, fwhm: np.ndarray[float], sensor_names: list[str]) -> None:
+    def set_fwhm_data(
+        self, fwhm: np.ndarray[float], sensor_ids: np.ndarray[int]
+    ) -> None:
         """Set the list of FWHMSensorData of each CCD of camera.
         Parameters
         ----------
@@ -222,9 +230,13 @@ class OFC:
             Array of arrays (e.g. 2-d array) which contains the FWHM data.
             Each element contains an array of fwhm (in arcsec) measurements for
             a  particular sensor.
-        sensor_names : `list` of `string`
-            List of sensor names.
+        sensor_ids : `np.ndarray[int]`
+            List of sensor ids.
         """
+
+        # Get sensor names from sensor ids
+        sensor_names = get_sensor_names(ofc_data=self.ofc_data, sensor_ids=sensor_ids)
+
         # Delegate the call to the controller's set_fwhm_data
         self.controller.set_fwhm_data(fwhm, sensor_names)
 

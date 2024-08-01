@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-3.2.3:
+
+v3.2.3
+======
+
+* Change `ofc.calculate_corrections()` to expect sensor_ids instead of sensor_names.
+
 .. _lsst.ts.ofc-3.2.2:
 
 v3.2.2

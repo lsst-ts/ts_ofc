@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-3.2.2:
+
+v3.2.2
+======
+
+* Allow filter names to be passed as 'r_01', 'r' or 'R'.
+
 .. _lsst.ts.ofc-3.2.1:
 
 v3.2.1

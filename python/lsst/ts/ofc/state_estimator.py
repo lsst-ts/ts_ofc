@@ -28,7 +28,7 @@ import numpy as np
 
 from . import SensitivityMatrix
 from .ofc_data import OFCData
-from .utils.intrinsic_zernikes import get_intrinsic_zernikes
+from .utils.ofc_data_helpers import get_intrinsic_zernikes
 
 
 class StateEstimator:

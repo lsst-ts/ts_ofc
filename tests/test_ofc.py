@@ -25,7 +25,7 @@ import unittest
 import numpy as np
 from lsst.ts.ofc import OFC, Correction, OFCData
 from lsst.ts.ofc.utils import CorrectionType
-from lsst.ts.ofc.utils.intrinsic_zernikes import get_intrinsic_zernikes
+from lsst.ts.ofc.utils.ofc_data_helpers import get_intrinsic_zernikes
 
 
 class TestOFC(unittest.TestCase):
@@ -45,6 +45,7 @@ class TestOFC(unittest.TestCase):
         )
 
         self.wfe = np.loadtxt(self.test_data_path)
+        self.sensor_id_list = [191, 195, 199, 203]
         self.sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
     def test_init_lv_dof(self) -> None:
@@ -58,12 +59,13 @@ class TestOFC(unittest.TestCase):
     def test_set_fwhm_data(self) -> None:
         """Test the set_fwhm_data method."""
         fwhm_values = np.ones((4, 19)) * 0.2
-        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
+        self.ofc.set_fwhm_data(fwhm_values, self.sensor_id_list)
 
         self.assertTrue(
-            np.all(sensor_names == self.ofc.controller.pssn_data["sensor_names"])
+            np.all(
+                self.sensor_name_list == self.ofc.controller.pssn_data["sensor_names"]
+            )
         )
         self.assertAlmostEqual(
             self.ofc.controller.pssn_data["pssn"][0], 0.9139012, places=6
@@ -73,10 +75,9 @@ class TestOFC(unittest.TestCase):
         """Test the set_fwhm_data method when it fails."""
         # Passing fwhm_values with 4 columns instead of 5
         fwhm_values = np.ones((3, 19)) * 0.2
-        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
         with self.assertRaises(RuntimeError):
-            self.ofc.set_fwhm_data(fwhm_values, sensor_names)
+            self.ofc.set_fwhm_data(fwhm_values, self.sensor_id_list)
 
     def test_reset(self) -> None:
         """Test the reset method."""
@@ -122,7 +123,7 @@ class TestOFC(unittest.TestCase):
             m2_corr,
         ) = self.ofc.calculate_corrections(
             wfe=self.wfe,
-            sensor_names=self.sensor_name_list,
+            sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
             rotation_angle=rotation_angle,
         )
@@ -200,7 +201,7 @@ class TestOFC(unittest.TestCase):
                     m2_corr,
                 ) = self.ofc.calculate_corrections(
                     wfe=wfe,
-                    sensor_names=self.sensor_name_list,
+                    sensor_ids=self.sensor_id_list,
                     filter_name=filter_name,
                     rotation_angle=0.0,
                 )
@@ -246,7 +247,7 @@ class TestOFC(unittest.TestCase):
             m2_corr,
         ) = self.ofc.calculate_corrections(
             wfe=wfe,
-            sensor_names=self.sensor_name_list,
+            sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
             rotation_angle=0.0,
         )
@@ -302,7 +303,7 @@ class TestOFC(unittest.TestCase):
         # Calculate corrections
         self.ofc.calculate_corrections(
             wfe=wfe,
-            sensor_names=self.sensor_name_list,
+            sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
             rotation_angle=rotation_angle,
         )

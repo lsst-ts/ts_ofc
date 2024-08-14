@@ -96,4 +96,6 @@ def get_sensor_names(ofc_data: OFCData, sensor_ids: np.ndarray[int]) -> list[str
     `list` [`str`]
         Sensor names.
     """
-    return [ofc_data.sensor_id_to_name[sensor_id] for sensor_id in sensor_ids]
+    return [
+        ofc_data.sensor_id_to_name[ofc_data.name][sensor_id] for sensor_id in sensor_ids
+    ]

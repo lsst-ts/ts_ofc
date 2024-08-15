@@ -88,9 +88,17 @@ class TestUtils(unittest.TestCase):
         self.assertAlmostEqual(rot_vec[0], vec[1])
         self.assertAlmostEqual(rot_vec[1], vec[0])
 
-    def test_get_sensor_names(self) -> None:
+    def test_get_sensor_names_lsst(self) -> None:
         expected_sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
         sensor_names = get_sensor_names(self.ofc_data, [191, 195, 199, 203])
+
+        self.assertTrue(isinstance(sensor_names, list))
+        self.assertEqual(sensor_names, expected_sensor_names)
+
+    def test_get_sensor_names_comcam(self) -> None:
+        self.ofc_data.name = "comcam"
+        expected_sensor_names = ["R22_S00", "R22_S22"]
+        sensor_names = get_sensor_names(self.ofc_data, [0, 8])
 
         self.assertTrue(isinstance(sensor_names, list))
         self.assertEqual(sensor_names, expected_sensor_names)

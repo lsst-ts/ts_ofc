@@ -17,6 +17,7 @@ v3.2.0
 * Add mypy type checking to ts_ofc.
 * Allow filter names to be passed as 'r_01', 'r' or 'R'.
 * Change `ofc.calculate_corrections()` to expect sensor_ids instead of sensor_names.
+* Add comcam to policy/sensor_ids_to_names.yaml.
 
 .. _lsst.ts.ofc-3.1.3:
 

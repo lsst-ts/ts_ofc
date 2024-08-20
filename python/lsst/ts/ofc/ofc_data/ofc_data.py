@@ -159,6 +159,11 @@ class OFCData(BaseOFCData):
         # Initialize controller configuration
         self._controller_filename = "oic_controller.yaml"
 
+        # Zernike indices used
+        self._zn_idx = np.arange(self.znmax - self.znmin + 1, dtype=int)
+        self._zn_idx_mask = np.ones_like(self._zn_idx, dtype=bool)
+        self._zn_selected = np.arange(self.znmin, self.znmax + 1, dtype=int)
+
         # Set the name of the instrument. This reads the instrument-related
         # configuration files.
         if name is not None:
@@ -202,11 +207,6 @@ class OFCData(BaseOFCData):
             sum([self.comp_dof_idx[comp]["idxLength"] for comp in self.comp_dof_idx])
         )
         self._dof_idx_mask = np.ones_like(self._dof_idx, dtype=bool)
-
-        # Zernike indices used
-        self._zn_idx = np.arange(self.znmax - self.znmin + 1, dtype=int)
-        self._zn_idx_mask = np.ones_like(self._zn_idx, dtype=bool)
-        self._zn_selected = np.arange(self.znmin, self.znmax + 1, dtype=int)
 
     @property
     def name(self) -> str | None:
@@ -673,6 +673,11 @@ class OFCData(BaseOFCData):
 
         if self.controller["name"] not in ["PID", "OIC"]:
             raise ValueError("Controller 'name' must be either 'PID' or 'OIC'.")
+
+        # check if the zn_selected key is present in
+        # the controller configuration
+        if "zn_selected" in self.controller:
+            self.zn_selected = np.array(self.controller["zn_selected"])
 
         if self.controller["name"] == "PID":
             for key in ["kp", "ki", "kd", "setpoint"]:

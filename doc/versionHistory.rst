@@ -18,6 +18,7 @@ v3.2.0
 * Allow filter names to be passed as 'r_01', 'r' or 'R'.
 * Change `ofc.calculate_corrections()` to expect sensor_ids instead of sensor_names.
 * Add comcam to policy/sensor_ids_to_names.yaml.
+* Add zn_selected as a configuration too policy files.
 
 .. _lsst.ts.ofc-3.1.3:
 

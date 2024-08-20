@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["get_intrinsic_zernikes"]
+__all__ = ["get_intrinsic_zernikes", "get_sensor_names"]
 
 import galsim
 import numpy as np
@@ -79,3 +79,23 @@ def get_intrinsic_zernikes(
     evaluated_zernikes *= ofc_data.eff_wavelength[filter_name]
 
     return evaluated_zernikes[:, ofc_data.znmin : ofc_data.znmax + 1]
+
+
+def get_sensor_names(ofc_data: OFCData, sensor_ids: np.ndarray[int]) -> list[str]:
+    """Return sensor names.
+
+    Parameters
+    ----------
+    ofc_data : `OFCData`
+        OFC data.
+    sensor_ids : `numpy.ndarray`
+        Sensor IDs.
+
+    Returns
+    -------
+    `list` [`str`]
+        Sensor names.
+    """
+    return [
+        ofc_data.sensor_id_to_name[ofc_data.name][sensor_id] for sensor_id in sensor_ids
+    ]

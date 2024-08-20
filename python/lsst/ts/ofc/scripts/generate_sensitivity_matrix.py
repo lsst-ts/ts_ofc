@@ -75,7 +75,7 @@ def double_zernike(
     spokes: int = 35,
     jmax: int = 22,
     kmax: int = 22,
-    **kwargs,
+    **kwargs: object,
 ) -> np.ndarray:
     """Compute Double Zernike coefficients for a given optical system.
 

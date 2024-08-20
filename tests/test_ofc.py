@@ -25,13 +25,14 @@ import unittest
 import numpy as np
 from lsst.ts.ofc import OFC, Correction, OFCData
 from lsst.ts.ofc.utils import CorrectionType
-from lsst.ts.ofc.utils.intrinsic_zernikes import get_intrinsic_zernikes
+from lsst.ts.ofc.utils.ofc_data_helpers import get_intrinsic_zernikes
 
 
 class TestOFC(unittest.TestCase):
     """Test the OFCCalculation class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Set up the test case."""
         self.ofc_data = OFCData("lsst")
         self.ofc_data.motion_penalty = (
             0.0001  # Set small motion penalty to allow for larger corrections
@@ -44,41 +45,44 @@ class TestOFC(unittest.TestCase):
         )
 
         self.wfe = np.loadtxt(self.test_data_path)
+        self.sensor_id_list = [191, 195, 199, 203]
         self.sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
-    def test_init_lv_dof(self):
-        self.ofc.lv_dof = np.random.rand(len(self.ofc.ofc_controller.dof_state0))
+    def test_init_lv_dof(self) -> None:
+        """Test the initialization of the last-value degrees of freedom."""
+        self.ofc.lv_dof = np.random.rand(len(self.ofc.controller.dof_state0))
 
         self.ofc.init_lv_dof()
 
         self.assertTrue(np.all(self.ofc.lv_dof == 0))
 
-    def test_pssn_data(self):
-        self.assertTrue("sensor_names" in self.ofc.pssn_data)
-        self.assertTrue("pssn" in self.ofc.pssn_data)
-        self.assertTrue(self.ofc.pssn_data["sensor_names"] is None)
-        self.assertTrue(self.ofc.pssn_data["pssn"] is None)
-
-    def test_set_fwhm_data(self):
+    def test_set_fwhm_data(self) -> None:
+        """Test the set_fwhm_data method."""
         fwhm_values = np.ones((4, 19)) * 0.2
-        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
-        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
+        self.ofc.set_fwhm_data(fwhm_values, self.sensor_id_list)
 
-        self.assertTrue(np.all(sensor_names == self.ofc.pssn_data["sensor_names"]))
-        self.assertAlmostEqual(self.ofc.pssn_data["pssn"][0], 0.9139012, places=6)
+        self.assertTrue(
+            np.all(
+                self.sensor_name_list == self.ofc.controller.pssn_data["sensor_names"]
+            )
+        )
+        self.assertAlmostEqual(
+            self.ofc.controller.pssn_data["pssn"][0], 0.9139012, places=6
+        )
 
-    def test_set_fwhm_data_fails(self):
+    def test_set_fwhm_data_fails(self) -> None:
+        """Test the set_fwhm_data method when it fails."""
         # Passing fwhm_values with 4 columns instead of 5
         fwhm_values = np.ones((3, 19)) * 0.2
-        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
         with self.assertRaises(RuntimeError):
-            self.ofc.set_fwhm_data(fwhm_values, sensor_names)
+            self.ofc.set_fwhm_data(fwhm_values, self.sensor_id_list)
 
-    def test_reset(self):
-        dof = np.ones_like(self.ofc.ofc_controller.dof_state)
-        self.ofc.ofc_controller.aggregate_state(dof, self.ofc.ofc_data.dof_idx)
+    def test_reset(self) -> None:
+        """Test the reset method."""
+        dof = np.ones_like(self.ofc.controller.dof_state)
+        self.ofc.controller.aggregate_state(dof, self.ofc.ofc_data.dof_idx)
         self.ofc.set_last_visit_dof(dof)
 
         (
@@ -101,37 +105,16 @@ class TestOFC(unittest.TestCase):
         self.assertEqual(len(self.ofc.lv_dof), 50)
         self.assertEqual(np.sum(np.abs(self.ofc.lv_dof)), 0)
 
-    def test_set_pssn_gain_unconfigured(self):
-        with self.assertRaises(RuntimeError):
-            self.ofc.set_pssn_gain()
-
-    def test_set_pssn_gain(self):
-        fwhm_values = np.ones((4, 19)) * 0.2
-        sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
-
-        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
-
-        self.ofc.set_pssn_gain()
-
-        self.assertTrue(self.ofc.ofc_controller.gain, self.ofc.default_gain)
-
-        fwhm_values = np.ones((4, 19))
-
-        self.ofc.set_fwhm_data(fwhm_values, sensor_names)
-
-        self.ofc.set_pssn_gain()
-
-        self.assertTrue(self.ofc.ofc_controller.gain, 1.0)
-
-    def test_calculate_corrections(self):
-        gain = 1.0
+    def test_calculate_corrections(self) -> None:
+        """Test the calculate_corrections method."""
         filter_name = "R"
         rotation_angle = 0.0
 
         self.ofc.ofc_data.xref = "0"
 
-        self.ofc.ofc_controller.dof_state0[45] = 0.1
-        self.ofc.ofc_controller.reset_dof_state()
+        self.ofc_data.controller["kp"] = 1  # gain
+        self.ofc.controller.dof_state0[45] = 0.1
+        self.ofc.controller.reset_dof_state()
 
         (
             m2_hex_corr,
@@ -140,9 +123,8 @@ class TestOFC(unittest.TestCase):
             m2_corr,
         ) = self.ofc.calculate_corrections(
             wfe=self.wfe,
-            sensor_names=self.sensor_name_list,
+            sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
-            gain=gain,
             rotation_angle=rotation_angle,
         )
 
@@ -166,7 +148,7 @@ class TestOFC(unittest.TestCase):
         for idx, computed_value, expected_value in zip(
             np.arange(10, 50),
             self.ofc.lv_dof[10:],
-            self.ofc.ofc_controller.dof_state0[10:],
+            self.ofc.controller.dof_state0[10:],
         ):
             with self.subTest(
                 correction=f"Correction DOF {idx}",
@@ -175,7 +157,8 @@ class TestOFC(unittest.TestCase):
             ):
                 assert np.abs(expected_value + computed_value) < 1e-1
 
-    def test_get_state_correction_from_last_visit(self):
+    def test_get_state_correction_from_last_visit(self) -> None:
+        """Test the get_state_correction_from_last_visit method."""
         new_comp_dof_idx = dict(
             m2HexPos=np.zeros(5, dtype=bool),
             camHexPos=np.ones(5, dtype=bool),
@@ -194,15 +177,16 @@ class TestOFC(unittest.TestCase):
         state_correction = self.ofc.lv_dof
 
         self.assertTrue(isinstance(self.ofc.lv_dof, np.ndarray))
-        self.assertEqual(len(self.ofc.lv_dof), len(self.ofc.ofc_controller.dof_state0))
+        self.assertEqual(len(self.ofc.lv_dof), len(self.ofc.controller.dof_state0))
 
         delta = np.sum(np.abs(state_correction - rearanged_dof))
         self.assertEqual(delta, 0)
 
-    def test_intrinsic_corr_is_zero(self):
+    def test_intrinsic_corr_is_zero(self) -> None:
         """Check that if we send intrinsic correction to the ofc we get zero
         for all corrections.
         """
+        self.ofc_data.controller["kp"] = 1  # gain
 
         for filter_name in self.ofc.ofc_data.intrinsic_zk:
             with self.subTest(filter_name=filter_name):
@@ -217,9 +201,8 @@ class TestOFC(unittest.TestCase):
                     m2_corr,
                 ) = self.ofc.calculate_corrections(
                     wfe=wfe,
-                    sensor_names=self.sensor_name_list,
+                    sensor_ids=self.sensor_id_list,
                     filter_name=filter_name,
-                    gain=1.0,
                     rotation_angle=0.0,
                 )
                 self.assertTrue(
@@ -231,11 +214,10 @@ class TestOFC(unittest.TestCase):
                 self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
                 self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
-    def test_truncate_dof(self):
+    def test_truncate_dof(self) -> None:
         """Check that we can truncate the number of degrees of freedom used
         in the calculation successfully.
         """
-
         # Set used degrees of freedom
         new_comp_dof_idx = dict(
             m2HexPos=np.zeros(5, dtype=bool),
@@ -244,6 +226,9 @@ class TestOFC(unittest.TestCase):
             M2Bend=np.zeros(20, dtype=bool),
         )
         self.ofc.ofc_data.comp_dof_idx = new_comp_dof_idx
+        self.ofc.controller.reset_history()
+
+        self.ofc_data.controller["kp"] = 1  # gain
 
         # Check that the number of degrees of freedom used is 5
         self.assertEqual(len(self.ofc.ofc_data.dof_idx), 5)
@@ -262,9 +247,8 @@ class TestOFC(unittest.TestCase):
             m2_corr,
         ) = self.ofc.calculate_corrections(
             wfe=wfe,
-            sensor_names=self.sensor_name_list,
+            sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
-            gain=1.0,
             rotation_angle=0.0,
         )
 
@@ -285,7 +269,8 @@ class TestOFC(unittest.TestCase):
         self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
         self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
-    def test_get_correction(self):
+    def test_get_correction(self) -> None:
+        """Test the get_correction method."""
         # First time of calculation
         correction0 = self._calculate_cam_hex_correction()
 
@@ -303,12 +288,13 @@ class TestOFC(unittest.TestCase):
         self.assertAlmostEqual(correction[4], 2 * correction0[4])
         self.assertAlmostEqual(correction[5], 2 * correction0[5])
 
-    def _calculate_cam_hex_correction(self):
-        gain = 1.0
+    def _calculate_cam_hex_correction(self) -> np.ndarray:
+        """Calculate the camera hexapod correction."""
         filter_name = "R"
         rotation_angle = 0.0
 
         self.ofc.ofc_data.xref = "x0"
+        self.ofc_data.controller["kp"] = 1  # gain
 
         # Set wavefront error
         wfe = get_intrinsic_zernikes(self.ofc_data, filter_name, self.sensor_name_list)
@@ -317,9 +303,8 @@ class TestOFC(unittest.TestCase):
         # Calculate corrections
         self.ofc.calculate_corrections(
             wfe=wfe,
-            sensor_names=self.sensor_name_list,
+            sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
-            gain=gain,
             rotation_angle=rotation_angle,
         )
 

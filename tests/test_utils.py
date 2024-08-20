@@ -22,30 +22,45 @@ import unittest
 
 import numpy as np
 from lsst.ts.ofc import OFCData
-from lsst.ts.ofc.utils import get_config_dir, get_pkg_root, rot_1d_array
-from lsst.ts.ofc.utils.intrinsic_zernikes import get_intrinsic_zernikes
+from lsst.ts.ofc.utils import (
+    get_config_dir,
+    get_filter_name,
+    get_pkg_root,
+    rot_1d_array,
+)
+from lsst.ts.ofc.utils.ofc_data_helpers import get_intrinsic_zernikes, get_sensor_names
 
 
 class TestUtils(unittest.TestCase):
     """Test the OFCCalculation class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.ofc_data = OFCData("lsst")
 
-    def test_get_pkg_root(self):
+    def test_get_pkg_root(self) -> None:
         pkg_root = get_pkg_root()
 
         self.assertTrue(pkg_root.exists())
 
-    def test_get_config_dir(self):
+    def test_get_config_dir(self) -> None:
         config_dir = get_config_dir()
 
         self.assertTrue(config_dir.exists())
 
-    def test_rot_1d_array(self):
+    def test_get_filter_name(self) -> None:
+        filter_name = "r_01"
+        self.assertEqual(get_filter_name(filter_name), "R")
+
+        filter_name = "r"
+        self.assertEqual(get_filter_name(filter_name), "R")
+
+        filter_name = "R"
+        self.assertEqual(get_filter_name(filter_name), "R")
+
+    def test_rot_1d_array(self) -> None:
         vec = np.array([1.0, 0.0])
 
-        def compute_rot_mat(rot):
+        def compute_rot_mat(rot: float) -> np.ndarray:
             """Return rotation matrix."""
             rot_rad = np.deg2rad(rot)
             c, s = np.cos(rot_rad), np.sin(rot_rad)
@@ -73,7 +88,22 @@ class TestUtils(unittest.TestCase):
         self.assertAlmostEqual(rot_vec[0], vec[1])
         self.assertAlmostEqual(rot_vec[1], vec[0])
 
-    def test_get_intrinsic_zernikes(self):
+    def test_get_sensor_names_lsst(self) -> None:
+        expected_sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+        sensor_names = get_sensor_names(self.ofc_data, [191, 195, 199, 203])
+
+        self.assertTrue(isinstance(sensor_names, list))
+        self.assertEqual(sensor_names, expected_sensor_names)
+
+    def test_get_sensor_names_comcam(self) -> None:
+        self.ofc_data.name = "comcam"
+        expected_sensor_names = ["R22_S00", "R22_S22"]
+        sensor_names = get_sensor_names(self.ofc_data, [0, 8])
+
+        self.assertTrue(isinstance(sensor_names, list))
+        self.assertEqual(sensor_names, expected_sensor_names)
+
+    def test_get_intrinsic_zernikes(self) -> None:
         sensor_names = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
 
         for filter_name in self.ofc_data.eff_wavelength:

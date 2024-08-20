@@ -28,7 +28,7 @@ import numpy as np
 
 from . import SensitivityMatrix
 from .ofc_data import OFCData
-from .utils.intrinsic_zernikes import get_intrinsic_zernikes
+from .utils.ofc_data_helpers import get_intrinsic_zernikes
 
 
 class StateEstimator:
@@ -57,7 +57,7 @@ class StateEstimator:
     """
 
     def __init__(
-        self, ofc_data: OFCData, rcond: int = 1e-3, log: logging.Logger = None
+        self, ofc_data: OFCData, rcond: float = 1e-3, log: logging.Logger | None = None
     ) -> None:
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
@@ -75,10 +75,10 @@ class StateEstimator:
     def dof_state(
         self,
         filter_name: str,
-        wfe: np.ndarray,
+        wfe: np.ndarray[float],
         sensor_names: list,
         rotation_angle: float,
-    ) -> np.ndarray:
+    ) -> np.ndarray[float]:
         """Compute the state in the basis of degrees of freedom.
 
         Solve y = A*x by x = pinv(A)*y.

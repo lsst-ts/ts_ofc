@@ -1,0 +1,36 @@
+# Description: Proportional-Integral-Derivative Controller (PID) configuration file
+#
+# Name: PID
+# kp is the proportional gain
+# ki is the integral gain defined as ki = kp*T/T_i
+# kd is the derivative gain defined as kd = kp*T_d/T
+# derivative_filter_coeff is the coefficient of the derivative filter
+# zn_selected is the zernike coefficients selected to be used by the controller in Noll index
+# setpoint is the setpoint for each degree of freedom (array of 50 elements)
+
+description: Proportional-Integral-Derivative Controller
+
+name: PID
+kp: 0.8
+ki: 0.1
+kd: 0.1
+derivative_filter_coeff: 1.0
+zn_selected: [
+  4, 5, 6, 7, 8,
+  9, 10, 11, 12, 13,
+  14, 15, 16, 17, 18,
+  19, 20, 21, 22, 23, 
+  24, 25, 26, 27, 28
+]
+setpoint: [
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0, 
+  0.0, 0.0, 0.0, 0.0, 0.0
+]

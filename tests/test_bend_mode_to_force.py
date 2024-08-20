@@ -28,14 +28,14 @@ from lsst.ts.ofc import BendModeToForce, OFCData
 class TestBendModeToForce(unittest.TestCase):
     """Test the BendModeToForce class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Set up the test case."""
         self.ofc_data = OFCData("comcam")
         self.bmf_m1m3 = BendModeToForce(component="M1M3", ofc_data=self.ofc_data)
         self.bmf_m2 = BendModeToForce(component="M2", ofc_data=self.ofc_data)
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test class initialization."""
-
         self.assertEqual(self.bmf_m1m3.rot_mat.shape, (156, 20))
         self.assertEqual(self.bmf_m1m3.rot_mat[0, 0], 0.07088527)
         self.assertEqual(self.bmf_m1m3.rot_mat[0, 1], -0.9108789)
@@ -49,7 +49,8 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertEqual(self.bmf_m2.rot_mat[1, 0], 0.5131827)
         self.assertEqual(self.bmf_m2.rot_mat[1, 1], 0.1040619)
 
-    def test_m1m3_force(self):
+    def test_m1m3_force(self) -> None:
+        """Test the force calculation for M1M3."""
         dof = np.zeros(20)
         dof[0:3] = np.array([1, 2, 3])
         force = self.bmf_m1m3.force(dof)
@@ -57,7 +58,8 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertEqual(len(force), 156)
         self.assertAlmostEqual(force[0], 222.57988747, places=7)
 
-    def test_m2_force(self):
+    def test_m2_force(self) -> None:
+        """Test the force calculation for M2."""
         dof = np.zeros(20)
         dof[0:3] = np.array([1, 2, 3])
         force = self.bmf_m2.force(dof)
@@ -65,7 +67,8 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertEqual(len(force), 72)
         self.assertAlmostEqual(force[0], 0.28011368, places=7)
 
-    def test_m1m3_bending_mode(self):
+    def test_m1m3_bending_mode(self) -> None:
+        """Test the bending mode calculation for M1M3."""
         dof = np.zeros(20)
         dof[0:3] = np.array([1, 2, 3])
         force = self.bmf_m1m3.force(dof)
@@ -75,7 +78,8 @@ class TestBendModeToForce(unittest.TestCase):
         delta = np.sum(np.abs(bm - dof))
         self.assertLess(delta, 1e-10)
 
-    def test_bad_init(self):
+    def test_bad_init(self) -> None:
+        """Test the class initialization with a bad component name."""
         with self.assertRaises(RuntimeError):
             BendModeToForce(component="camHex", ofc_data=self.ofc_data)
 

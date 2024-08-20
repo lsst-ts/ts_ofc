@@ -29,7 +29,8 @@ from lsst.ts.ofc import OFCData, SensitivityMatrix, StateEstimator
 class TestStateEstimator(unittest.TestCase):
     """Test the OptStateEsti class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
+        """Set up the test case."""
         self.ofc_data = OFCData("lsst")
 
         self.estimator = StateEstimator(self.ofc_data, rcond=1e-5)
@@ -54,10 +55,43 @@ class TestStateEstimator(unittest.TestCase):
             self.ofc_data.sample_points[sensor] for sensor in self.sensor_name_list
         ]
 
-    def mean_squared_residual(self, new_array, reference_array):
+    def mean_squared_residual(
+        self, new_array: np.ndarray, reference_array: np.ndarray
+    ) -> float:
+        """Compute the mean squared residual between two arrays.
+
+        Parameters
+        ----------
+        new_array : np.ndarray
+            New array.
+        reference_array : np.ndarray
+            Reference array.
+
+        Returns
+        -------
+        float
+            Mean squared residual.
+        """
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
 
-    def compute_sensitivity_matrix(self, field_angles, rotation_angle):
+    def compute_sensitivity_matrix(
+        self, field_angles: np.ndarray, rotation_angle: float
+    ) -> np.ndarray:
+        """Compute sensitivity matrix for the given
+        field angles and rotation angle.
+
+        Parameters
+        ----------
+        field_angles : np.ndarray
+            Field angles for the sensors.
+        rotation_angle : float
+            Rotation angle.
+
+        Returns
+        -------
+        np.ndarray
+            Sensitivity matrix.
+        """
         # Evaluate sensitivity matrix at sensor positions
         sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(
             field_angles, rotation_angle
@@ -80,7 +114,8 @@ class TestStateEstimator(unittest.TestCase):
 
         return sensitivity_matrix
 
-    def test_dof_state(self):
+    def test_dof_state(self) -> None:
+        """Test the dof_state method."""
         # Compute sensitivity matrix
         sensitivity_matrix = self.compute_sensitivity_matrix(
             self.field_angles, rotation_angle=0.0
@@ -102,7 +137,10 @@ class TestStateEstimator(unittest.TestCase):
         )
         assert residual < 1e-3
 
-    def test_dof_state_trim_zn_dof(self):
+    def test_dof_state_trim_zn_dof(self) -> None:
+        """Test the dof_state method with trimmed
+        zernike indices and degrees of freedom.
+        """
         # Set zernike indices to Z4-Z9
         self.estimator.ofc_data.zn_selected = np.arange(4, 10)
         self.dz_sensitivity_matrix.ofc_data.zn_selected = np.arange(4, 10)
@@ -137,7 +175,8 @@ class TestStateEstimator(unittest.TestCase):
         )
         assert residual < 1e-2
 
-    def test_dof_state_not_enough_zk(self):
+    def test_dof_state_not_enough_zk(self) -> None:
+        """Test the dof_state method with not enough zernike indices."""
         # Set zernike indices to Z4-Z8
         self.estimator.ofc_data.zn_selected = np.arange(4, 8)
 

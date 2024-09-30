@@ -57,6 +57,22 @@ def default_rb_stroke() -> np.ndarray:
     return np.array([5900, 6700, 6700, 432, 432, 8700, 7600, 7600, 864, 864])
 
 
+def default_dof_indices() -> dict:
+    """Default degrees of freedom indices.
+
+    Returns
+    -------
+    `dict`
+        Dictionary with the indices of the degrees of freedom.
+    """
+    return {
+        "M2_hexapod": [0, 5],
+        "CAM_hexapod": [5, 10],
+        "M1M3_bending": [10, 30],
+        "M2_bending": [30, 50],
+    }
+
+
 @dataclass
 class BaseOFCData:
     """Base Optical Feedback Control Data.
@@ -65,8 +81,6 @@ class BaseOFCData:
     ----------
     alpha : `np.array` of `float`
         Alpha coefficient for the normalized point-source sensitivity (PSSN).
-    controller_filename : `string`
-        Name of the file where the controller is saved.
     dof_state0_filename : `string`
         Name of the file with the initial degrees of freedom.
     eff_wavelength : `dict` of `string`
@@ -87,6 +101,8 @@ class BaseOFCData:
         Filename root string for the sensitivity matrix M.
     y2_filename_root : `string`
         Name of the file where `y2_correction` is read from.
+    dof_indices: `dict`
+        Dictionary with the indices of the degrees of freedom.
     znmax : `int`
         Max number of zernikes used.
     znmin : `int`
@@ -104,6 +120,9 @@ class BaseOFCData:
     # Used zernikes
     znmax: int = 28  # Max number of zernikes used (to be filtered with zn3Idx)
     znmin: int = 4  # Min number of zernikes used (to be filtered with zn3Idx)
+
+    # Degre of freedom indices
+    dof_indices: dict = field(default_factory=default_dof_indices)
 
     # M1M3 actuator penalty factor
     # how many microns of M2 piston does 1N rms force correspond to

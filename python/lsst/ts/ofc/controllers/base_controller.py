@@ -219,6 +219,16 @@ class BaseController:
         """
         return self.dof_state[self.ofc_data.dof_idx]
 
+    def set_aggregated_state(self, value: np.ndarray[float]) -> None:
+        """Set the aggregated state.
+
+        Parameters
+        ----------
+        value : `np.ndarray[float]`
+            Aggregated state.
+        """
+        self.dof_state[self.ofc_data.dof_idx] = value
+
     def reset_history(self) -> None:
         """Reset the history of the controller."""
         self.dof_state0 = self.dof_state.copy()

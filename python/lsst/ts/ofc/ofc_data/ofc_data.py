@@ -60,6 +60,8 @@ class OFCData(BaseOFCData):
     bend_mode : `dict`
         Dictionary to hold bending mode data. The data is read alongside the
         other files when the name is set.
+    bending_mode_stresses : `dict`
+        Mirror bending mode stresses.
     config_dir : `pathlib.Path`
         Path to the directory storing configuration files.
     controller_filename : `string`
@@ -141,6 +143,16 @@ class OFCData(BaseOFCData):
                 "force": {"filename": "M2_1um_72_force.yaml"},
                 "rot": {"filename": "rotMatM2.yaml"},
             },
+        }
+
+        # Configure mirror bending mode stresses
+        self.bending_mode_stresses = {
+            "M1M3": self.load_yaml_file(
+                self.config_dir / "M1M3" / "bending_mode_stresses.yaml"
+            ),
+            "M2": self.load_yaml_file(
+                self.config_dir / "M2" / "bending_mode_stresses.yaml"
+            ),
         }
 
         # Try to create a lock and a future. Sometimes it happens that the

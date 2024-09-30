@@ -6,6 +6,15 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.0.0:
+
+v4.0.0
+======
+
+* Add function `stresses()` to return calculated stress on the mirrors from bending modes.
+* Add policy files for the bending mode stress per um and scale factor.
+* Add function `set_aggregated_state()` to be able to set the total DOF state.
+
 .. _lsst.ts.ofc-3.2.0:
 
 v3.2.0

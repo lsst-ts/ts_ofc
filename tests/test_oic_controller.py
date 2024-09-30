@@ -68,6 +68,20 @@ class TestOICController(unittest.TestCase):
         assert self.mean_squared_residual(sum_uk[25], 1.5) < 5e-2
         assert self.mean_squared_residual(sum_uk[45], 1.5) < 5e-2
 
+    def test_set_aggregated_state(self) -> None:
+        """Test the set_aggregated_state method."""
+        new_state = np.ones(50)
+
+        self.controller.set_aggregated_state(new_state)
+
+        # Check that the aggregated state is the same as the new state
+        np.testing.assert_array_almost_equal(
+            self.controller.aggregated_state,
+            new_state,
+            decimal=5,
+            err_msg="Aggregated state does not match new state.",
+        )
+
     def mean_squared_residual(
         self, new_array: np.ndarray, reference_array: np.ndarray
     ) -> float:

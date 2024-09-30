@@ -41,6 +41,8 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertEqual(self.bmf_m1m3.rot_mat[0, 1], -0.9108789)
         self.assertEqual(self.bmf_m1m3.rot_mat[1, 0], 0.192324)
         self.assertEqual(self.bmf_m1m3.rot_mat[1, 1], -2.764459)
+        self.assertEqual(self.bmf_m1m3.bending_mode_stresses_positive.shape, (20,))
+        self.assertEqual(self.bmf_m1m3.bending_mode_stresses_negative.shape, (20,))
 
         # Computed using previous version of the code.
         self.assertEqual(self.bmf_m2.rot_mat.shape, (72, 20))
@@ -48,6 +50,19 @@ class TestBendModeToForce(unittest.TestCase):
         self.assertEqual(self.bmf_m2.rot_mat[0, 1], -0.1140833)
         self.assertEqual(self.bmf_m2.rot_mat[1, 0], 0.5131827)
         self.assertEqual(self.bmf_m2.rot_mat[1, 1], 0.1040619)
+        self.assertEqual(self.bmf_m2.bending_mode_stresses_positive.shape, (20,))
+        self.assertEqual(self.bmf_m2.bending_mode_stresses_negative.shape, (20,))
+
+    def test_m1m3_bending_mode_stresses(self) -> None:
+        """Test the bending mode to stress per bending mode calculation."""
+        dof = np.zeros(20)
+        dof[0] = 1
+        stresses = self.bmf_m1m3.get_stresses_from_dof(dof)
+
+        expected_stresses = np.zeros(20)
+        expected_stresses[0] = self.bmf_m1m3.bending_mode_stresses_positive[0]
+
+        np.testing.assert_allclose(stresses, expected_stresses)
 
     def test_m1m3_force(self) -> None:
         """Test the force calculation for M1M3."""

@@ -35,6 +35,14 @@ class TestBaseOFCData(unittest.TestCase):
         self.assertEqual(base_ofc_data.dof_state0_filename, "state0_in_dof.yaml")
         self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "intrinsic_zk")
         self.assertEqual(base_ofc_data.sen_m_filename_root, "sensitivity")
+        self.assertEqual(base_ofc_data.dof_indices["M2_hexapod"][0], 0)
+        self.assertEqual(base_ofc_data.dof_indices["M2_hexapod"][1], 5)
+        self.assertEqual(base_ofc_data.dof_indices["CAM_hexapod"][0], 5)
+        self.assertEqual(base_ofc_data.dof_indices["CAM_hexapod"][1], 10)
+        self.assertEqual(base_ofc_data.dof_indices["M1M3_bending"][0], 10)
+        self.assertEqual(base_ofc_data.dof_indices["M1M3_bending"][1], 30)
+        self.assertEqual(base_ofc_data.dof_indices["M2_bending"][0], 30)
+        self.assertEqual(base_ofc_data.dof_indices["M2_bending"][1], 50)
 
     def test_constructor_with_args(self) -> None:
         """Test the OFCData class with the lsst instrument."""

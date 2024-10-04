@@ -23,6 +23,7 @@ import pathlib
 import unittest
 
 import numpy as np
+import yaml
 from lsst.ts.ofc import OFCData, SensitivityMatrix, StateEstimator
 
 
@@ -33,13 +34,20 @@ class TestStateEstimator(unittest.TestCase):
         """Set up the test case."""
         self.ofc_data = OFCData("lsst")
 
-        self.estimator = StateEstimator(self.ofc_data, rcond=1e-5)
+        self.estimator = StateEstimator(self.ofc_data)
+        self.estimator.rcond = 1e-5
 
         self.wfe = np.loadtxt(
             pathlib.Path(__file__).parent.absolute()
             / "testData"
             / "lsst_wfs_error_iter0.z4c"
         )
+
+        file_path = (
+            pathlib.Path(__file__).parent.absolute() / "testData" / "test_weights.yaml"
+        )
+        with open(file_path, "r") as fp:
+            self.normalization_weights = np.array(yaml.safe_load(fp))
 
         dofs = np.loadtxt(
             pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_dof_iter0.txt"
@@ -132,6 +140,26 @@ class TestStateEstimator(unittest.TestCase):
 
         # Check derived wavefront from state estimate
         # matches the one from original dofs
+        residual = self.mean_squared_residual(
+            sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
+        )
+        assert residual < 1e-3
+
+    def test_dof_state_with_normalization_weights(self) -> None:
+        """Test the dof_state method when using normalization weights."""
+        self.estimator.normalization_weights = self.normalization_weights
+
+        sensitivity_matrix = self.compute_sensitivity_matrix(
+            self.field_angles, rotation_angle=0.0
+        )
+
+        state = self.estimator.dof_state(
+            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
+        )
+
+        n_values = len(self.estimator.ofc_data.dof_idx)
+        self.assertEqual(len(state), n_values)
+
         residual = self.mean_squared_residual(
             sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
         )

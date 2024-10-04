@@ -46,10 +46,10 @@ class TestBendModeToForce(unittest.TestCase):
 
         # Computed using previous version of the code.
         self.assertEqual(self.bmf_m2.rot_mat.shape, (72, 20))
-        self.assertEqual(self.bmf_m2.rot_mat[0, 0], 0.5095989)
-        self.assertEqual(self.bmf_m2.rot_mat[0, 1], -0.1140833)
-        self.assertEqual(self.bmf_m2.rot_mat[1, 0], 0.5131827)
-        self.assertEqual(self.bmf_m2.rot_mat[1, 1], 0.1040619)
+        self.assertEqual(self.bmf_m2.rot_mat[0, 0], 2.2668080189579998)
+        self.assertEqual(self.bmf_m2.rot_mat[0, 1], -0.507467616726)
+        self.assertEqual(self.bmf_m2.rot_mat[1, 0], 2.282749549794)
+        self.assertEqual(self.bmf_m2.rot_mat[1, 1], 0.462890224818)
         self.assertEqual(self.bmf_m2.bending_mode_stresses_positive.shape, (20,))
         self.assertEqual(self.bmf_m2.bending_mode_stresses_negative.shape, (20,))
 
@@ -80,7 +80,7 @@ class TestBendModeToForce(unittest.TestCase):
         force = self.bmf_m2.force(dof)
 
         self.assertEqual(len(force), 72)
-        self.assertAlmostEqual(force[0], 0.28011368, places=7)
+        self.assertAlmostEqual(force[0], 1.2460073, places=7)
 
     def test_m1m3_bending_mode(self) -> None:
         """Test the bending mode calculation for M1M3."""

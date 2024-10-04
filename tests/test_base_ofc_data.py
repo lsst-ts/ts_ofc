@@ -35,6 +35,8 @@ class TestBaseOFCData(unittest.TestCase):
         self.assertEqual(base_ofc_data.dof_state0_filename, "state0_in_dof.yaml")
         self.assertEqual(base_ofc_data.intrinsic_zk_filename_root, "intrinsic_zk")
         self.assertEqual(base_ofc_data.sen_m_filename_root, "sensitivity")
+        self.assertEqual(base_ofc_data.m1m3_force_range, 67 * 2)
+        self.assertEqual(base_ofc_data.m2_force_range, 22.5 * 2)
         self.assertEqual(base_ofc_data.dof_indices["M2_hexapod"][0], 0)
         self.assertEqual(base_ofc_data.dof_indices["M2_hexapod"][1], 5)
         self.assertEqual(base_ofc_data.dof_indices["CAM_hexapod"][0], 5)

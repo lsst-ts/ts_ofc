@@ -14,6 +14,7 @@ v4.0.0
 * Add function `stresses()` to return calculated stress on the mirrors from bending modes.
 * Add policy files for the bending mode stress per um and scale factor.
 * Add function `set_aggregated_state()` to be able to set the total DOF state.
+* Fix `get_sensor_names` helper to work with lsstfam.
 
 .. _lsst.ts.ofc-3.2.0:
 

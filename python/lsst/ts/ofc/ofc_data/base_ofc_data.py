@@ -121,8 +121,11 @@ class BaseOFCData:
     znmax: int = 28  # Max number of zernikes used (to be filtered with zn3Idx)
     znmin: int = 4  # Min number of zernikes used (to be filtered with zn3Idx)
 
-    # Degre of freedom indices
+    # Degree of freedom indices
     dof_indices: dict = field(default_factory=default_dof_indices)
+
+    m1m3_force_range: float = 67 * 2
+    m2_force_range: float = 22.5 * 2
 
     # M1M3 actuator penalty factor
     # how many microns of M2 piston does 1N rms force correspond to

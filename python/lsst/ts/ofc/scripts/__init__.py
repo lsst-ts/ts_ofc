@@ -23,3 +23,4 @@
 from .generate_alpha_values import *
 from .generate_intrinsic_zernikes import *
 from .generate_sensitivity_matrix import *
+from .generate_sensitivity_normalization_matrix import *

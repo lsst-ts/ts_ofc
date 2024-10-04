@@ -56,9 +56,7 @@ class StateEstimator:
         matrix.
     """
 
-    def __init__(
-        self, ofc_data: OFCData, rcond: float = 1e-3, log: logging.Logger | None = None
-    ) -> None:
+    def __init__(self, ofc_data: OFCData, log: logging.Logger | None = None) -> None:
         if log is None:
             self.log = logging.getLogger(type(self).__name__)
         else:
@@ -69,8 +67,9 @@ class StateEstimator:
         # Constuct the double zernike sensitivity matrix
         self.dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
-        # Set rcond for the pseudoinverse computation
-        self.rcond = rcond
+        self.normalization_weights = ofc_data.normalization_weights
+
+        self.rcond = ofc_data.controller["truncation_threshold"]
 
     def dof_state(
         self,
@@ -121,6 +120,11 @@ class StateEstimator:
 
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
+
+        normalization_matrix = np.diag(
+            self.normalization_weights[self.ofc_data.dof_idx]
+        )
+        sensitivity_matrix = sensitivity_matrix @ normalization_matrix
 
         # Check the dimension of sensitivity matrix to see if we can invert it
         num_zk, num_dof = sensitivity_matrix.shape
@@ -174,6 +178,9 @@ class StateEstimator:
         y = y.reshape(-1, 1)
 
         # Compute optical state estimate in the basis of DOF
-        x = pinv_sensitivity_matrix.dot(y)
+        # Because of normalization, we need to de-normalize the result
+        # to retrieve the actual DOF values in the original 50 dimensional
+        # basis. For more details, see equation (10) in arXiv:2406.04656.
+        x = normalization_matrix @ pinv_sensitivity_matrix.dot(y)
 
         return x.ravel()

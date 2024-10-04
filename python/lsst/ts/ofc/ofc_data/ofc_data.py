@@ -648,6 +648,16 @@ class OFCData(BaseOFCData):
         # ---------------------------------------
         self.configure_controller()
 
+        # Read normalization weights for sensitivity matrix
+        # -------------------------------------------------
+        configuration_path = (
+            self.config_dir
+            / "normalization_weights"
+            / self.controller["normalization_weights_filename"]
+        )
+
+        normalization_weights = np.array(self.load_yaml_file(configuration_path))
+
         # Now all data was read successfully, time to set it up.
         # ------------------------------------------------------
         self.alpha = alpha
@@ -661,6 +671,7 @@ class OFCData(BaseOFCData):
         self.gq_y2_correction = gq_y2_correction if instrument == "lsst" else None
         self.intrinsic_zk = intrinsic_zk
         self.sensitivity_matrix = sensitivity_matrix
+        self.normalization_weights = normalization_weights
         self.start_task.set_result(instrument)
 
         self.log.debug(f"Done configuring {instrument}")
@@ -668,6 +679,21 @@ class OFCData(BaseOFCData):
     def configure_controller(self) -> None:
         """Refresh the controller configuration based
         on the current controller_filename.
+
+        Raises
+        ------
+        ValueError
+            If controller name is missing in the configuration.
+        ValueError
+            If normalization_weights_filename is missing in the configuration.
+        ValueError
+            If truncation_threshold is missing in the configuration.
+        ValueError
+            If controller name is not PID or OIC.
+        ValueError
+            If required key is missing in the PID controller configuration.
+        ValueError
+            If required key is missing in the OIC controller configuration.
         """
         if Path(self.controller_filename).is_absolute():
             controller_path = Path(self.controller_filename)
@@ -681,6 +707,16 @@ class OFCData(BaseOFCData):
         if "name" not in self.controller:
             raise ValueError(
                 "Required key 'name' is missing in the controller configuration."
+            )
+
+        if "normalization_weights_filename" not in self.controller:
+            raise ValueError(
+                "Required key 'normalization_weights_filename' is missing in the controller configuration."
+            )
+
+        if "truncation_threshold" not in self.controller:
+            raise ValueError(
+                "Required key 'truncation_threshold' is missing in the controller configuration."
             )
 
         if self.controller["name"] not in ["PID", "OIC"]:

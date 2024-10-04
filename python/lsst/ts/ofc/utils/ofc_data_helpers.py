@@ -96,6 +96,6 @@ def get_sensor_names(ofc_data: OFCData, sensor_ids: np.ndarray[int]) -> list[str
     `list` [`str`]
         Sensor names.
     """
-    return [
-        ofc_data.sensor_id_to_name[ofc_data.name][sensor_id] for sensor_id in sensor_ids
-    ]
+    name = "lsst" if ofc_data.name == "lsstfam" else ofc_data.name
+
+    return [ofc_data.sensor_id_to_name[name][sensor_id] for sensor_id in sensor_ids]

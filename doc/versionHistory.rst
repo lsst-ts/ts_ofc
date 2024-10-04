@@ -15,6 +15,7 @@ v4.0.0
 * Add policy files for the bending mode stress per um and scale factor.
 * Add function `set_aggregated_state()` to be able to set the total DOF state.
 * Fix `get_sensor_names` helper to work with lsstfam.
+* Update M2 bending mode actuator forces from FEA analysis data in https://docushare.lsst.org/docushare/dsweb/View/Collection-15536 (September 19th, 2024)
 
 .. _lsst.ts.ofc-3.2.0:
 

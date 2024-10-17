@@ -140,6 +140,11 @@ class OFC:
                 f"number of sensors ({len(sensor_ids)})."
             )
 
+        # Remove NaN values and corresponding sensor_ids
+        valid_indices = ~np.isnan(wfe).any(axis=1)
+        wfe = wfe[valid_indices]
+        sensor_ids = np.array(sensor_ids)[valid_indices]
+
         # Process filter name to be in the correct format.
         filter_name = get_filter_name(filter_name)
         # Get sensor names from sensor ids

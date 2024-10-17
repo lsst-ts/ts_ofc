@@ -116,14 +116,18 @@ class TestOFC(unittest.TestCase):
         self.ofc.controller.dof_state0[45] = 0.1
         self.ofc.controller.reset_dof_state()
 
+        nan_row = np.full(self.wfe.shape[1], np.nan)
+        wfe_with_nans = np.vstack([self.wfe, nan_row])
+        sensor_id_list_with_nans = [191, 195, 199, 203, 207]
+
         (
             m2_hex_corr,
             cam_hex_corr,
             m1m3_corr,
             m2_corr,
         ) = self.ofc.calculate_corrections(
-            wfe=self.wfe,
-            sensor_ids=self.sensor_id_list,
+            wfe=wfe_with_nans,
+            sensor_ids=sensor_id_list_with_nans,
             filter_name=filter_name,
             rotation_angle=rotation_angle,
         )

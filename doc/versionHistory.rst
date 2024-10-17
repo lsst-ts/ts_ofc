@@ -17,6 +17,7 @@ v4.0.0
 * Fix `get_sensor_names` helper to work with lsstfam.
 * Update M2 bending mode actuator forces from FEA analysis data in https://docushare.lsst.org/docushare/dsweb/View/Collection-15536 (September 19th, 2024)
 * Add `normalization_weights` for `StateEstimator` to be able to operate in reduced basis.
+* Filter out NaN zernike estimates in `OFC`.
 
 .. _lsst.ts.ofc-3.2.0:
 

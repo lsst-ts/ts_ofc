@@ -76,14 +76,10 @@ class SensitivityMatrix:
                         for zk in galsim.zernike.DoubleZernike(
                             self.ofc_data.sensitivity_matrix[..., dof_idx],
                             # Rubin annuli
-                            uv_inner=self.ofc_data.config["pupil"]["radius_inner"],
-                            uv_outer=self.ofc_data.config["pupil"]["radius_outer"],
-                            xy_inner=self.ofc_data.config["obscuration"][
-                                "radius_inner"
-                            ],
-                            xy_outer=self.ofc_data.config["obscuration"][
-                                "radius_outer"
-                            ],
+                            uv_inner=self.ofc_data.config["field"]["radius_inner"],
+                            uv_outer=self.ofc_data.config["field"]["radius_outer"],
+                            xy_inner=self.ofc_data.config["pupil"]["radius_inner"],
+                            xy_outer=self.ofc_data.config["pupil"]["radius_outer"],
                         ).rotate(theta_uv=rotation_angle)(field_x, field_y)
                     ]
                 )

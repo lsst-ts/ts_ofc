@@ -177,7 +177,7 @@ def get_intrinsic_zk(
 
     return double_zernike(
         fiducial,
-        field=np.deg2rad(config["pupil"]["radius_outer"]),
+        field=np.deg2rad(config["field"]["radius_outer"]),
         wavelength=wavelength * 1e-6,  # nm -> m
         eps=0.61,
         rings=rings,
@@ -242,7 +242,7 @@ def get_sensitivity_dz(
         # Compute the double zernikes with the given perturbation
         dz1 = double_zernike(
             telescope,
-            field=np.deg2rad(config["pupil"]["radius_outer"]),
+            field=np.deg2rad(config["field"]["radius_outer"]),
             wavelength=wavelength * 1e-6,
             eps=0.61,
             jmax=jmax,

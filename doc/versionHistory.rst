@@ -18,6 +18,7 @@ v4.0.0
 * Update M2 bending mode actuator forces from FEA analysis data in https://docushare.lsst.org/docushare/dsweb/View/Collection-15536 (September 19th, 2024)
 * Add `normalization_weights` for `StateEstimator` to be able to operate in reduced basis.
 * Filter out NaN zernike estimates in `OFC`.
+* Fix policy/configurations names from obscuration and pupil to pupil and field.
 
 .. _lsst.ts.ofc-3.2.0:
 

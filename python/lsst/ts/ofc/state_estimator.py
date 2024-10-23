@@ -149,8 +149,8 @@ class StateEstimator:
 
             zk_galsim = galsim.zernike.Zernike(
                 wfe_sensor,
-                R_outer=self.ofc_data.config["obscuration"]["radius_outer"],
-                R_inner=self.ofc_data.config["obscuration"]["radius_inner"],
+                R_outer=self.ofc_data.config["pupil"]["radius_outer"],
+                R_inner=self.ofc_data.config["pupil"]["radius_inner"],
             )
             # Note that we need to remove the first 4 Zernike coefficients
             # since we padded the wfe with zeros for the 4 first Zernike

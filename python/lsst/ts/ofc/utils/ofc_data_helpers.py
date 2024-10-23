@@ -68,10 +68,10 @@ def get_intrinsic_zernikes(
             for zk in galsim.zernike.DoubleZernike(
                 ofc_data.intrinsic_zk[filter_name],
                 # Rubin annuli
-                uv_inner=ofc_data.config["pupil"]["radius_inner"],
-                uv_outer=ofc_data.config["pupil"]["radius_outer"],
-                xy_inner=ofc_data.config["obscuration"]["radius_inner"],
-                xy_outer=ofc_data.config["obscuration"]["radius_outer"],
+                uv_inner=ofc_data.config["field"]["radius_inner"],
+                uv_outer=ofc_data.config["field"]["radius_outer"],
+                xy_inner=ofc_data.config["pupil"]["radius_inner"],
+                xy_outer=ofc_data.config["pupil"]["radius_outer"],
             ).rotate(theta_uv=rotation_angle)(field_x, field_y)
         ]
     )

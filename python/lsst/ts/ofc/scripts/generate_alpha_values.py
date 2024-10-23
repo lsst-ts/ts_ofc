@@ -172,8 +172,8 @@ def get_alpha_values(
                 new_opd = opd_w.array.copy()
                 new_opd[non_masked] = galsim.zernike.Zernike(
                     np.concatenate([np.zeros(znmin), zk]),
-                    R_inner=config["obscuration"]["radius_inner"]
-                    / config["obscuration"]["radius_outer"],
+                    R_inner=config["pupil"]["radius_inner"]
+                    / config["pupil"]["radius_outer"],
                 )(opd_x[non_masked], opd_y[non_masked])
 
                 # Calculate PSSN from the new opd

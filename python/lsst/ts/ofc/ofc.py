@@ -155,7 +155,7 @@ class OFC:
         )
 
         # Calculate the uk based on the control algorithm
-        uk = self.controller.control_step(filter_name, optical_state, sensor_names)
+        uk = -self.controller.control_step(filter_name, optical_state, sensor_names)
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)
@@ -199,7 +199,7 @@ class OFC:
         dof_idx = np.arange(start_idx, end_idx)
 
         # Need minus sign to correct for the current state
-        dof = -self.controller.dof_state[dof_idx]
+        dof = self.controller.dof_state[dof_idx]
 
         if isinstance(self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"], float):
             trans_dof = self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"] * dof

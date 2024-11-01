@@ -198,7 +198,8 @@ class OFC:
         end_idx = start_idx + self.ofc_data.comp_dof_idx[dof_comp]["idxLength"]
         dof_idx = np.arange(start_idx, end_idx)
 
-        dof = self.controller.dof_state[dof_idx]
+        # Need minus sign to correct for the current state
+        dof = -self.controller.dof_state[dof_idx]
 
         if isinstance(self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"], float):
             trans_dof = self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"] * dof

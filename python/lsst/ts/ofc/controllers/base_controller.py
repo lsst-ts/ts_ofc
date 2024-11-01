@@ -217,7 +217,7 @@ class BaseController:
         `np.ndarray[float]`
             Aggregated state.
         """
-        return self.dof_state[self.ofc_data.dof_idx]
+        return self.dof_state
 
     def set_aggregated_state(self, value: np.ndarray[float]) -> None:
         """Set the aggregated state.

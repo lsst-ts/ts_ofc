@@ -379,7 +379,10 @@ class OFCData(BaseOFCData):
 
             if len(value[comp]) != length:
                 raise RuntimeError(
-                    f"Size of input vector ({len(value[comp])}) different than expected ({length})."
+                    f"Size of input vector for {comp} ({len(value[comp])}) different than "
+                    f"expected ({length}). "
+                    f"Current value: {self._dof_idx_mask[start_idx:end_idx]}. "
+                    f"New value: {value[comp]}."
                 )
             if (
                 not isinstance(value[comp], np.ndarray)

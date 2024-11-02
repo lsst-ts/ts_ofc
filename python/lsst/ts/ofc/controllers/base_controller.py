@@ -227,7 +227,7 @@ class BaseController:
         value : `np.ndarray[float]`
             Aggregated state.
         """
-        self.dof_state[self.ofc_data.dof_idx] = value
+        self.dof_state = value
 
     def reset_history(self) -> None:
         """Reset the history of the controller."""

@@ -206,7 +206,7 @@ class BaseController:
         dof_idx : `numpy.ndarray` or `list[int]`
             Index array of degree of freedom.
         """
-        self.dof_state[dof_idx] += dof
+        self.dof_state += dof
 
     @property
     def aggregated_state(self) -> np.ndarray[float]:

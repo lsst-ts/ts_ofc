@@ -352,13 +352,13 @@ class OFCData(BaseOFCData):
     @property
     def default_comp_dof_idx(self) -> dict:
         """Default value of the comp_dof_idx."""
-        default_comp_dof = dict()
+        default_comp_dof_idx = dict()
 
         for comp in self.comp_dof_idx:
             default_comp_dof_idx[comp] = np.ones(self.comp_dof_idx[comp]["idxLength"], dtype=np.bool_)
 
         return default_comp_dof_idx
-            
+
     @comp_dof_idx.setter
     def comp_dof_idx(self, value: dict) -> None:
         """Set the index of Degree of Freedom (DOF) per component.

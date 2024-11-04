@@ -6,6 +6,17 @@
 Version History
 ##################
 
+
+.. _lsst.ts.ofc-4.1.0:
+
+v4.1.0
+======
+
+* Add property `default_comp_dof_idx` to `OFC` to get the default compensation DOF index.
+* Fix signs and convert to degrees instead of arcsec for hexapod motions.
+* Fix return aggregated_state to return 50-dimensional vector.
+* Fix sensitivity matrix to be in degrees instead of arcseconds.
+
 .. _lsst.ts.ofc-4.0.0:
 
 v4.0.0

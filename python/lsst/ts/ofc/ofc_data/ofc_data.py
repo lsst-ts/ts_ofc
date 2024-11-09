@@ -740,6 +740,9 @@ class OFCData(BaseOFCData):
         if "zn_selected" in self.controller:
             self.zn_selected = np.array(self.controller["zn_selected"])
 
+        if "rotation_offset" in self.controller:
+            self.rotation_offset = np.array(self.controller["rotation_offset"])
+
         if self.controller["name"] == "PID":
             for key in ["kp", "ki", "kd", "setpoint"]:
                 if key not in self.controller:

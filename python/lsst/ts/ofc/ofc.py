@@ -140,9 +140,6 @@ class OFC:
                 f"number of sensors ({len(sensor_ids)})."
             )
 
-        # Set entire row to NaN if any element in the row is higher than 10um
-        wfe[np.any(wfe > 10, axis=1)] = np.nan
-
         # Remove NaN values and corresponding sensor_ids
         valid_indices = ~np.isnan(wfe).any(axis=1)
         wfe = wfe[valid_indices]
@@ -154,7 +151,7 @@ class OFC:
         sensor_names = get_sensor_names(ofc_data=self.ofc_data, sensor_ids=sensor_ids)
 
         optical_state = self.state_estimator.dof_state(
-            filter_name, wfe, sensor_names, rotation_angle
+            filter_name, wfe, sensor_names, rotation_angle + self.ofc_data.rotation_offset
         )
 
         # Calculate the uk based on the control algorithm

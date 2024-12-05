@@ -71,6 +71,31 @@ class StateEstimator:
 
         self.rcond = ofc_data.controller["truncation_threshold"]
 
+    def pinv_sparse_vmodes(a, rcond):
+        """
+        Compute the (Moore-Penrose) pseudo-inverse of a matrix
+        using sparse vmodes.
+        """
+        a = np.array(a)
+        wrap = getattr(a, "__array_wrap__", a.__array_wrap__)
+
+        rcond = np.array(rcond)
+        a = a.conjugate()
+        u, s, vt = np.linalg.svd(a, full_matrices=False)
+
+        # discard small singular values
+        cutoff = rcond[..., np.newaxis] * np.amax(s, axis=-1, keepdims=True)
+        large = s > cutoff
+        s = np.divide(1, s, where=large, out=s)
+        s[~large] = 0
+
+        res = np.matmul(
+            np.transpose(vt)[:, self.ofc_data.sparse_modes],
+            np.multiply(s[self.ofc_data.sparse_modes, np.newaxis],
+            np.transpose(u)[self.ofc_data.sparse_modes, :])
+        )
+        return wrap(res)
+
     def dof_state(
         self,
         filter_name: str,
@@ -135,7 +160,7 @@ class StateEstimator:
 
         # Compute the pseudo-inverse of the sensitivity matrix
         # rcond sets the truncation of different modes.
-        pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.rcond)
+        pinv_sensitivity_matrix = pinv_sparse_vmodes(sensitivity_matrix, rcond=self.rcond)
 
         # Rotate the wavefront error to the same orientation as the
         # sensitivity matrix. When creating galsim.Zernike object,

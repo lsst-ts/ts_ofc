@@ -742,6 +742,16 @@ class OFCData(BaseOFCData):
 
         if "rotation_offset" in self.controller:
             self.rotation_offset = self.controller["rotation_offset"]
+        
+        if "sparse_modes" in self.controller:
+            self.sparse_modes = self.controller["sparse_modes"]
+
+            if not isinstance(self.sparse_modes, (list, np.ndarray)):
+                raise ValueError(
+                    f"'sparse_modes' must be an array (list or numpy array)."
+                )
+        else:
+            self.sparse_modes = np.arange(50)
 
         if self.controller["name"] == "PID":
             for key in ["kp", "ki", "kd", "setpoint"]:

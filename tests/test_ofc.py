@@ -34,6 +34,7 @@ class TestOFC(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test case."""
         self.ofc_data = OFCData("lsst")
+        self.ofc_data.rotation_offset = 0.0
         self.ofc_data.motion_penalty = (
             0.0001  # Set small motion penalty to allow for larger corrections
         )
@@ -159,7 +160,7 @@ class TestOFC(unittest.TestCase):
                 computed_value=computed_value,
                 expected_value=expected_value,
             ):
-                assert np.abs(expected_value + computed_value) < 1e-1
+                assert np.abs(expected_value - computed_value) < 1e-1
 
     def test_get_state_correction_from_last_visit(self) -> None:
         """Test the get_state_correction_from_last_visit method."""

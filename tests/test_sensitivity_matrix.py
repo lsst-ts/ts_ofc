@@ -111,6 +111,9 @@ class TestSensitivityMatrix(unittest.TestCase):
             ]
             self.gq_sensitivity_matrix = self.gq_sensitivity_matrix[swap_gq, :]
 
+            # Change the units of the tilts to degrees
+            self.gq_sensitivity_matrix[:, :, [3, 4, 8, 9]] *= 3600
+
     def mean_squared_residual(
         self, new_array: np.ndarray, reference_array: np.ndarray
     ) -> float:

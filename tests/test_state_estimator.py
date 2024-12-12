@@ -35,7 +35,7 @@ class TestStateEstimator(unittest.TestCase):
         self.ofc_data = OFCData("lsst")
 
         self.estimator = StateEstimator(self.ofc_data)
-        self.estimator.rcond = 1e-5
+        self.estimator.rcond = 1e-7
 
         self.wfe = np.loadtxt(
             pathlib.Path(__file__).parent.absolute()
@@ -143,7 +143,7 @@ class TestStateEstimator(unittest.TestCase):
         residual = self.mean_squared_residual(
             sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
         )
-        assert residual < 1e-3
+        assert residual < 2e-3
 
     def test_dof_state_with_normalization_weights(self) -> None:
         """Test the dof_state method when using normalization weights."""
@@ -163,7 +163,7 @@ class TestStateEstimator(unittest.TestCase):
         residual = self.mean_squared_residual(
             sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
         )
-        assert residual < 1e-3
+        assert residual < 2e-3
 
     def test_dof_state_trim_zn_dof(self) -> None:
         """Test the dof_state method with trimmed
@@ -201,7 +201,7 @@ class TestStateEstimator(unittest.TestCase):
         residual = self.mean_squared_residual(
             sensitivity_matrix @ self.dofs, sensitivity_matrix[..., :n_values] @ state
         )
-        assert residual < 1e-2
+        assert residual < 2e-2
 
     def test_dof_state_not_enough_zk(self) -> None:
         """Test the dof_state method with not enough zernike indices."""

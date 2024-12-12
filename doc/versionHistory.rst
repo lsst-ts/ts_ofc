@@ -19,6 +19,12 @@ v4.0.0
 * Add `normalization_weights` for `StateEstimator` to be able to operate in reduced basis.
 * Filter out NaN zernike estimates in `OFC`.
 * Fix policy/configurations names from obscuration and pupil to pupil and field.
+* Add property `default_comp_dof_idx` to `OFC` to get the default compensation DOF index.
+* Fix signs and convert to degrees instead of arcsec for hexapod motions.
+* Fix return aggregated_state to return 50-dimensional vector.
+* Fix sensitivity matrix to be in degrees instead of arcseconds.
+* Fix comcam sensitivity matrix to accound for rotation offset
+* Update unit tests to use the degrees instead of arcseconds and use 0 rotation offset.
 
 .. _lsst.ts.ofc-3.2.0:
 

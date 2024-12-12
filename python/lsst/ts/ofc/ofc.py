@@ -151,11 +151,14 @@ class OFC:
         sensor_names = get_sensor_names(ofc_data=self.ofc_data, sensor_ids=sensor_ids)
 
         optical_state = self.state_estimator.dof_state(
-            filter_name, wfe, sensor_names, rotation_angle
+            filter_name,
+            wfe,
+            sensor_names,
+            rotation_angle + self.ofc_data.rotation_offset,
         )
 
         # Calculate the uk based on the control algorithm
-        uk = self.controller.control_step(filter_name, optical_state, sensor_names)
+        uk = -self.controller.control_step(filter_name, optical_state, sensor_names)
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)

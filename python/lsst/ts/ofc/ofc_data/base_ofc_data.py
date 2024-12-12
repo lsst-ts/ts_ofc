@@ -54,7 +54,7 @@ def default_rb_stroke() -> np.ndarray:
         Allowed moving range of rigid body of M2 hexapod and Camera hexapod.
     """
 
-    return np.array([5900, 6700, 6700, 432, 432, 8700, 7600, 7600, 864, 864])
+    return np.array([5900, 6700, 6700, 0.12, 0.12, 8700, 7600, 7600, 0.24, 0.24])
 
 
 def default_dof_indices() -> dict:

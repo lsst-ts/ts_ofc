@@ -186,11 +186,11 @@ class OFCData(BaseOFCData):
         # The signs are very important!
         rot_mat_hexapod: np.ndarray = np.array(
             [
-                [0.0, 0.0, -1.0, 0.0, 0.0, 0.0],
-                [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, -3600.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, -3600.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
             ]
         )
 
@@ -379,7 +379,10 @@ class OFCData(BaseOFCData):
 
             if len(value[comp]) != length:
                 raise RuntimeError(
-                    f"Size of input vector ({len(value[comp])}) different than expected ({length})."
+                    f"Size of input vector for {comp} ({len(value[comp])}) different than "
+                    f"expected ({length}). "
+                    f"Current value: {self._dof_idx_mask[start_idx:end_idx]}. "
+                    f"New value: {value[comp]}."
                 )
             if (
                 not isinstance(value[comp], np.ndarray)
@@ -387,6 +390,18 @@ class OFCData(BaseOFCData):
             ):
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]
+
+    @property
+    def default_comp_dof_idx(self) -> dict:
+        """Default value of the comp_dof_idx."""
+        default_comp_dof_idx = dict()
+
+        for comp in self.comp_dof_idx:
+            default_comp_dof_idx[comp] = np.ones(
+                self.comp_dof_idx[comp]["idxLength"], dtype=np.bool_
+            )
+
+        return default_comp_dof_idx
 
     @property
     def controller_filename(self) -> str:
@@ -726,6 +741,9 @@ class OFCData(BaseOFCData):
         # the controller configuration
         if "zn_selected" in self.controller:
             self.zn_selected = np.array(self.controller["zn_selected"])
+
+        if "rotation_offset" in self.controller:
+            self.rotation_offset = self.controller["rotation_offset"]
 
         if self.controller["name"] == "PID":
             for key in ["kp", "ki", "kd", "setpoint"]:

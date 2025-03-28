@@ -579,7 +579,7 @@ class OFCData(BaseOFCData):
         )
 
         self.log.debug(
-            f"Configuring image quality weights: {image_quality_weights_path }"
+            f"Configuring image quality weights: {image_quality_weights_path}"
         )
         image_quality_weights = self.load_yaml_file(image_quality_weights_path)
 

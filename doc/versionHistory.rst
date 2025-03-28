@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.0.1:
+
+v4.0.1
+======
+
+* Fix flake8 error.
+
 .. _lsst.ts.ofc-4.0.0:
 
 v4.0.0

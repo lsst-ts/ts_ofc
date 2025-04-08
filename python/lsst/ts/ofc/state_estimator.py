@@ -69,7 +69,8 @@ class StateEstimator:
 
         self.normalization_weights = ofc_data.normalization_weights
 
-        self.rcond = ofc_data.controller["truncation_threshold"]
+        self.rcond = ofc_data.controller.get("truncation_threshold", None)
+        self.truncate_index = ofc_data.controller.get("truncation_index", None)
 
     def dof_state(
         self,
@@ -135,6 +136,16 @@ class StateEstimator:
 
         # Compute the pseudo-inverse of the sensitivity matrix
         # rcond sets the truncation of different modes.
+        # If rcond is None, it is computed from the singular values
+        # of the sensitivity matrix, using the truncation index as reference.
+        if self.rcond is None:
+            if self.truncate_index is None:
+                raise ValueError(
+                    "Neither truncation index or threshold are set in the controller."
+                )
+            self.log.info("Setting rcond value from truncation index.")
+            _, s, _ = np.linalg.svd(sensitivity_matrix, full_matrices=False)
+            self.rcond = 0.99 * s[self.truncate_index - 1] / np.max(s)
         pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.rcond)
 
         # Rotate the wavefront error to the same orientation as the

@@ -145,6 +145,46 @@ class TestStateEstimator(unittest.TestCase):
         )
         assert residual < 2e-3
 
+    def test_dof_state_raises_if_no_truncation_method(self) -> None:
+        """Test dof_state raises an error if both rcond
+        and truncate_index are None.
+        """
+        self.estimator.rcond = None
+        self.estimator.truncate_index = None
+
+        with self.assertRaises(ValueError):
+            self.estimator.dof_state(
+                "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
+            )
+
+    def test_dof_state_with_truncation_index(self) -> None:
+        """Test the dof_state method."""
+        # Set truncation index to be high
+        # we expect this to correspond to a threshold close to 1e-7
+        self.estimator.rcond = None
+        self.estimator.truncate_index = 46
+
+        # Compute sensitivity matrix
+        sensitivity_matrix = self.compute_sensitivity_matrix(
+            self.field_angles, rotation_angle=0.0
+        )
+
+        # Compute optical state estimate
+        state = self.estimator.dof_state(
+            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
+        )
+
+        # Check number of degrees of freedom matches the specified
+        n_values = len(self.estimator.ofc_data.dof_idx)
+        self.assertEqual(len(state), n_values)
+
+        # Check derived wavefront from state estimate
+        # matches the one from original dofs
+        residual = self.mean_squared_residual(
+            sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
+        )
+        assert residual < 2e-3
+
     def test_dof_state_with_normalization_weights(self) -> None:
         """Test the dof_state method when using normalization weights."""
         self.estimator.normalization_weights = self.normalization_weights

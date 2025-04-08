@@ -579,7 +579,7 @@ class OFCData(BaseOFCData):
         )
 
         self.log.debug(
-            f"Configuring image quality weights: {image_quality_weights_path }"
+            f"Configuring image quality weights: {image_quality_weights_path}"
         )
         image_quality_weights = self.load_yaml_file(image_quality_weights_path)
 
@@ -729,9 +729,22 @@ class OFCData(BaseOFCData):
                 "Required key 'normalization_weights_filename' is missing in the controller configuration."
             )
 
-        if "truncation_threshold" not in self.controller:
+        if (
+            "truncation_threshold" not in self.controller
+            and "truncation_index" not in self.controller
+        ):
             raise ValueError(
-                "Required key 'truncation_threshold' is missing in the controller configuration."
+                "Required keys 'truncation_threshold' or 'truncation_index' are missing "
+                "in the controller configuration."
+            )
+
+        if (
+            "truncation_threshold" in self.controller
+            and "truncation_index" in self.controller
+        ):
+            raise ValueError(
+                "Both 'truncation_threshold' and 'truncation_index' are set in the controller "
+                "configuration. These options are mutually exclusive."
             )
 
         if self.controller["name"] not in ["PID", "OIC"]:

@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.1.0:
+
+v4.1.0
+======
+
+* Add truncation_index as a possible configuration for the controller.
+
 .. _lsst.ts.ofc-4.0.0:
 
 v4.0.0

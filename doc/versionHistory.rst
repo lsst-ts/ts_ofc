@@ -12,6 +12,7 @@ v4.1.0
 ======
 
 * Add truncation_index as a possible configuration for the controller.
+* Add `set_controller_filename` and `set_truncation_index` in OFC.
 
 .. _lsst.ts.ofc-4.0.0:
 

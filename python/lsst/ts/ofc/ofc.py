@@ -86,10 +86,7 @@ class OFC:
 
         self.state_estimator = StateEstimator(self.ofc_data)
 
-        if self.ofc_data.controller["name"] == "PID":
-            self.controller: BaseController = PIDController(self.ofc_data)
-        elif self.ofc_data.controller["name"] == "OIC":
-            self.controller = OICController(self.ofc_data)
+        self.set_controller(self.ofc_data.controller["name"])
 
         # Truncation of degenerate modes after correction calculation
         self.rcond_degeneracy = 1e-3
@@ -98,6 +95,46 @@ class OFC:
         self.lv_dof = self.controller.dof_state.copy()
 
         self.dof_order = ("m2HexPos", "camHexPos", "M1M3Bend", "M2Bend")
+
+    def set_controller(self, controller_name: str) -> None:
+        """Set the controller to be used.
+
+        Parameters
+        ----------
+        controller_name : `str`
+            Name of the controller. Options are: "PID", "OIC".
+        """
+        if controller_name == "PID":
+            self.controller: BaseController = PIDController(self.ofc_data)
+        elif controller_name == "OIC":
+            self.controller = OICController(self.ofc_data)
+        else:
+            raise ValueError(
+                f"Unknown controller name: {controller_name}. "
+                f"Options are: 'PID', 'OIC'."
+            )
+
+    def set_controller_filename(self, controller_filename: str) -> None:
+        """Set the controller filename.
+
+        Parameters
+        ----------
+        controller_filename : `str`
+            Filename of the controller.
+        """
+        self.ofc_data.controller_filename = controller_filename
+        self.set_controller(self.ofc_data.controller["name"])
+
+    def set_truncation_index(self, truncation_index: int) -> None:
+        """Set the truncation index for the controller.
+
+        Parameters
+        ----------
+        truncation_index : `int`
+            Truncation index.
+        """
+        self.ofc_data.controller["truncation_index"] = truncation_index
+        self.state_estimator = StateEstimator(self.ofc_data)
 
     def calculate_corrections(
         self,

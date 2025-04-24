@@ -177,6 +177,13 @@ class OFC:
                 f"number of sensors ({len(sensor_ids)})."
             )
 
+        self.log.debug(
+            f"Gain {self.controller.kp} "
+            f"ofc_data truncation index {self.ofc_data.controller.get('truncation_index', None)} "
+            f"state estimator truncation index {self.state_estimator.truncate_index} "
+            f"and ofc_data threshold {self.ofc_data.controller.get('truncation_threshold', None)} "
+            f"state estimator rcond {self.state_estimator.rcond}"
+        )
         # Remove NaN values and corresponding sensor_ids
         valid_indices = ~np.isnan(wfe).any(axis=1)
         wfe = wfe[valid_indices]

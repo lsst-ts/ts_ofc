@@ -182,6 +182,7 @@ class StateEstimator:
                 self.ofc_data.znmin :
             ]
 
+        self.log.debug(f"Derotated wavefront error: {wfe}")
         # Compute wavefront error deviation from the intrinsic wavefront error
         # y = wfe - intrinsic_zk - y2_correction
         # y2_correction is a static correction for the

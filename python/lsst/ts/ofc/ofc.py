@@ -84,7 +84,7 @@ class OFC:
 
         self.ofc_data = ofc_data
 
-        self.state_estimator = StateEstimator(self.ofc_data)
+        self.state_estimator = StateEstimator(self.ofc_data, log=self.log)
 
         self.set_controller(self.ofc_data.controller["name"])
 

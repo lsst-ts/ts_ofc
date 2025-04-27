@@ -102,14 +102,22 @@ class StateEstimator:
 
         # Get the field angles for the sensors
         field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
+        field_x, field_y = zip(*field_angles)
+
+        rotation_angle_rad = np.deg2rad(rotation_angle)
+        rot_mat = np.array(
+            [
+                [np.cos(rotation_angle_rad), -np.sin(rotation_angle_rad)],
+                [np.sin(rotation_angle_rad), np.cos(rotation_angle_rad)],
+            ]
+        )
+        field_angles = np.array([field_x, field_y]).T @ rot_mat
 
         # Evaluate sensitivity matrix at sensor positions
         # The rotation angle is negative because the rotation
         # in the uv-plane for the Double Zernike object
         # needs to be in the opposite direction.
-        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(
-            field_angles, -rotation_angle
-        )
+        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(field_angles, 0.0)
 
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn_idx, :]

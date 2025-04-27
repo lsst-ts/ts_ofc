@@ -104,7 +104,7 @@ class StateEstimator:
         field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
         field_x, field_y = zip(*field_angles)
 
-        rotation_angle_rad = np.deg2rad(rotation_angle)
+        rotation_angle_rad = np.deg2rad(-rotation_angle)
         rot_mat = np.array(
             [
                 [np.cos(rotation_angle_rad), -np.sin(rotation_angle_rad)],

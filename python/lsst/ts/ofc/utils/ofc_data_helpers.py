@@ -60,7 +60,7 @@ def get_intrinsic_zernikes(
     field_x, field_y = zip(*field_angles)
 
     # Convert rotation angle to radians
-    rotation_angle_rad = np.deg2rad(rotation_angle)
+    rotation_angle_rad = np.deg2rad(-rotation_angle)
     rot_mat = np.array(
         [
             [np.cos(rotation_angle_rad), -np.sin(rotation_angle_rad)],

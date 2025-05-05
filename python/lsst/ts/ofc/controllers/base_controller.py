@@ -281,7 +281,9 @@ class BaseController:
         error = self.setpoint[self.ofc_data.dof_idx] - state
         self.integral += error
         self.integral = np.clip(
-            self.integral, -self.ofc_data.max_integral, self.ofc_data.max_integral
+            self.integral,
+            -self.ofc_data.max_integral[self.ofc_data.dof_idx],
+            self.ofc_data.max_integral[self.ofc_data.dof_idx],
         )
         derivative = error - self.previous_error
 

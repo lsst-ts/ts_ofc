@@ -759,7 +759,7 @@ class OFCData(BaseOFCData):
             self.rotation_offset = self.controller["rotation_offset"]
 
         if "max_integral" in self.controller:
-            self.max_integral = self.controller["max_integral"]
+            self.max_integral = np.array(self.controller["max_integral"])
         else:
             self.max_integral = np.ones(50)
 

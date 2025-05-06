@@ -279,9 +279,9 @@ class BaseController:
             Calculated uk in the basis of DOF.
         """
         error = self.setpoint[self.ofc_data.dof_idx] - state
-        self.integral += error
-        self.integral = np.clip(
-            self.integral,
+        self.integral[self.ofc_data.dof_idx] += error
+        self.integral[self.ofc_data.dof_idx] = np.clip(
+            self.integral[self.ofc_data.dof_idx],
             -self.ofc_data.max_integral[self.ofc_data.dof_idx],
             self.ofc_data.max_integral[self.ofc_data.dof_idx],
         )
@@ -295,7 +295,7 @@ class BaseController:
 
         uk = (
             self.kp * error
-            + self.ki * self.integral
+            + self.ki * self.integral[self.ofc_data.dof_idx]
             + self.kd * self.filtered_derivative
         )
 

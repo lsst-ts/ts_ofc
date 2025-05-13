@@ -26,7 +26,7 @@ import logging
 import numpy as np
 
 from . import BendModeToForce, Correction, StateEstimator
-from .controllers import BaseController, OICController, PIDController
+from .controllers import BaseController, OICController, PIDController, ZernikeController
 from .ofc_data import OFCData
 from .utils import CorrectionType, get_filter_name
 from .utils.ofc_data_helpers import get_sensor_names
@@ -85,6 +85,10 @@ class OFC:
         self.ofc_data = ofc_data
 
         self.state_estimator = StateEstimator(self.ofc_data, log=self.log)
+
+        self.zernike_controller = ZernikeController(
+            self.ofc_data, num_sensors=4, log=self.log
+        )
 
         self.set_controller(self.ofc_data.controller["name"])
 
@@ -194,9 +198,16 @@ class OFC:
         # Get sensor names from sensor ids
         sensor_names = get_sensor_names(ofc_data=self.ofc_data, sensor_ids=sensor_ids)
 
-        optical_state = self.state_estimator.dof_state(
+        zernike_step = self.zernike_controller.control_step(
             filter_name,
             wfe,
+            sensor_names,
+            rotation_angle + self.ofc_data.rotation_offset,
+        )
+
+        optical_state = self.state_estimator.dof_state(
+            filter_name,
+            zernike_step,
             sensor_names,
             rotation_angle + self.ofc_data.rotation_offset,
         )

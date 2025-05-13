@@ -170,6 +170,7 @@ class OFCData(BaseOFCData):
 
         # Initialize controller configuration
         self._controller_filename = "oic_controller.yaml"
+        self._zk_controller_filename = "zk_controller.yaml"
 
         # Zernike indices used
         self._zn_idx = np.arange(self.znmax - self.znmin + 1, dtype=int)
@@ -425,6 +426,29 @@ class OFCData(BaseOFCData):
         """
         self._controller_filename = value
         self.configure_controller()
+
+    @property
+    def zk_controller_filename(self) -> str:
+        """Controller configuration filename.
+
+        Returns
+        -------
+        `string`
+            Controller configuration filename.
+        """
+        return self._zk_controller_filename
+
+    @zk_controller_filename.setter
+    def zk_controller_filename(self, value: str) -> None:
+        """Set the controller configuration filename.
+
+        Parameters
+        ----------
+        value : `string`
+            Controller configuration filename.
+        """
+        self._zk_controller_filename = value
+        self.configure_zk_controller()
 
     def load_yaml_file(self, file_path: Path | str) -> dict:
         """Load yaml file.
@@ -777,6 +801,47 @@ class OFCData(BaseOFCData):
                     )
 
             self.xref = self.controller["xref"]
+
+    def configure_zk_controller(self) -> None:
+        """Refresh the controller configuration based
+        on the current controller_filename.
+
+        Raises
+        ------
+        ValueError
+            If controller name is missing in the configuration.
+        ValueError
+            If normalization_weights_filename is missing in the configuration.
+        ValueError
+            If truncation_threshold is missing in the configuration.
+        ValueError
+            If controller name is not PID or OIC.
+        ValueError
+            If required key is missing in the PID controller configuration.
+        ValueError
+            If required key is missing in the OIC controller configuration.
+        """
+        if Path(self.zk_controller_filename).is_absolute():
+            controller_path = Path(self.zk_controller_filename)
+        else:
+            controller_path = (
+                self.config_dir / "configurations" / self.zk_controller_filename
+            )
+
+        self.zk_controller = self.load_yaml_file(controller_path)
+
+        if "max_zk_integral" in self.controller:
+            self.max_zk_integral = np.array(
+                self.controller["max_zk_integral"], dtype=float
+            )
+        else:
+            self.max_zk_integral = np.ones(self.znmax - self.znmin + 1, dtype=float)
+
+        for key in ["kp", "ki", "kd", "setpoint"]:
+            if key not in self.zk_controller:
+                raise ValueError(
+                    f"Required key '{key}' is missing in the PID controller configuration."
+                )
 
     async def __aenter__(self) -> "OFCData":
         return self

@@ -686,6 +686,7 @@ class OFCData(BaseOFCData):
         # Read configuration file for controller
         # ---------------------------------------
         self.configure_controller()
+        self.configure_zk_controller()
 
         # Read normalization weights for sensitivity matrix
         # -------------------------------------------------

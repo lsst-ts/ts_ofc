@@ -191,7 +191,7 @@ class ZernikeController:
         self,
         filter_name: str,
         wfe: np.ndarray[float],
-        sensor_names: list[str] | None = None,
+        sensor_names: list[str],
         rotation_angle: float = 0.0,
     ) -> np.ndarray[float]:
         """Estimate uk in the basis of degree of freedom (DOF).

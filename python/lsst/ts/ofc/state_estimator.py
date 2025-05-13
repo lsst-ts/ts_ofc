@@ -23,12 +23,10 @@ __all__ = ["StateEstimator"]
 
 import logging
 
-import galsim
 import numpy as np
 
 from . import SensitivityMatrix
 from .ofc_data import OFCData
-from .utils.ofc_data_helpers import get_intrinsic_zernikes
 
 
 class StateEstimator:
@@ -161,46 +159,9 @@ class StateEstimator:
 
         pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.rcond)
 
-        # Rotate the wavefront error to the same orientation as the
-        # sensitivity matrix. When creating galsim.Zernike object,
-        # the coefficients are in units of um which does not matter
-        # here as we are only rotating them.
-        # Note that we need to pad the wfe with zeros for the 4 first
-        # Zernike coefficients, since wfe goes from Z4-Z22
-        wfe = np.array(wfe)
-        for idx in range(wfe.shape[0]):
-            wfe_sensor = np.pad(wfe[idx, :], (self.ofc_data.znmin, 0))
-
-            zk_galsim = galsim.zernike.Zernike(
-                wfe_sensor,
-                R_outer=self.ofc_data.config["pupil"]["radius_outer"],
-                R_inner=self.ofc_data.config["pupil"]["radius_inner"],
-            )
-            # Note that we need to remove the first 4 Zernike coefficients
-            # since we padded the wfe with zeros for the 4 first Zernike
-            wfe[idx, :] = zk_galsim.rotate(np.deg2rad(rotation_angle)).coef[
-                self.ofc_data.znmin :
-            ]
-
-        self.log.debug(f"Derotated wavefront error: {wfe}")
-        # Compute wavefront error deviation from the intrinsic wavefront error
-        # y = wfe - intrinsic_zk - y2_correction
-        # y2_correction is a static correction for the
-        # deviation currently set to zero.
-        y2_correction = np.array(
-            [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
-        )
-        y = (
-            wfe[:, self.ofc_data.zn_idx]
-            - get_intrinsic_zernikes(
-                self.ofc_data, filter_name, sensor_names, rotation_angle
-            )[:, self.ofc_data.zn_idx]
-            - y2_correction[:, self.ofc_data.zn_idx]
-        )
-
         # Reshape wavefront error to dimensions
         # (#zk * #sensors, 1) = (19 * #sensors, 1)
-        y = y.reshape(-1, 1)
+        y = wfe.reshape(-1, 1)
 
         # Compute optical state estimate in the basis of DOF
         # Because of normalization, we need to de-normalize the result

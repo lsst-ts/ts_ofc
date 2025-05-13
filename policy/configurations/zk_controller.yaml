@@ -16,6 +16,7 @@ description: Zernike controller
 kp: 1.0
 ki: 0
 kd: 0
+derivative_filter_coeff: 1.0
 setpoint: [
   [
     0.0, 0.0, 0.0, 0.0, 0.0,

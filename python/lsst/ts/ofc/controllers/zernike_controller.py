@@ -104,7 +104,7 @@ class ZernikeController:
 
         # Initialize previous error and integral
         self.previous_error = self.setpoint - self.zk_state0
-        self._integral = self.previous_error
+        self.integral = self.previous_error
         self.filtered_derivative = np.zeros((num_sensors, num_zk))
 
     @property
@@ -263,12 +263,7 @@ class ZernikeController:
             Calculated uk in the basis of DOF.
         """
         error = self.setpoint - state
-        self.integral = error
-        self.integral = np.clip(
-            self.integral,
-            -self.ofc_data.max_zk_integral,
-            self.ofc_data.max_zk_integral,
-        )
+        self.integral += error
         derivative = error - self.previous_error
 
         # Apply low-pass filter to the derivative term

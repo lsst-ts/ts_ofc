@@ -207,11 +207,11 @@ class OFC:
 
         optical_state = self.state_estimator.dof_state(
             filter_name,
-            zernike_step,
+            zernike_step[:, self.ofc_data.zn_idx],
             sensor_names,
             rotation_angle + self.ofc_data.rotation_offset,
         )
-
+        print(optical_state)
         # Calculate the uk based on the control algorithm
         uk = -self.controller.control_step(filter_name, optical_state, sensor_names)
 

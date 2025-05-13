@@ -128,6 +128,8 @@ class StateEstimator:
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
 
+        print(sensitivity_matrix.shape)
+
         normalization_matrix = np.diag(
             self.normalization_weights[self.ofc_data.dof_idx]
         )
@@ -135,6 +137,7 @@ class StateEstimator:
 
         # Check the dimension of sensitivity matrix to see if we can invert it
         num_zk, num_dof = sensitivity_matrix.shape
+        print(num_zk, num_dof)
         if num_zk < num_dof:
             raise RuntimeError(
                 f"Equation number ({num_zk}) < variable number ({num_dof})."

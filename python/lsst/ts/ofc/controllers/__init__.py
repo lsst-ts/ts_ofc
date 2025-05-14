@@ -23,3 +23,4 @@
 from .base_controller import *
 from .oic_controller import *
 from .pid_controller import *
+from .zernike_controller import *

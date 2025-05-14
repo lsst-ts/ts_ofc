@@ -1,0 +1,56 @@
+# Description: Optimal Integral Controller (OIC) configuration file
+#
+# Name: OIC
+# xref is the reference to the controller, it can be ['x0', 'x00', '0']
+# kp is the proportional gain
+# ki is the integral gain defined as ki = kp*T/T_i
+# kd is the derivative gain defined as kd = kp*T_d/T
+# For more details on the controller gains and the values of T, T_i, and T_d, 
+# please refer to the report https://www.betzler.physik.uni-osnabrueck.de/Manuskripte/Elektronik-Praktikum/p3/doc2558.pdf
+# zn_selected is the zernike coefficients selected to be used by the controller in Noll index
+# derivative_filter_coeff is the coefficient of the derivative filter
+# setpoint is the setpoint for each degree of freedom (array of 50 elements)
+
+description: Zernike controller
+
+kp: 1.
+ki: 0.0
+kd: 0
+derivative_filter_coeff: 1.0
+setpoint: [
+  [
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+  ],
+  [
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+  ],
+  [
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+  ],
+  [
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0,
+  ]
+]
+max_zk_integral: [
+  100., 100., 100., 100., 100.,
+  100., 100., 100., 100., 100.,
+  100., 100., 100., 100., 100.,
+  100., 100., 100., 100., 100.,
+  0.0, 0.0, 0.0, 0.0, 0.0,
+]

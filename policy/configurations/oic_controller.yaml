@@ -13,10 +13,10 @@
 
 description: Optimal Integral Controller (OIC)
 
-name: OIC
+name: PID
 xref: x00 
-kp: 1.0
-ki: 0
+kp: 0.5
+ki: 0.2
 kd: 0
 zn_selected: [
   4, 5, 6, 7, 8,
@@ -38,6 +38,6 @@ setpoint: [
   0.0, 0.0, 0.0, 0.0, 0.0, 
   0.0, 0.0, 0.0, 0.0, 0.0
 ]
-normalization_weights_filename: "default.yaml"
-truncation_threshold: 1.e-7
-rotation_offset: 90.0
+normalization_weights_filename: "range-fwhm.yaml"
+truncation_index: 12
+rotation_offset: 0.0

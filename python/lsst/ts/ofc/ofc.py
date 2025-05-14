@@ -207,7 +207,7 @@ class OFC:
 
         optical_state = self.state_estimator.dof_state(
             filter_name,
-            zernike_step[:, self.ofc_data.zn_idx],
+            -zernike_step[:, self.ofc_data.zn_idx],
             sensor_names,
             rotation_angle + self.ofc_data.rotation_offset,
         )

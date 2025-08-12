@@ -145,7 +145,7 @@ class BaseOFCData:
     # default below is 0.01, meaning 1N force is as bad as 0.01 increase
     # in pssn. Use 0 if you accept whatever motion needed to produce best
     # image quality; use 1e100, if you absolutely hate anything that moves.
-    motion_penalty: float = 0.01
+    motion_penalty: float = 0.0
 
     # Allowed moving range of rigid body of M2 hexapod and Camera hexapod
     # in the unit of um. e.g. rbStroke[0] means the M2 piston is allowed to

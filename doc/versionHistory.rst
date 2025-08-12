@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.2.0:
+
+v4.2.0
+======
+
+* Switch rotation of zernikes to `state_estimator.py`.
+* Set motion penalty and rotation offset to default to zero.
+
 .. _lsst.ts.ofc-4.1.0:
 
 v4.1.0

@@ -84,7 +84,7 @@ class OFC:
 
         self.ofc_data = ofc_data
 
-        self.state_estimator = StateEstimator(self.ofc_data)
+        self.state_estimator = StateEstimator(self.ofc_data, log=self.log)
 
         self.set_controller(self.ofc_data.controller["name"])
 
@@ -182,7 +182,8 @@ class OFC:
             f"ofc_data truncation index {self.ofc_data.controller.get('truncation_index', None)} "
             f"state estimator truncation index {self.state_estimator.truncate_index} "
             f"and ofc_data threshold {self.ofc_data.controller.get('truncation_threshold', None)} "
-            f"state estimator rcond {self.state_estimator.rcond}"
+            f"state estimator rcond {self.state_estimator.rcond} "
+            f"zn_selected {self.ofc_data.zn_selected}"
         )
         # Remove NaN values and corresponding sensor_ids
         valid_indices = ~np.isnan(wfe).any(axis=1)

@@ -758,6 +758,11 @@ class OFCData(BaseOFCData):
         if "rotation_offset" in self.controller:
             self.rotation_offset = self.controller["rotation_offset"]
 
+        if "max_integral" in self.controller:
+            self.max_integral = np.array(self.controller["max_integral"], dtype=float)
+        else:
+            self.max_integral = np.ones(50, dtype=float)
+
         if self.controller["name"] == "PID":
             for key in ["kp", "ki", "kd", "setpoint"]:
                 if key not in self.controller:

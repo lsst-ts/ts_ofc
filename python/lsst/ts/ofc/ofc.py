@@ -84,12 +84,9 @@ class OFC:
 
         self.ofc_data = ofc_data
 
-        self.state_estimator = StateEstimator(self.ofc_data)
+        self.state_estimator = StateEstimator(self.ofc_data, log=self.log)
 
-        if self.ofc_data.controller["name"] == "PID":
-            self.controller: BaseController = PIDController(self.ofc_data)
-        elif self.ofc_data.controller["name"] == "OIC":
-            self.controller = OICController(self.ofc_data)
+        self.set_controller(self.ofc_data.controller["name"])
 
         # Truncation of degenerate modes after correction calculation
         self.rcond_degeneracy = 1e-3
@@ -98,6 +95,46 @@ class OFC:
         self.lv_dof = self.controller.dof_state.copy()
 
         self.dof_order = ("m2HexPos", "camHexPos", "M1M3Bend", "M2Bend")
+
+    def set_controller(self, controller_name: str) -> None:
+        """Set the controller to be used.
+
+        Parameters
+        ----------
+        controller_name : `str`
+            Name of the controller. Options are: "PID", "OIC".
+        """
+        if controller_name == "PID":
+            self.controller: BaseController = PIDController(self.ofc_data)
+        elif controller_name == "OIC":
+            self.controller = OICController(self.ofc_data)
+        else:
+            raise ValueError(
+                f"Unknown controller name: {controller_name}. "
+                f"Options are: 'PID', 'OIC'."
+            )
+
+    def set_controller_filename(self, controller_filename: str) -> None:
+        """Set the controller filename.
+
+        Parameters
+        ----------
+        controller_filename : `str`
+            Filename of the controller.
+        """
+        self.ofc_data.controller_filename = controller_filename
+        self.set_controller(self.ofc_data.controller["name"])
+
+    def set_truncation_index(self, truncation_index: int) -> None:
+        """Set the truncation index for the controller.
+
+        Parameters
+        ----------
+        truncation_index : `int`
+            Truncation index.
+        """
+        self.ofc_data.controller["truncation_index"] = truncation_index
+        self.state_estimator = StateEstimator(self.ofc_data)
 
     def calculate_corrections(
         self,
@@ -140,17 +177,33 @@ class OFC:
                 f"number of sensors ({len(sensor_ids)})."
             )
 
+        self.log.debug(
+            f"Gain {self.controller.kp} "
+            f"ofc_data truncation index {self.ofc_data.controller.get('truncation_index', None)} "
+            f"state estimator truncation index {self.state_estimator.truncate_index} "
+            f"and ofc_data threshold {self.ofc_data.controller.get('truncation_threshold', None)} "
+            f"state estimator rcond {self.state_estimator.rcond} "
+            f"zn_selected {self.ofc_data.zn_selected}"
+        )
+        # Remove NaN values and corresponding sensor_ids
+        valid_indices = ~np.isnan(wfe).any(axis=1)
+        wfe = wfe[valid_indices]
+        sensor_ids = np.array(sensor_ids)[valid_indices]
+
         # Process filter name to be in the correct format.
         filter_name = get_filter_name(filter_name)
         # Get sensor names from sensor ids
         sensor_names = get_sensor_names(ofc_data=self.ofc_data, sensor_ids=sensor_ids)
 
         optical_state = self.state_estimator.dof_state(
-            filter_name, wfe, sensor_names, rotation_angle
+            filter_name,
+            wfe,
+            sensor_names,
+            rotation_angle + self.ofc_data.rotation_offset,
         )
 
         # Calculate the uk based on the control algorithm
-        uk = self.controller.control_step(filter_name, optical_state, sensor_names)
+        uk = -self.controller.control_step(filter_name, optical_state, sensor_names)
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)

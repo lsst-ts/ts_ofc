@@ -13,6 +13,8 @@ dynamic = [ "version" ]
 [project.scripts]
 generate_intrinsic_zernikes = "lsst.ts.ofc.scripts:generate_intrinsic_zernikes"
 generate_sensitivity_matrix = "lsst.ts.ofc.scripts:generate_sensitivity_matrix"
+generate_alpha_values = "lsst.ts.ofc.scripts:generate_alpha_values"
+generate_sensitivity_normalization_matrix = "lsst.ts.ofc.scripts:generate_sensitivity_normalization_matrix"
  
 [tools.setuptools]
 package-data = { "" = "*.csv"}

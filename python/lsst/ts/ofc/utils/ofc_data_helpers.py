@@ -60,7 +60,15 @@ def get_intrinsic_zernikes(
     field_x, field_y = zip(*field_angles)
 
     # Convert rotation angle to radians
-    rotation_angle = np.deg2rad(rotation_angle)
+    rotation_angle_rad = np.deg2rad(-rotation_angle)
+    rot_mat = np.array(
+        [
+            [np.cos(rotation_angle_rad), -np.sin(rotation_angle_rad)],
+            [np.sin(rotation_angle_rad), np.cos(rotation_angle_rad)],
+        ]
+    )
+    field_angles = np.array([field_x, field_y]).T @ rot_mat
+    field_x, field_y = zip(*field_angles)
 
     evaluated_zernikes = np.array(
         [
@@ -68,11 +76,11 @@ def get_intrinsic_zernikes(
             for zk in galsim.zernike.DoubleZernike(
                 ofc_data.intrinsic_zk[filter_name],
                 # Rubin annuli
-                uv_inner=ofc_data.config["pupil"]["radius_inner"],
-                uv_outer=ofc_data.config["pupil"]["radius_outer"],
-                xy_inner=ofc_data.config["obscuration"]["radius_inner"],
-                xy_outer=ofc_data.config["obscuration"]["radius_outer"],
-            ).rotate(theta_uv=rotation_angle)(field_x, field_y)
+                uv_inner=ofc_data.config["field"]["radius_inner"],
+                uv_outer=ofc_data.config["field"]["radius_outer"],
+                xy_inner=ofc_data.config["pupil"]["radius_inner"],
+                xy_outer=ofc_data.config["pupil"]["radius_outer"],
+            ).rotate(theta_uv=0.0)(field_x, field_y)
         ]
     )
 
@@ -96,6 +104,6 @@ def get_sensor_names(ofc_data: OFCData, sensor_ids: np.ndarray[int]) -> list[str
     `list` [`str`]
         Sensor names.
     """
-    return [
-        ofc_data.sensor_id_to_name[ofc_data.name][sensor_id] for sensor_id in sensor_ids
-    ]
+    name = "lsst" if ofc_data.name == "lsstfam" else ofc_data.name
+
+    return [ofc_data.sensor_id_to_name[name][sensor_id] for sensor_id in sensor_ids]

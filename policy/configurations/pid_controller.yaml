@@ -34,3 +34,6 @@ setpoint: [
   0.0, 0.0, 0.0, 0.0, 0.0, 
   0.0, 0.0, 0.0, 0.0, 0.0
 ]
+normalization_weights_filename: "default.yaml"
+truncation_index: 22
+rotation_offset: 0.0

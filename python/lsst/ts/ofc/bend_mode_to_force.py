@@ -28,7 +28,8 @@ from .utils import rot_1d_array
 
 
 class BendModeToForce:
-    """Transform Bend mode to forces.
+    """Bending mode class to compute actuator forces and mirror stresses
+    from bending modes and retrieve bending modes from actuator forces.
 
     Parameters
     ----------
@@ -46,8 +47,12 @@ class BendModeToForce:
     RCOND : `float`
         Cutoff for small singular values, used when computing pseudo-inverse
         matrix.
+    bending_mode_stresses_positive : `np.ndarray[float]`
+        Bending mode stresses in psi/um for tensile stress.
+    bending_mode_stresses_negative : `np.ndarray[float]`
+        Bending mode stresses in psi/um for compressive stress.
     rot_mat : `np.ndarray[float]`
-        Rotation matrix.
+        Influence matrix relating bending mode to actuator force.
 
     Raises
     ------
@@ -71,6 +76,18 @@ class BendModeToForce:
                 f"Must be one of {self.ofc_data.bend_mode.keys()}"
             )
 
+        # Load the bending mode stresses data
+        self.bending_mode_stresses_positive = np.array(
+            self.ofc_data.bending_mode_stresses[self.component][
+                "bending_mode_stress_positive"
+            ]
+        )
+        self.bending_mode_stresses_negative = np.array(
+            self.ofc_data.bending_mode_stresses[self.component][
+                "bending_mode_stress_negative"
+            ]
+        )
+
         dof_idx_name = f"{component}Bend"
 
         if dof_idx_name not in self.ofc_data.comp_dof_idx:
@@ -85,7 +102,7 @@ class BendModeToForce:
             )
         n_bending_modes = self.ofc_data.comp_dof_idx[dof_idx_name]["idxLength"]
 
-        # Rotation matrix to rotate the basis from bending mode to actuator
+        # Influence matrix to rotate the basis from bending mode to actuator
         # forces
         # The first three terms (actuator ID in ZEMAX, x position in m,
         # y position in m) are not needed.
@@ -94,6 +111,30 @@ class BendModeToForce:
         self.rot_mat = np.array(self.ofc_data.bend_mode[component]["force"]["data"])[
             :, usecols
         ]
+
+    def get_stresses_from_dof(self, dof: np.ndarray[float]) -> np.ndarray[float]:
+        """Calculated mirror stress in psi per bending mode of the mirror.
+
+        Parameters
+        ----------
+        dof : `numpy.ndarray`
+            Mirror bending mode DOF in um.
+
+        Returns
+        -------
+        `np.ndarray`
+            Mirror stress in psi per bending mode.
+        """
+        # Apply the positive (tensile) or negative (compressive)
+        # bending mode stresses based on the sign of the DOF
+        stresses = np.where(
+            dof >= 0,
+            dof
+            * self.bending_mode_stresses_positive,  # Use positive stress values for positive DOF
+            dof * self.bending_mode_stresses_negative,
+        )  # Use negative stress values for negative DOF
+
+        return stresses
 
     def force(self, dof: np.ndarray[float]) -> np.ndarray[float]:
         """Calculate the actuator forces in N based on the degree of freedom

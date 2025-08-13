@@ -34,6 +34,7 @@ class TestOFC(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test case."""
         self.ofc_data = OFCData("lsst")
+        self.ofc_data.rotation_offset = 0.0
         self.ofc_data.motion_penalty = (
             0.0001  # Set small motion penalty to allow for larger corrections
         )
@@ -116,14 +117,18 @@ class TestOFC(unittest.TestCase):
         self.ofc.controller.dof_state0[45] = 0.1
         self.ofc.controller.reset_dof_state()
 
+        nan_row = np.full(self.wfe.shape[1], np.nan)
+        wfe_with_nans = np.vstack([self.wfe, nan_row])
+        sensor_id_list_with_nans = [191, 195, 199, 203, 207]
+
         (
             m2_hex_corr,
             cam_hex_corr,
             m1m3_corr,
             m2_corr,
         ) = self.ofc.calculate_corrections(
-            wfe=self.wfe,
-            sensor_ids=self.sensor_id_list,
+            wfe=wfe_with_nans,
+            sensor_ids=sensor_id_list_with_nans,
             filter_name=filter_name,
             rotation_angle=rotation_angle,
         )
@@ -155,7 +160,7 @@ class TestOFC(unittest.TestCase):
                 computed_value=computed_value,
                 expected_value=expected_value,
             ):
-                assert np.abs(expected_value + computed_value) < 1e-1
+                assert np.abs(expected_value - computed_value) < 1e-1
 
     def test_get_state_correction_from_last_visit(self) -> None:
         """Test the get_state_correction_from_last_visit method."""

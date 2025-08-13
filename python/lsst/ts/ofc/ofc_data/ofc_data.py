@@ -60,6 +60,8 @@ class OFCData(BaseOFCData):
     bend_mode : `dict`
         Dictionary to hold bending mode data. The data is read alongside the
         other files when the name is set.
+    bending_mode_stresses : `dict`
+        Mirror bending mode stresses.
     config_dir : `pathlib.Path`
         Path to the directory storing configuration files.
     controller_filename : `string`
@@ -143,6 +145,16 @@ class OFCData(BaseOFCData):
             },
         }
 
+        # Configure mirror bending mode stresses
+        self.bending_mode_stresses = {
+            "M1M3": self.load_yaml_file(
+                self.config_dir / "M1M3" / "bending_mode_stresses.yaml"
+            ),
+            "M2": self.load_yaml_file(
+                self.config_dir / "M2" / "bending_mode_stresses.yaml"
+            ),
+        }
+
         # Try to create a lock and a future. Sometimes it happens that the
         # event loop is closed, which raises a RuntimeError. If this happens,
         # create a new event loops and try again.
@@ -174,11 +186,11 @@ class OFCData(BaseOFCData):
         # The signs are very important!
         rot_mat_hexapod: np.ndarray = np.array(
             [
-                [0.0, 0.0, -1.0, 0.0, 0.0, 0.0],
-                [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, -3600.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, -3600.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
             ]
         )
 
@@ -367,7 +379,10 @@ class OFCData(BaseOFCData):
 
             if len(value[comp]) != length:
                 raise RuntimeError(
-                    f"Size of input vector ({len(value[comp])}) different than expected ({length})."
+                    f"Size of input vector for {comp} ({len(value[comp])}) different than "
+                    f"expected ({length}). "
+                    f"Current value: {self._dof_idx_mask[start_idx:end_idx]}. "
+                    f"New value: {value[comp]}."
                 )
             if (
                 not isinstance(value[comp], np.ndarray)
@@ -375,6 +390,18 @@ class OFCData(BaseOFCData):
             ):
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]
+
+    @property
+    def default_comp_dof_idx(self) -> dict:
+        """Default value of the comp_dof_idx."""
+        default_comp_dof_idx = dict()
+
+        for comp in self.comp_dof_idx:
+            default_comp_dof_idx[comp] = np.ones(
+                self.comp_dof_idx[comp]["idxLength"], dtype=np.bool_
+            )
+
+        return default_comp_dof_idx
 
     @property
     def controller_filename(self) -> str:
@@ -552,7 +579,7 @@ class OFCData(BaseOFCData):
         )
 
         self.log.debug(
-            f"Configuring image quality weights: {image_quality_weights_path }"
+            f"Configuring image quality weights: {image_quality_weights_path}"
         )
         image_quality_weights = self.load_yaml_file(image_quality_weights_path)
 
@@ -636,6 +663,16 @@ class OFCData(BaseOFCData):
         # ---------------------------------------
         self.configure_controller()
 
+        # Read normalization weights for sensitivity matrix
+        # -------------------------------------------------
+        configuration_path = (
+            self.config_dir
+            / "normalization_weights"
+            / self.controller["normalization_weights_filename"]
+        )
+
+        normalization_weights = np.array(self.load_yaml_file(configuration_path))
+
         # Now all data was read successfully, time to set it up.
         # ------------------------------------------------------
         self.alpha = alpha
@@ -649,6 +686,7 @@ class OFCData(BaseOFCData):
         self.gq_y2_correction = gq_y2_correction if instrument == "lsst" else None
         self.intrinsic_zk = intrinsic_zk
         self.sensitivity_matrix = sensitivity_matrix
+        self.normalization_weights = normalization_weights
         self.start_task.set_result(instrument)
 
         self.log.debug(f"Done configuring {instrument}")
@@ -656,6 +694,21 @@ class OFCData(BaseOFCData):
     def configure_controller(self) -> None:
         """Refresh the controller configuration based
         on the current controller_filename.
+
+        Raises
+        ------
+        ValueError
+            If controller name is missing in the configuration.
+        ValueError
+            If normalization_weights_filename is missing in the configuration.
+        ValueError
+            If truncation_threshold is missing in the configuration.
+        ValueError
+            If controller name is not PID or OIC.
+        ValueError
+            If required key is missing in the PID controller configuration.
+        ValueError
+            If required key is missing in the OIC controller configuration.
         """
         if Path(self.controller_filename).is_absolute():
             controller_path = Path(self.controller_filename)
@@ -671,6 +724,29 @@ class OFCData(BaseOFCData):
                 "Required key 'name' is missing in the controller configuration."
             )
 
+        if "normalization_weights_filename" not in self.controller:
+            raise ValueError(
+                "Required key 'normalization_weights_filename' is missing in the controller configuration."
+            )
+
+        if (
+            "truncation_threshold" not in self.controller
+            and "truncation_index" not in self.controller
+        ):
+            raise ValueError(
+                "Required keys 'truncation_threshold' or 'truncation_index' are missing "
+                "in the controller configuration."
+            )
+
+        if (
+            "truncation_threshold" in self.controller
+            and "truncation_index" in self.controller
+        ):
+            raise ValueError(
+                "Both 'truncation_threshold' and 'truncation_index' are set in the controller "
+                "configuration. These options are mutually exclusive."
+            )
+
         if self.controller["name"] not in ["PID", "OIC"]:
             raise ValueError("Controller 'name' must be either 'PID' or 'OIC'.")
 
@@ -678,6 +754,14 @@ class OFCData(BaseOFCData):
         # the controller configuration
         if "zn_selected" in self.controller:
             self.zn_selected = np.array(self.controller["zn_selected"])
+
+        if "rotation_offset" in self.controller:
+            self.rotation_offset = self.controller["rotation_offset"]
+
+        if "max_integral" in self.controller:
+            self.max_integral = np.array(self.controller["max_integral"], dtype=float)
+        else:
+            self.max_integral = np.ones(50, dtype=float)
 
         if self.controller["name"] == "PID":
             for key in ["kp", "ki", "kd", "setpoint"]:

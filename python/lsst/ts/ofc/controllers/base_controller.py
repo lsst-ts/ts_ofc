@@ -217,7 +217,17 @@ class BaseController:
         `np.ndarray[float]`
             Aggregated state.
         """
-        return self.dof_state[self.ofc_data.dof_idx]
+        return self.dof_state
+
+    def set_aggregated_state(self, value: np.ndarray[float]) -> None:
+        """Set the aggregated state.
+
+        Parameters
+        ----------
+        value : `np.ndarray[float]`
+            Aggregated state.
+        """
+        self.dof_state[self.ofc_data.dof_idx] = value
 
     def reset_history(self) -> None:
         """Reset the history of the controller."""
@@ -270,6 +280,11 @@ class BaseController:
         """
         error = self.setpoint[self.ofc_data.dof_idx] - state
         self.integral += error
+        self.integral = np.clip(
+            self.integral,
+            -self.ofc_data.max_integral[self.ofc_data.dof_idx],
+            self.ofc_data.max_integral[self.ofc_data.dof_idx],
+        )
         derivative = error - self.previous_error
 
         # Apply low-pass filter to the derivative term

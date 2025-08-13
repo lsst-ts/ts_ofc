@@ -6,6 +6,44 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.2.0:
+
+v4.2.0
+======
+
+* Switch rotation of zernikes to `state_estimator.py`.
+* Set motion penalty and rotation offset to default to zero.
+
+.. _lsst.ts.ofc-4.1.0:
+
+v4.1.0
+======
+
+* Add truncation_index as a possible configuration for the controller.
+* Add `set_controller_filename` and `set_truncation_index` in OFC.
+* Allow providing truncation index larger than number of degrees of freedom.
+* Add debugging message for used configuration.
+
+.. _lsst.ts.ofc-4.0.0:
+
+v4.0.0
+======
+
+* Add function `stresses()` to return calculated stress on the mirrors from bending modes.
+* Add policy files for the bending mode stress per um and scale factor.
+* Add function `set_aggregated_state()` to be able to set the total DOF state.
+* Fix `get_sensor_names` helper to work with lsstfam.
+* Update M2 bending mode actuator forces from FEA analysis data in https://docushare.lsst.org/docushare/dsweb/View/Collection-15536 (September 19th, 2024)
+* Add `normalization_weights` for `StateEstimator` to be able to operate in reduced basis.
+* Filter out NaN zernike estimates in `OFC`.
+* Fix policy/configurations names from obscuration and pupil to pupil and field.
+* Add property `default_comp_dof_idx` to `OFC` to get the default compensation DOF index.
+* Fix signs and convert to degrees instead of arcsec for hexapod motions.
+* Fix return aggregated_state to return 50-dimensional vector.
+* Fix sensitivity matrix to be in degrees instead of arcseconds.
+* Fix comcam sensitivity matrix to accound for rotation offset
+* Update unit tests to use the degrees instead of arcseconds and use 0 rotation offset.
+
 .. _lsst.ts.ofc-3.2.0:
 
 v3.2.0

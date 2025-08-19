@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.2.1:
+
+v4.2.1
+======
+
+* Fix how integral term is handled in the base controller.
+
 .. _lsst.ts.ofc-4.2.0:
 
 v4.2.0

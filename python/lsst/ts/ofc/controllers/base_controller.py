@@ -128,7 +128,7 @@ class BaseController:
 
         # Initialize previous error and integral
         self.previous_error = self.setpoint - self.dof_state0
-        self.integral = self.previous_error
+        self._integral = self.previous_error
         self.filtered_derivative = np.zeros(len(self.ofc_data.dof_idx))
 
         # Initialize PSSN data
@@ -279,7 +279,7 @@ class BaseController:
             Calculated uk in the basis of DOF.
         """
         error = self.setpoint[self.ofc_data.dof_idx] - state
-        self.integral += error
+        self.integral = error
         self.integral = np.clip(
             self.integral,
             -self.ofc_data.max_integral[self.ofc_data.dof_idx],

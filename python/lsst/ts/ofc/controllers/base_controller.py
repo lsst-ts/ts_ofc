@@ -127,8 +127,8 @@ class BaseController:
         self.dof_state = self.dof_state0.copy()
 
         # Initialize previous error and integral
-        self.previous_error = self.setpoint - self.dof_state0
-        self.integral = self.previous_error
+        self.previous_error = np.zeros(len(self.ofc_data.dof_idx))
+        self.integral = np.zeros(len(self.ofc_data.dof_idx))
         self.filtered_derivative = np.zeros(len(self.ofc_data.dof_idx))
 
         # Initialize PSSN data
@@ -232,12 +232,8 @@ class BaseController:
     def reset_history(self) -> None:
         """Reset the history of the controller."""
         self.dof_state0 = self.dof_state.copy()
-        self.integral = (
-            self.setpoint[self.ofc_data.dof_idx] - self.dof_state[self.ofc_data.dof_idx]
-        )
-        self.previous_error = (
-            self.setpoint[self.ofc_data.dof_idx] - self.dof_state[self.ofc_data.dof_idx]
-        )
+        self.integral = np.zeros(len(self.ofc_data.dof_idx))
+        self.previous_error = np.zeros(len(self.ofc_data.dof_idx))
         self.filtered_derivative = np.zeros(len(self.ofc_data.dof_idx))
 
     def control_step(

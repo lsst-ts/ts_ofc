@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.2.1:
+
+v4.2.1
+======
+
+* Made integral term reference zero instead of current state.
+
 .. _lsst.ts.ofc-4.2.0:
 
 v4.2.0

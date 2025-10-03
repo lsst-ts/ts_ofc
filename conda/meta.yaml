@@ -7,7 +7,9 @@ source:
   path: ../
 
 build:
-  script: python -m pip install --no-deps --ignore-installed .
+  noarch: python
+  script: 
+    - {{ PYTHON }} -m pip install --no-deps --ignore-installed .
 
 test:
   requires:
@@ -18,19 +20,25 @@ test:
   source_files:
     - python
     - tests
-    - policy
+    - pyproject.toml
   commands:
-    - py.test -vs
+    - pytest -vs
 
 requirements:
   host:
-    - python
+    - numpy {{ numpy }}
     - pip
-    - setuptools_scm
-    - setuptools
-    - pytest-runner
+    - python {{ python }}
+    - setuptools {{ setuptools }}
+    - setuptools_scm {{ setuptools_scm }}
+  build:
+    - numpy {{ numpy }}
+    - python {{ python }}
+    - setuptools {{ setuptools }}
+    - setuptools_scm {{ setuptools_scm }}
+    - ts-conda-build =0.4
   run:
-    - python
+    - python {{ python }}
     - setuptools
     - setuptools_scm
     - scipy >=1.6

@@ -34,7 +34,7 @@ def get_pkg_root() -> pathlib.Path:
     `pathlib.Path`
         Path to the package root.
     """
-    return pathlib.Path(__file__).resolve().parents[5]
+    return pathlib.Path(__file__).resolve().parents[1]
 
 
 def get_config_dir() -> pathlib.Path:

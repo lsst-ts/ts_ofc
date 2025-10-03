@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 # This file is part of ts_ofc.
 #
-# Developed for Vera Rubin Observatory.
+# Developed for the Vera Rubin Observatory Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -19,18 +18,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-# isort: skip_file
 
-try:
-    from .version import *
-except ModuleNotFoundError:
-    pass
+import setuptools_scm
+from setuptools import setup
 
-from .bend_mode_to_force import *
-from .sensitivity_matrix import *
-from .state_estimator import *
-from .correction import *
-from .ofc_data import OFCData
-from .ofc import *
-from .controllers import *
-from .policy import *
+setup(version=setuptools_scm.get_version())

@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import pathlib
 import unittest
 
 import numpy as np
@@ -52,6 +53,12 @@ class TestOFCData(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test case."""
         self.ofc_data = OFCData("lsst")
+        file_path = (
+            pathlib.Path(__file__).parent.absolute()
+            / "testData"
+            / "test_controller.yaml"
+        )
+        self.ofc_data.controller_filename = file_path
 
     def test_xref(self) -> None:
         """Test the xref property."""

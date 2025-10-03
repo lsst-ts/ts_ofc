@@ -42,9 +42,13 @@ class TestSensitivityMatrix(unittest.TestCase):
             self.ofc_data.gq_points[sensor]
             for sensor in range(len(self.ofc_data.gq_points))
         ]
-        self.unrotated_sensitivity_matrix = self.sensitivity_matrix.evaluate(
+        self.unrotated_sensitivity_matrix = -self.sensitivity_matrix.evaluate(
             field_angles=self.field_angles
         )
+
+        self.unrotated_sensitivity_matrix[
+            ..., [0, 1, 3, 5, 6, 8] + list(range(30, 50))
+        ] *= -1
 
         gq_sensitivity_matrix_file = Path(
             glob(
@@ -186,9 +190,12 @@ class TestSensitivityMatrix(unittest.TestCase):
         ]
 
         for angle in angles:
-            rotated_sensitivity_matrix = self.sensitivity_matrix.evaluate(
+            rotated_sensitivity_matrix = -self.sensitivity_matrix.evaluate(
                 field_angles=self.field_angles, rotation_angle=angle
             )
+            rotated_sensitivity_matrix[
+                ..., [0, 1, 3, 5, 6, 8] + list(range(30, 50))
+            ] *= -1
 
             # Check for zernikes excited uniformally
             # accross the field (radial order 0)

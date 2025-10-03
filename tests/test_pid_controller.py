@@ -127,13 +127,11 @@ class TestPIDController(unittest.TestCase):
 
         np.testing.assert_array_equal(
             self.pid_controller.integral,
-            self.pid_controller.setpoint[self.pid_controller.ofc_data.dof_idx]
-            - self.pid_controller.dof_state[self.pid_controller.ofc_data.dof_idx],
+            np.zeros(len(self.pid_controller.ofc_data.dof_idx)),
         )
         np.testing.assert_array_equal(
             self.pid_controller.previous_error,
-            self.pid_controller.setpoint[self.pid_controller.ofc_data.dof_idx]
-            - self.pid_controller.dof_state[self.pid_controller.ofc_data.dof_idx],
+            np.zeros(len(self.pid_controller.ofc_data.dof_idx)),
         )
 
     def test_derivative_filter(self) -> None:

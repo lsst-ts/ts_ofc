@@ -17,7 +17,10 @@ generate_alpha_values = "lsst.ts.ofc.scripts:generate_alpha_values"
 generate_sensitivity_normalization_matrix = "lsst.ts.ofc.scripts:generate_sensitivity_normalization_matrix"
  
 [tools.setuptools]
-package-data = { "" = "*.csv"}
+include-package-data = true
+
+[tool.setuptools.package-data]
+"lsst.ts.ofc" = ["policy/**/*"]
  
 [tool.setuptools.dynamic]
 version = { attr = "setuptools_scm.get_version" }

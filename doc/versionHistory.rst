@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.3.0:
+
+v4.3.0
+======
+
+* Update default policy files to match default configuration in v8 ts_config_mttcs.
+
 .. _lsst.ts.ofc-4.2.1:
 
 v4.2.1

@@ -1,23 +1,30 @@
-# Description: Proportional-Integral-Derivative Controller (PID) configuration file
+# Description: Optimal Integral Controller (OIC) configuration file
 #
-# Name: PID
+# Name: OIC
+# xref is the reference to the controller, it can be ['x0', 'x00', '0']
 # kp is the proportional gain
 # ki is the integral gain defined as ki = kp*T/T_i
 # kd is the derivative gain defined as kd = kp*T_d/T
+# For more details on the controller gains and the values of T, T_i, and T_d,
+# please refer to the report https://www.betzler.physik.uni-osnabrueck.de/Manuskripte/Elektronik-Praktikum/p3/doc2558.pdf
 # derivative_filter_coeff is the coefficient of the derivative filter
 # zn_selected is the zernike coefficients selected to be used by the controller in Noll index
 # setpoint is the setpoint for each degree of freedom (array of 50 elements)
 
-description: Proportional-Integral-Derivative Controller
+description: Optimal Integral Controller (OIC)
 
-name: PID
-kp: 0.7
-ki: 0.0
-kd: 0.1
+name: OIC
+xref: x00 
+kp: 1.0
+ki: 0
+kd: 0
 derivative_filter_coeff: 1.0
 zn_selected: [
   4, 5, 6, 7, 8,
-  9, 10, 11
+  9, 10, 11, 12, 13,
+  14, 15, 16, 17, 18,
+  19, 20, 21, 22, 23, 
+  24, 25, 26, 27, 28
 ]
 setpoint: [
   0.0, 0.0, 0.0, 0.0, 0.0, 
@@ -33,4 +40,5 @@ setpoint: [
 ]
 normalization_weights_filename: "default.yaml"
 truncation_threshold: 1.e-7
-rotation_offset: 90.0
+rotation_offset: 0.0
+

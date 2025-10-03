@@ -33,6 +33,12 @@ class TestStateEstimator(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test case."""
         self.ofc_data = OFCData("lsst")
+        file_path = (
+            pathlib.Path(__file__).parent.absolute()
+            / "testData"
+            / "test_controller.yaml"
+        )
+        self.ofc_data.controller_filename = file_path
 
         self.estimator = StateEstimator(self.ofc_data)
         self.estimator.rcond = 1e-7
@@ -143,7 +149,7 @@ class TestStateEstimator(unittest.TestCase):
         residual = self.mean_squared_residual(
             sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
         )
-        assert residual < 2e-3
+        assert residual < 3e-2
 
     def test_dof_state_raises_if_no_truncation_method(self) -> None:
         """Test dof_state raises an error if both rcond
@@ -183,7 +189,7 @@ class TestStateEstimator(unittest.TestCase):
         residual = self.mean_squared_residual(
             sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
         )
-        assert residual < 2e-3
+        assert residual < 3e-2
 
     def test_dof_state_with_normalization_weights(self) -> None:
         """Test the dof_state method when using normalization weights."""
@@ -203,7 +209,7 @@ class TestStateEstimator(unittest.TestCase):
         residual = self.mean_squared_residual(
             sensitivity_matrix @ self.dofs, sensitivity_matrix @ state
         )
-        assert residual < 2e-3
+        assert residual < 3e-2
 
     def test_dof_state_trim_zn_dof(self) -> None:
         """Test the dof_state method with trimmed

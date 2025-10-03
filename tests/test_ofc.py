@@ -34,6 +34,13 @@ class TestOFC(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test case."""
         self.ofc_data = OFCData("lsst")
+        file_path = (
+            pathlib.Path(__file__).parent.absolute()
+            / "testData"
+            / "test_controller.yaml"
+        )
+        self.ofc_data.controller_filename = file_path
+
         self.ofc_data.rotation_offset = 0.0
         self.ofc_data.motion_penalty = (
             0.0001  # Set small motion penalty to allow for larger corrections

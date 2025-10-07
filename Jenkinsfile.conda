@@ -1,2 +1,2 @@
 @Library('JenkinsShared')_
-CondaPipeline([], "ts-ofc", "lsst.ts.ofc")
+CondaPipeline([], "ts-ofc", "lsst.ts.ofc", "noarch")

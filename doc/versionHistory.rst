@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.2.2:
+
+v4.2.2
+======
+
+* Update Jenkinsfile.conda to use no-arch instead of linux-64.
+
 .. _lsst.ts.ofc-4.2.1:
 
 v4.2.1

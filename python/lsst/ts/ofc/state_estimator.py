@@ -145,15 +145,28 @@ class StateEstimator:
         if self.rcond is None and self.truncate_index is None:
             raise ValueError("Neither truncation index or threshold are set in the controller.")
 
+        u, s, vh = np.linalg.svd(W_inv_sqrt @ sensitivity_matrix, full_matrices=False)
+        v = vh.T
         if self.truncate_index is not None:
             self.log.info("Setting rcond value from truncation index.")
-            _, s, _ = np.linalg.svd(sensitivity_matrix, full_matrices=False)
             if self.truncate_index >= len(s):
                 self.rcond = 0.99 * s[-1] / np.max(s)
             else:
                 self.rcond = 0.99 * s[self.truncate_index - 1] / np.max(s)
 
         pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.rcond)
+
+        # discard small singular values
+        cutoff = self.rcond[..., np.newaxis] * np.amax(s, axis=-1, keepdims=True)
+        large = s > cutoff
+        s = np.divide(1, s, where=large, out=s)
+        s[~large] = 0
+
+        from scipy.linalg import fractional_matrix_power
+
+        W_inv_sqrt = fractional_matrix_power(W, -0.5)
+
+        pinv_sensitivity_matrix = v @ np.diag(s) @ u.T
 
         # Rotate the wavefront error to the same orientation as the
         # sensitivity matrix. When creating galsim.Zernike object,
@@ -196,6 +209,6 @@ class StateEstimator:
         # Because of normalization, we need to de-normalize the result
         # to retrieve the actual DOF values in the original 50 dimensional
         # basis. For more details, see equation (10) in arXiv:2406.04656.
-        x = normalization_matrix @ pinv_sensitivity_matrix.dot(y)
+        x = normalization_matrix @ pinv_sensitivity_matrix2 @ W_inv_sqrt @ y
 
         return x.ravel()

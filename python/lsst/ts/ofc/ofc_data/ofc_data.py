@@ -77,6 +77,10 @@ class OFCData(BaseOFCData):
     intrinsic_zk : `dict` of `string`
         Intrinsic zernike coefficients per band per detector for a specific
         instrument configuration.
+    normalization_weights : `np.ndarray` of `float`
+        Normalization weights for the sensitivity matrix.
+    noise_covariance : `np.ndarray` of `float`
+        Measurement noise covariance matrix.
     log : `logging.Logger`
         Logger class used for logging operations.
     name : `string`
@@ -623,6 +627,16 @@ class OFCData(BaseOFCData):
 
         normalization_weights = np.array(self.load_yaml_file(configuration_path))
 
+        # Read measurement noise covariance matrix
+        # ----------------------------------------
+        configuration_path = (
+            self.config_dir
+            / "noise_covariance"
+            / self.controller["noise_covariance_filename"]
+        )
+
+        noise_covariance = np.array(self.load_yaml_file(configuration_path))
+
         # Now all data was read successfully, time to set it up.
         # ------------------------------------------------------
         self.alpha = alpha
@@ -637,6 +651,7 @@ class OFCData(BaseOFCData):
         self.intrinsic_zk = intrinsic_zk
         self.sensitivity_matrix = sensitivity_matrix
         self.normalization_weights = normalization_weights
+        self.noise_covariance = noise_covariance
         self.start_task.set_result(instrument)
 
         self.log.debug(f"Done configuring {instrument}")
@@ -675,7 +690,15 @@ class OFCData(BaseOFCData):
                 "Required key 'normalization_weights_filename' is missing in the controller configuration."
             )
 
-        if "truncation_threshold" not in self.controller and "truncation_index" not in self.controller:
+        if "noise_covariance_filename" not in self.controller:
+            raise ValueError(
+                "Required key 'noise_covariance_filename' is missing in the controller configuration."
+            )
+
+        if (
+            "truncation_threshold" not in self.controller
+            and "truncation_index" not in self.controller
+        ):
             raise ValueError(
                 "Required keys 'truncation_threshold' or 'truncation_index' are missing "
                 "in the controller configuration."

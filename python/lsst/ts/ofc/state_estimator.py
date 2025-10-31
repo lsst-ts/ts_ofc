@@ -25,6 +25,7 @@ import logging
 
 import galsim
 import numpy as np
+from scipy.linalg import fractional_matrix_power
 
 from . import SensitivityMatrix
 from .ofc_data import OFCData
@@ -68,6 +69,7 @@ class StateEstimator:
         self.dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         self.normalization_weights = ofc_data.normalization_weights
+        self.noise_covariance = ofc_data.noise_covariance
 
         self.rcond = ofc_data.controller.get("truncation_threshold", None)
         self.truncate_index = ofc_data.controller.get("truncation_index", None)
@@ -145,7 +147,10 @@ class StateEstimator:
         if self.rcond is None and self.truncate_index is None:
             raise ValueError("Neither truncation index or threshold are set in the controller.")
 
-        u, s, vh = np.linalg.svd(W_inv_sqrt @ sensitivity_matrix, full_matrices=False)
+        noise_cov_inv_sqrt = fractional_matrix_power(self.noise_covariance, -0.5)
+        u, s, vh = np.linalg.svd(
+            noise_cov_inv_sqrt @ sensitivity_matrix, full_matrices=False
+        )
         v = vh.T
         if self.truncate_index is not None:
             self.log.info("Setting rcond value from truncation index.")
@@ -161,10 +166,6 @@ class StateEstimator:
         large = s > cutoff
         s = np.divide(1, s, where=large, out=s)
         s[~large] = 0
-
-        from scipy.linalg import fractional_matrix_power
-
-        W_inv_sqrt = fractional_matrix_power(W, -0.5)
 
         pinv_sensitivity_matrix = v @ np.diag(s) @ u.T
 
@@ -209,6 +210,6 @@ class StateEstimator:
         # Because of normalization, we need to de-normalize the result
         # to retrieve the actual DOF values in the original 50 dimensional
         # basis. For more details, see equation (10) in arXiv:2406.04656.
-        x = normalization_matrix @ pinv_sensitivity_matrix2 @ W_inv_sqrt @ y
+        x = normalization_matrix @ pinv_sensitivity_matrix @ noise_cov_inv_sqrt @ y
 
         return x.ravel()

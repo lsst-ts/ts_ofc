@@ -147,7 +147,10 @@ class StateEstimator:
         if self.rcond is None and self.truncate_index is None:
             raise ValueError("Neither truncation index or threshold are set in the controller.")
 
-        noise_cov_inv_sqrt = fractional_matrix_power(self.noise_covariance, -0.5)
+        used_noise_covariance = self.noise_covariance[
+            np.ix_(self.ofc_data.zn_idx, self.ofc_data.zn_idx)
+        ]
+        noise_cov_inv_sqrt = fractional_matrix_power(used_noise_covariance, -0.5)
         u, s, vh = np.linalg.svd(
             noise_cov_inv_sqrt @ sensitivity_matrix, full_matrices=False
         )

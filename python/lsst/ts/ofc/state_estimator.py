@@ -159,8 +159,6 @@ class StateEstimator:
             else:
                 self.rcond = 0.99 * s[self.truncate_index - 1] / np.max(s)
 
-        pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.rcond)
-
         # discard small singular values
         cutoff = self.rcond[..., np.newaxis] * np.amax(s, axis=-1, keepdims=True)
         large = s > cutoff

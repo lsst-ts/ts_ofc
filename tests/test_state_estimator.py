@@ -47,7 +47,17 @@ class TestStateEstimator(unittest.TestCase):
         with open(file_path, "r") as fp:
             self.normalization_weights = np.array(yaml.safe_load(fp))
 
-        dofs = np.loadtxt(pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_dof_iter0.txt")
+        file_path = (
+            pathlib.Path(__file__).parent.absolute()
+            / "testData"
+            / "test_identity_noise_covariance.yaml"
+        )
+        with open(file_path, "r") as fp:
+            self.noise_covariance = np.array(yaml.safe_load(fp))
+
+        dofs = np.loadtxt(
+            pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_dof_iter0.txt"
+        )
         self.dofs = dofs[:, 1]
 
         # Constuct the double zernike sensitivity matrix
@@ -168,6 +178,30 @@ class TestStateEstimator(unittest.TestCase):
 
         residual = self.mean_squared_residual(sensitivity_matrix @ self.dofs, sensitivity_matrix @ state)
         assert residual < 3e-2
+
+    def test_dof_state_with_noise_covariance(self) -> None:
+        """Test the dof_state method when using noise covariance."""
+        state_identity_covariance = self.estimator.dof_state(
+            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
+        )
+
+        self.estimator.noise_covariance = self.noise_covariance
+        state_random_covariance = self.estimator.dof_state(
+            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
+        )
+
+        n_values = len(self.estimator.ofc_data.dof_idx)
+        self.assertEqual(len(state_random_covariance), n_values)
+
+        # Check that the state is different when using noise covariance
+        sensitivity_matrix = self.compute_sensitivity_matrix(
+            self.field_angles, rotation_angle=0.0
+        )
+        residual = self.mean_squared_residual(
+            sensitivity_matrix @ state_random_covariance,
+            sensitivity_matrix @ state_identity_covariance,
+        )
+        assert residual > 1e-3
 
     def test_dof_state_trim_zn_dof(self) -> None:
         """Test the dof_state method with trimmed

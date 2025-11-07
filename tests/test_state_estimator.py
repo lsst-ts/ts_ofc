@@ -48,16 +48,12 @@ class TestStateEstimator(unittest.TestCase):
             self.normalization_weights = np.array(yaml.safe_load(fp))
 
         file_path = (
-            pathlib.Path(__file__).parent.absolute()
-            / "testData"
-            / "test_identity_noise_covariance.yaml"
+            pathlib.Path(__file__).parent.absolute() / "testData" / "test_identity_noise_covariance.yaml"
         )
         with open(file_path, "r") as fp:
             self.noise_covariance = np.array(yaml.safe_load(fp))
 
-        dofs = np.loadtxt(
-            pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_dof_iter0.txt"
-        )
+        dofs = np.loadtxt(pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_dof_iter0.txt")
         self.dofs = dofs[:, 1]
 
         # Constuct the double zernike sensitivity matrix
@@ -194,9 +190,7 @@ class TestStateEstimator(unittest.TestCase):
         self.assertEqual(len(state_random_covariance), n_values)
 
         # Check that the state is different when using noise covariance
-        sensitivity_matrix = self.compute_sensitivity_matrix(
-            self.field_angles, rotation_angle=0.0
-        )
+        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
         residual = self.mean_squared_residual(
             sensitivity_matrix @ state_random_covariance,
             sensitivity_matrix @ state_identity_covariance,

@@ -690,10 +690,7 @@ class OFCData(BaseOFCData):
                 "Required key 'normalization_weights_filename' is missing in the controller configuration."
             )
 
-        if (
-            "truncation_threshold" not in self.controller
-            and "truncation_index" not in self.controller
-        ):
+        if "truncation_threshold" not in self.controller and "truncation_index" not in self.controller:
             raise ValueError(
                 "Required keys 'truncation_threshold' or 'truncation_index' are missing "
                 "in the controller configuration."

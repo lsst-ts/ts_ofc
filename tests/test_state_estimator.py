@@ -47,10 +47,6 @@ class TestStateEstimator(unittest.TestCase):
         with open(file_path, "r") as fp:
             self.normalization_weights = np.array(yaml.safe_load(fp))
 
-        file_path = pathlib.Path(__file__).parent.absolute() / "testData" / "test_noise_covariance.yaml"
-        with open(file_path, "r") as fp:
-            self.noise_covariance = np.array(yaml.safe_load(fp))
-
         dofs = np.loadtxt(pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_dof_iter0.txt")
         self.dofs = dofs[:, 1]
 
@@ -172,110 +168,6 @@ class TestStateEstimator(unittest.TestCase):
 
         residual = self.mean_squared_residual(sensitivity_matrix @ self.dofs, sensitivity_matrix @ state)
         assert residual < 3e-2
-
-    def test_dof_state_with_noise_covariance(self) -> None:
-        """Test the dof_state method when using noise covariance."""
-        state_identity_covariance = self.estimator.dof_state(
-            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
-        )
-
-        self.estimator.noise_covariance = self.noise_covariance
-        state_random_covariance = self.estimator.dof_state(
-            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
-        )
-
-        n_values = len(self.estimator.ofc_data.dof_idx)
-        self.assertEqual(len(state_random_covariance), n_values)
-
-        # Check that the state is different when using noise covariance
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
-        residual = self.mean_squared_residual(
-            sensitivity_matrix @ state_random_covariance,
-            sensitivity_matrix @ state_identity_covariance,
-        )
-        assert residual > 1e-3
-
-    def test_dof_state_distribution_with_noise_covariance(self) -> None:
-        """Test the dof_state resulting distribution when
-        using noise covariance.
-        """
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
-        state_estimator_identity = StateEstimator(self.ofc_data)
-        state_estimator_covariance = StateEstimator(self.ofc_data)
-
-        full_idx = np.concatenate([self.ofc_data.zn_idx + i * len(self.ofc_data.zn_idx) for i in range(4)])
-        used_noise_covariance = self.noise_covariance[np.ix_(full_idx, full_idx)]
-        state_estimator_covariance.noise_covariance = used_noise_covariance
-
-        n_trials = 100
-        rng = np.random.default_rng(42)
-
-        x_true = np.zeros(50)
-        x_true[0] = 0.0
-        x_true[3] = 0.2
-        x_true[11] = 0.2
-        x_true[32] = 0.5
-
-        m = sensitivity_matrix.shape[0]
-        p = x_true.size
-
-        x_err1 = np.zeros((n_trials, p))  # x1 - x_true
-        x_err2 = np.zeros((n_trials, p))  # x2 - x_true
-        y_res1 = np.zeros((n_trials, m))  # y - A x1
-        y_res2 = np.zeros((n_trials, m))  # y - A x2
-        rss1 = np.zeros(n_trials)  # sum((y - y1)^2)
-        rss2 = np.zeros(n_trials)  # sum((y - y2)^2)
-        for k in range(n_trials):
-            y = sensitivity_matrix @ x_true
-            y_noisy = rng.multivariate_normal(y, used_noise_covariance)
-
-            # Estimate with the two estimators
-            x1 = state_estimator_identity.dof_state("R", y_noisy.reshape(4, -1), self.sensor_name_list, 0.0)
-            x2 = state_estimator_covariance.dof_state("R", y_noisy.reshape(4, -1), self.sensor_name_list, 0.0)
-
-            # Errors in DOF space
-            x_err1[k] = x1 - x_true
-            x_err2[k] = x2 - x_true
-
-            # Residuals in measurement space
-            y1 = sensitivity_matrix @ x1
-            y2 = sensitivity_matrix @ x2
-            r1 = y - y1
-            r2 = y - y2
-
-            y_res1[k] = r1
-            y_res2[k] = r2
-
-            # Unweighted RSS
-            rss1[k] = np.sum(r1**2)
-            rss2[k] = np.sum(r2**2)
-
-        std_x1 = np.std(x_err1, axis=0, ddof=1)
-        std_x2 = np.std(x_err2, axis=0, ddof=1)
-        std_y1 = np.std(y_res1, axis=0, ddof=1)
-        std_y2 = np.std(y_res2, axis=0, ddof=1)
-        median_rss1 = np.median(rss1)
-        median_rss2 = np.median(rss2)
-
-        # 1) Covariance estimator should reduce DOF-space variance
-        # in majority of components
-        fraction_tighter_x = np.mean(std_x2 < std_x1)
-        assert fraction_tighter_x > 0.95, (
-            f"Covariance estimator did not reduce DOF errors enough: "
-            f"{fraction_tighter_x:.2%} components improved (< 55%)"
-        )
-
-        # 2) Measurement residual variance should drop in majority of terms
-        fraction_tighter_y = np.mean(std_y2 < std_y1)
-        assert fraction_tighter_y > 0.95, (
-            f"Covariance estimator did not reduce measurement residuals enough: "
-            f"{fraction_tighter_y:.2%} improved (< 70%)"
-        )
-
-        # 3) Residual sum-of-squares should be strictly lower on median
-        assert median_rss2 < median_rss1, (
-            f"RSS did not improve: median RSS(x2)={median_rss2:.3g} is not < RSS(x1)={median_rss1:.3g}"
-        )
 
     def test_dof_state_trim_zn_dof(self) -> None:
         """Test the dof_state method with trimmed

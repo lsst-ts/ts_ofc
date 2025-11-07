@@ -6,13 +6,6 @@
 Version History
 ##################
 
-.. _lsst.ts.ofc-4.3.0:
-
-v4.3.0
-======
-
-* Add noise covariance to the state estimation for GLS/MVUE estimates.
-
 .. _lsst.ts.ofc-4.2.3:
 
 v4.2.3

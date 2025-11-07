@@ -25,13 +25,10 @@ import logging
 
 import galsim
 import numpy as np
-from scipy.linalg import fractional_matrix_power
 
 from . import SensitivityMatrix
 from .ofc_data import OFCData
 from .utils.ofc_data_helpers import get_intrinsic_zernikes
-
-RCOND_NOISE_COV = 1e-9
 
 
 class StateEstimator:
@@ -71,7 +68,6 @@ class StateEstimator:
         self.dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
 
         self.normalization_weights = ofc_data.normalization_weights
-        self.noise_covariance = ofc_data.noise_covariance
 
         self.rcond = ofc_data.controller.get("truncation_threshold", None)
         self.truncate_index = ofc_data.controller.get("truncation_index", None)
@@ -149,29 +145,15 @@ class StateEstimator:
         if self.rcond is None and self.truncate_index is None:
             raise ValueError("Neither truncation index or threshold are set in the controller.")
 
-        # Handle truncation of the sensitivity matrix using SVD first.
-        # This ensures the v-modes will not depend on the noise covariance.
-        u, s, vh = np.linalg.svd(sensitivity_matrix, full_matrices=False)
         if self.truncate_index is not None:
             self.log.info("Setting rcond value from truncation index.")
+            _, s, _ = np.linalg.svd(sensitivity_matrix, full_matrices=False)
             if self.truncate_index >= len(s):
                 self.rcond = 0.99 * s[-1] / np.max(s)
             else:
                 self.rcond = 0.99 * s[self.truncate_index - 1] / np.max(s)
 
-        cutoff = self.rcond * np.amax(s, axis=-1, keepdims=True)
-        large = s > cutoff
-        s[~large] = 0
-        truncated_sensitivity_matrix = u @ np.diag(s) @ vh
-
-        # With the truncated sensitivity matrix, now include noise covariance
-        # when computing the pseudo-inverse. We use the 1e-9 default rcond.
-        full_idx = np.concatenate([self.ofc_data.zn_idx + i * len(self.ofc_data.zn_idx) for i in range(4)])
-        used_noise_covariance = self.noise_covariance[np.ix_(full_idx, full_idx)]
-        noise_cov_inv_sqrt = fractional_matrix_power(used_noise_covariance, -0.5)
-        pinv_sensitivity_matrix = np.linalg.pinv(
-            noise_cov_inv_sqrt @ truncated_sensitivity_matrix, rcond=RCOND_NOISE_COV
-        )
+        pinv_sensitivity_matrix = np.linalg.pinv(sensitivity_matrix, rcond=self.rcond)
 
         # Rotate the wavefront error to the same orientation as the
         # sensitivity matrix. When creating galsim.Zernike object,
@@ -214,7 +196,6 @@ class StateEstimator:
         # Because of normalization, we need to de-normalize the result
         # to retrieve the actual DOF values in the original 50 dimensional
         # basis. For more details, see equation (10) in arXiv:2406.04656.
-        # For the noise covariance part, see description in SITCOMTN-129.
-        x = normalization_matrix @ pinv_sensitivity_matrix @ noise_cov_inv_sqrt @ y
+        x = normalization_matrix @ pinv_sensitivity_matrix.dot(y)
 
         return x.ravel()

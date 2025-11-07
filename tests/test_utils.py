@@ -108,9 +108,7 @@ class TestUtils(unittest.TestCase):
 
         for filter_name in self.ofc_data.eff_wavelength:
             with self.subTest(filter_name=filter_name):
-                intrinsic_zk = get_intrinsic_zernikes(
-                    self.ofc_data, filter_name, sensor_names
-                )
+                intrinsic_zk = get_intrinsic_zernikes(self.ofc_data, filter_name, sensor_names)
                 self.assertTrue(isinstance(intrinsic_zk, np.ndarray))
                 self.assertEqual(len(intrinsic_zk), 4)
 

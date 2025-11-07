@@ -33,18 +33,14 @@ def compute_fwhm_matrix(
     ofc_data: OFCData, dz_sensitivity_matrix: SensitivityMatrix, field_angles: list
 ) -> np.ndarray:
     # Evaluate sensitivity matrix at sensor positions
-    sensitivity_matrix = dz_sensitivity_matrix.evaluate(
-        field_angles, rotation_angle=0.0
-    )
+    sensitivity_matrix = dz_sensitivity_matrix.evaluate(field_angles, rotation_angle=0.0)
 
     # Select sensitivity matrix only at used zernikes
     sensitivity_matrix = sensitivity_matrix[:, dz_sensitivity_matrix.ofc_data.zn_idx, :]
 
     fwhm_matrix = np.zeros(sensitivity_matrix.shape)
     for idy in range(sensitivity_matrix.shape[0]):
-        fwhm_matrix[idy, ...] = convertZernikesToPsfWidth(
-            sensitivity_matrix[idy, ...].T
-        ).T
+        fwhm_matrix[idy, ...] = convertZernikesToPsfWidth(sensitivity_matrix[idy, ...].T).T
 
     size = fwhm_matrix.shape[2]
     fwhm_matrix = fwhm_matrix.reshape((-1, size))
@@ -55,9 +51,7 @@ def compute_fwhm_matrix(
     return fwhm_matrix
 
 
-def compute_normalization_weights(
-    ofc_data: OFCData, fwhm_matrix: np.ndarray
-) -> np.ndarray:
+def compute_normalization_weights(ofc_data: OFCData, fwhm_matrix: np.ndarray) -> np.ndarray:
     """Compute the normalization weights.
 
     Parameters
@@ -93,9 +87,7 @@ def compute_normalization_weights(
     return normalization_weights
 
 
-def save_normalization_weights(
-    normalization_weights: np.ndarray, output_dir: str
-) -> None:
+def save_normalization_weights(normalization_weights: np.ndarray, output_dir: str) -> None:
     """Save the normalization weights.
 
     Parameters

@@ -123,14 +123,10 @@ class OFCData(BaseOFCData):
             self.log.debug("Using default configuration directory.")
             self.config_dir = get_config_dir()
         else:
-            self.log.debug(
-                f"Using user-provided configuration directory: {config_dir}."
-            )
+            self.log.debug(f"Using user-provided configuration directory: {config_dir}.")
             self.config_dir = Path(config_dir)
             if not self.config_dir.exists():
-                raise RuntimeError(
-                    f"Provided data path ({self.config_dir}) does not exists."
-                )
+                raise RuntimeError(f"Provided data path ({self.config_dir}) does not exists.")
 
         # Dictionary to hold bending mode data. The data is read alongside the
         # other files when the name is set.
@@ -147,12 +143,8 @@ class OFCData(BaseOFCData):
 
         # Configure mirror bending mode stresses
         self.bending_mode_stresses = {
-            "M1M3": self.load_yaml_file(
-                self.config_dir / "M1M3" / "bending_mode_stresses.yaml"
-            ),
-            "M2": self.load_yaml_file(
-                self.config_dir / "M2" / "bending_mode_stresses.yaml"
-            ),
+            "M1M3": self.load_yaml_file(self.config_dir / "M1M3" / "bending_mode_stresses.yaml"),
+            "M2": self.load_yaml_file(self.config_dir / "M2" / "bending_mode_stresses.yaml"),
         }
 
         # Try to create a lock and a future. Sometimes it happens that the
@@ -208,16 +200,12 @@ class OFCData(BaseOFCData):
                 state0name="cameraHexapod",
                 rot_mat=rot_mat_hexapod,
             ),
-            M1M3Bend=dict(
-                startIdx=10, idxLength=20, state0name="M1M3Bending", rot_mat=1.0
-            ),
+            M1M3Bend=dict(startIdx=10, idxLength=20, state0name="M1M3Bending", rot_mat=1.0),
             M2Bend=dict(startIdx=30, idxLength=20, state0name="M2Bending", rot_mat=1.0),
         )
 
         # Index of degree of freedom
-        self._dof_idx = np.arange(
-            sum([self.comp_dof_idx[comp]["idxLength"] for comp in self.comp_dof_idx])
-        )
+        self._dof_idx = np.arange(sum([self.comp_dof_idx[comp]["idxLength"] for comp in self.comp_dof_idx]))
         self._dof_idx_mask = np.ones_like(self._dof_idx, dtype=bool)
 
     @property
@@ -285,9 +273,7 @@ class OFCData(BaseOFCData):
         if value in self.xref_list:
             self._xref = value
         else:
-            raise ValueError(
-                f"Invalid xref value {value}. Must be one of {self.xref_list}."
-            )
+            raise ValueError(f"Invalid xref value {value}. Must be one of {self.xref_list}.")
 
     @property
     def xref_list(self) -> set[str]:
@@ -328,9 +314,7 @@ class OFCData(BaseOFCData):
         # Check if any element in the value vector is
         # smaller or larger than zmin and zmax
         if np.any(np.array(value) < self.znmin) or np.any(np.array(value) > self.znmax):
-            raise ValueError(
-                f"Zernike index must be between {self.znmin} and {self.znmax}."
-            )
+            raise ValueError(f"Zernike index must be between {self.znmin} and {self.znmax}.")
         self._zn_selected = value
         self._zn_idx_mask = np.isin(self._zn_idx, self._zn_selected - self.znmin)
 
@@ -368,9 +352,7 @@ class OFCData(BaseOFCData):
             If input is not a numpy array of type bool.
         """
         if not isinstance(value, dict):
-            raise ValueError(
-                f"comp_dof_idx must be a dictionary with {self.comp_dof_idx.keys()} entries."
-            )
+            raise ValueError(f"comp_dof_idx must be a dictionary with {self.comp_dof_idx.keys()} entries.")
 
         for comp in self.comp_dof_idx:
             start_idx = self.comp_dof_idx[comp]["startIdx"]
@@ -384,10 +366,7 @@ class OFCData(BaseOFCData):
                     f"Current value: {self._dof_idx_mask[start_idx:end_idx]}. "
                     f"New value: {value[comp]}."
                 )
-            if (
-                not isinstance(value[comp], np.ndarray)
-                or value[comp].dtype.type is not np.bool_
-            ):
+            if not isinstance(value[comp], np.ndarray) or value[comp].dtype.type is not np.bool_:
                 raise RuntimeError("Input should be np.ndarray of type bool.")
             self._dof_idx_mask[start_idx:end_idx] = value[comp]
 
@@ -397,9 +376,7 @@ class OFCData(BaseOFCData):
         default_comp_dof_idx = dict()
 
         for comp in self.comp_dof_idx:
-            default_comp_dof_idx[comp] = np.ones(
-                self.comp_dof_idx[comp]["idxLength"], dtype=np.bool_
-            )
+            default_comp_dof_idx[comp] = np.ones(self.comp_dof_idx[comp]["idxLength"], dtype=np.bool_)
 
         return default_comp_dof_idx
 
@@ -450,8 +427,7 @@ class OFCData(BaseOFCData):
                 return yaml.safe_load(fp)
         except FileNotFoundError:
             raise RuntimeError(
-                f"Could not read file from policy path: {file_path!s}. "
-                "Check your policy directory integrity."
+                f"Could not read file from policy path: {file_path!s}. Check your policy directory integrity."
             )
 
     async def configure_instrument(self, instrument: str) -> None:
@@ -523,18 +499,14 @@ class OFCData(BaseOFCData):
                     self.log.debug(f"Data for {comp}:{ftype} already read, skipping...")
                 else:
                     self.log.debug(f"Reading {comp}:{ftype} data.")
-                    path = (
-                        self.config_dir / comp / self.bend_mode[comp][ftype]["filename"]
-                    )
+                    path = self.config_dir / comp / self.bend_mode[comp][ftype]["filename"]
                     with open(path) as fp:
                         self.bend_mode[comp][ftype]["data"] = yaml.safe_load(fp)
 
         self.log.debug(f"Configuring {instrument}")
 
         # Sensor id to name mapping
-        self.sensor_id_to_name = self.load_yaml_file(
-            self.config_dir / "sensor_ids_to_names.yaml"
-        )
+        self.sensor_id_to_name = self.load_yaml_file(self.config_dir / "sensor_ids_to_names.yaml")
 
         # Load all data to local variables and only set them at the end if
         # everthing went fine. Otherwise you can leave the class in a broken
@@ -553,9 +525,7 @@ class OFCData(BaseOFCData):
 
         # Read sample points
         # ------------------
-        sample_points_path = (
-            self.config_dir / "sample_points" / f"{instrument}_points.yaml"
-        )
+        sample_points_path = self.config_dir / "sample_points" / f"{instrument}_points.yaml"
 
         self.log.debug(f"Configuring sample points: {sample_points_path}")
         sample_points = self.load_yaml_file(sample_points_path)
@@ -565,22 +535,16 @@ class OFCData(BaseOFCData):
         # ------------------------------------------
         if instrument == "lsst":
             gq_points_path = (
-                self.config_dir
-                / "sample_points"
-                / f"{instrument}_gaussian_quadrature_points.yaml"
+                self.config_dir / "sample_points" / f"{instrument}_gaussian_quadrature_points.yaml"
             )
 
             gq_points = self.load_yaml_file(gq_points_path)
 
         # Read image quality weights
         # --------------------------
-        image_quality_weights_path = (
-            self.config_dir / "image_quality_weights" / f"{instrument}_weights.yaml"
-        )
+        image_quality_weights_path = self.config_dir / "image_quality_weights" / f"{instrument}_weights.yaml"
 
-        self.log.debug(
-            f"Configuring image quality weights: {image_quality_weights_path}"
-        )
+        self.log.debug(f"Configuring image quality weights: {image_quality_weights_path}")
         image_quality_weights = self.load_yaml_file(image_quality_weights_path)
 
         # If the camera type is lsst read and set up
@@ -588,9 +552,7 @@ class OFCData(BaseOFCData):
         # ------------------------------------------
         if instrument == "lsst":
             gq_weights_path = (
-                self.config_dir
-                / "image_quality_weights"
-                / f"{instrument}_gaussian_quadrature_weights.yaml"
+                self.config_dir / "image_quality_weights" / f"{instrument}_gaussian_quadrature_weights.yaml"
             )
 
             gq_weights = self.load_yaml_file(gq_weights_path)
@@ -607,11 +569,7 @@ class OFCData(BaseOFCData):
         # y2_correction for the gaussian quadrature points
         # ------------------------------------------------
         if instrument == "lsst":
-            gq_y2_path = (
-                self.config_dir
-                / "y2"
-                / f"{instrument}_gaussian_quadrature{self.y2_filename_root}"
-            )
+            gq_y2_path = self.config_dir / "y2" / f"{instrument}_gaussian_quadrature{self.y2_filename_root}"
 
             self.log.debug(f"Configuring y2: {gq_y2_path}")
 
@@ -619,9 +577,7 @@ class OFCData(BaseOFCData):
 
         # Read all intrinsic zernike coefficients data
         # --------------------------------------------
-        self.log.debug(
-            f"Configuring instrisic zernikes: {len(self.eff_wavelength.keys())} files."
-        )
+        self.log.debug(f"Configuring instrisic zernikes: {len(self.eff_wavelength.keys())} files.")
 
         intrinsic_zk = dict()
         intrinsic_zk_path = self.config_dir / "intrinsic_zernikes" / camera_type
@@ -633,9 +589,7 @@ class OFCData(BaseOFCData):
             )
 
         for filter_name in self.eff_wavelength.keys():
-            file_name = (
-                f"{self.intrinsic_zk_filename_root}_{filter_name.lower()}_31*.yaml"
-            )
+            file_name = f"{self.intrinsic_zk_filename_root}_{filter_name.lower()}_31*.yaml"
 
             intrinsic_file = next(Path(intrinsic_zk_path).rglob(file_name))
 
@@ -647,9 +601,7 @@ class OFCData(BaseOFCData):
 
         file_name = f"{camera_type}_{self.sen_m_filename_root}*.yaml"
 
-        sensitivity_matrix_path = next(
-            Path(f"{self.config_dir}/sensitivity_matrix").rglob(file_name)
-        )
+        sensitivity_matrix_path = next(Path(f"{self.config_dir}/sensitivity_matrix").rglob(file_name))
 
         sensitivity_matrix = np.array(self.load_yaml_file(sensitivity_matrix_path))
 
@@ -666,9 +618,7 @@ class OFCData(BaseOFCData):
         # Read normalization weights for sensitivity matrix
         # -------------------------------------------------
         configuration_path = (
-            self.config_dir
-            / "normalization_weights"
-            / self.controller["normalization_weights_filename"]
+            self.config_dir / "normalization_weights" / self.controller["normalization_weights_filename"]
         )
 
         normalization_weights = np.array(self.load_yaml_file(configuration_path))
@@ -713,35 +663,25 @@ class OFCData(BaseOFCData):
         if Path(self.controller_filename).is_absolute():
             controller_path = Path(self.controller_filename)
         else:
-            controller_path = (
-                self.config_dir / "configurations" / self.controller_filename
-            )
+            controller_path = self.config_dir / "configurations" / self.controller_filename
 
         self.controller = self.load_yaml_file(controller_path)
 
         if "name" not in self.controller:
-            raise ValueError(
-                "Required key 'name' is missing in the controller configuration."
-            )
+            raise ValueError("Required key 'name' is missing in the controller configuration.")
 
         if "normalization_weights_filename" not in self.controller:
             raise ValueError(
                 "Required key 'normalization_weights_filename' is missing in the controller configuration."
             )
 
-        if (
-            "truncation_threshold" not in self.controller
-            and "truncation_index" not in self.controller
-        ):
+        if "truncation_threshold" not in self.controller and "truncation_index" not in self.controller:
             raise ValueError(
                 "Required keys 'truncation_threshold' or 'truncation_index' are missing "
                 "in the controller configuration."
             )
 
-        if (
-            "truncation_threshold" in self.controller
-            and "truncation_index" in self.controller
-        ):
+        if "truncation_threshold" in self.controller and "truncation_index" in self.controller:
             raise ValueError(
                 "Both 'truncation_threshold' and 'truncation_index' are set in the controller "
                 "configuration. These options are mutually exclusive."
@@ -766,15 +706,11 @@ class OFCData(BaseOFCData):
         if self.controller["name"] == "PID":
             for key in ["kp", "ki", "kd", "setpoint"]:
                 if key not in self.controller:
-                    raise ValueError(
-                        f"Required key '{key}' is missing in the PID controller configuration."
-                    )
+                    raise ValueError(f"Required key '{key}' is missing in the PID controller configuration.")
         elif self.controller["name"] == "OIC":
             for key in ["kp", "ki", "kd", "setpoint", "xref"]:
                 if key not in self.controller:
-                    raise ValueError(
-                        f"Required key '{key}' is missing in the OIC controller configuration."
-                    )
+                    raise ValueError(f"Required key '{key}' is missing in the OIC controller configuration.")
 
             self.xref = self.controller["xref"]
 

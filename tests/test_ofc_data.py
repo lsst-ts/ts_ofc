@@ -53,11 +53,7 @@ class TestOFCData(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test case."""
         self.ofc_data = OFCData("lsst")
-        file_path = (
-            pathlib.Path(__file__).parent.absolute()
-            / "testData"
-            / "test_controller.yaml"
-        )
+        file_path = pathlib.Path(__file__).parent.absolute() / "testData" / "test_controller.yaml"
         self.ofc_data.controller_filename = file_path
 
     def test_xref(self) -> None:
@@ -96,9 +92,7 @@ class TestOFCData(unittest.TestCase):
         new_zn_selected = np.array([4, 5, 10, 20, 25])
         self.ofc_data.zn_selected = new_zn_selected
         self.assertEqual(len(self.ofc_data.zn_idx), 5)
-        np.testing.assert_array_equal(
-            self.ofc_data.zn_idx, new_zn_selected - self.ofc_data.znmin
-        )
+        np.testing.assert_array_equal(self.ofc_data.zn_idx, new_zn_selected - self.ofc_data.znmin)
 
         # Check that selecting zernikes below znmin limit raises an error
         with self.assertRaises(ValueError):

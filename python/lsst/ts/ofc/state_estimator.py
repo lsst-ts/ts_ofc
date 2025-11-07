@@ -31,7 +31,7 @@ from . import SensitivityMatrix
 from .ofc_data import OFCData
 from .utils.ofc_data_helpers import get_intrinsic_zernikes
 
-RCOND_DEFAULT = 1e-9
+RCOND_NOISE_COV = 1e-9
 
 
 class StateEstimator:
@@ -172,7 +172,7 @@ class StateEstimator:
         used_noise_covariance = self.noise_covariance[np.ix_(full_idx, full_idx)]
         noise_cov_inv_sqrt = fractional_matrix_power(used_noise_covariance, -0.5)
         pinv_sensitivity_matrix = np.linalg.pinv(
-            noise_cov_inv_sqrt @ truncated_sensitivity_matrix, rcond=RCOND_DEFAULT
+            noise_cov_inv_sqrt @ truncated_sensitivity_matrix, rcond=RCOND_NOISE_COV
         )
 
         # Rotate the wavefront error to the same orientation as the
@@ -216,6 +216,7 @@ class StateEstimator:
         # Because of normalization, we need to de-normalize the result
         # to retrieve the actual DOF values in the original 50 dimensional
         # basis. For more details, see equation (10) in arXiv:2406.04656.
+        # For the noise covariance part, see description in SITCOMTN-129.
         x = normalization_matrix @ pinv_sensitivity_matrix @ noise_cov_inv_sqrt @ y
 
         return x.ravel()

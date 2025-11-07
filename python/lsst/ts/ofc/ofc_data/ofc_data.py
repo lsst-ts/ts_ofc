@@ -629,12 +629,12 @@ class OFCData(BaseOFCData):
 
         # Read measurement noise covariance matrix
         # ----------------------------------------
-        configuration_path = (
-            self.config_dir
-            / "noise_covariance"
-            / self.controller["noise_covariance_filename"]
-        )
+        if "noise_covariance_filename" not in self.controller:
+            covariance_filename = "default_noise_covariance.yaml"
+        else:
+            covariance_filename = self.controller["noise_covariance_filename"]
 
+        configuration_path = self.config_dir / "noise_covariance" / covariance_filename
         noise_covariance = np.array(self.load_yaml_file(configuration_path))
 
         # Now all data was read successfully, time to set it up.
@@ -688,11 +688,6 @@ class OFCData(BaseOFCData):
         if "normalization_weights_filename" not in self.controller:
             raise ValueError(
                 "Required key 'normalization_weights_filename' is missing in the controller configuration."
-            )
-
-        if "noise_covariance_filename" not in self.controller:
-            raise ValueError(
-                "Required key 'noise_covariance_filename' is missing in the controller configuration."
             )
 
         if (

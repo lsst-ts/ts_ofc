@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.2.3:
+
+v4.2.3
+======
+
+* Run ruff updated version on all ts_ofc files.
+
 .. _lsst.ts.ofc-4.2.2:
 
 v4.2.2

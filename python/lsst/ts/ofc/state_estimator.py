@@ -130,26 +130,20 @@ class StateEstimator:
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
 
-        normalization_matrix = np.diag(
-            self.normalization_weights[self.ofc_data.dof_idx]
-        )
+        normalization_matrix = np.diag(self.normalization_weights[self.ofc_data.dof_idx])
         sensitivity_matrix = sensitivity_matrix @ normalization_matrix
 
         # Check the dimension of sensitivity matrix to see if we can invert it
         num_zk, num_dof = sensitivity_matrix.shape
         if num_zk < num_dof:
-            raise RuntimeError(
-                f"Equation number ({num_zk}) < variable number ({num_dof})."
-            )
+            raise RuntimeError(f"Equation number ({num_zk}) < variable number ({num_dof}).")
 
         # Compute the pseudo-inverse of the sensitivity matrix
         # rcond sets the truncation of different modes.
         # If rcond is None, it is computed from the singular values
         # of the sensitivity matrix, using the truncation index as reference.
         if self.rcond is None and self.truncate_index is None:
-            raise ValueError(
-                "Neither truncation index or threshold are set in the controller."
-            )
+            raise ValueError("Neither truncation index or threshold are set in the controller.")
 
         if self.truncate_index is not None:
             self.log.info("Setting rcond value from truncation index.")
@@ -178,23 +172,19 @@ class StateEstimator:
             )
             # Note that we need to remove the first 4 Zernike coefficients
             # since we padded the wfe with zeros for the 4 first Zernike
-            wfe[idx, :] = zk_galsim.rotate(np.deg2rad(rotation_angle)).coef[
-                self.ofc_data.znmin :
-            ]
+            wfe[idx, :] = zk_galsim.rotate(np.deg2rad(rotation_angle)).coef[self.ofc_data.znmin :]
 
         self.log.debug(f"Derotated wavefront error: {wfe}")
         # Compute wavefront error deviation from the intrinsic wavefront error
         # y = wfe - intrinsic_zk - y2_correction
         # y2_correction is a static correction for the
         # deviation currently set to zero.
-        y2_correction = np.array(
-            [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
-        )
+        y2_correction = np.array([self.ofc_data.y2_correction[sensor] for sensor in sensor_names])
         y = (
             wfe[:, self.ofc_data.zn_idx]
-            - get_intrinsic_zernikes(
-                self.ofc_data, filter_name, sensor_names, rotation_angle
-            )[:, self.ofc_data.zn_idx]
+            - get_intrinsic_zernikes(self.ofc_data, filter_name, sensor_names, rotation_angle)[
+                :, self.ofc_data.zn_idx
+            ]
             - y2_correction[:, self.ofc_data.zn_idx]
         )
 

@@ -82,9 +82,7 @@ class TestOICController(unittest.TestCase):
             err_msg="Aggregated state does not match new state.",
         )
 
-    def mean_squared_residual(
-        self, new_array: np.ndarray, reference_array: np.ndarray
-    ) -> float:
+    def mean_squared_residual(self, new_array: np.ndarray, reference_array: np.ndarray) -> float:
         """Compute the mean squared residual between two arrays.
 
         Parameters

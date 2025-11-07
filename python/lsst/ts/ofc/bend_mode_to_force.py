@@ -78,27 +78,18 @@ class BendModeToForce:
 
         # Load the bending mode stresses data
         self.bending_mode_stresses_positive = np.array(
-            self.ofc_data.bending_mode_stresses[self.component][
-                "bending_mode_stress_positive"
-            ]
+            self.ofc_data.bending_mode_stresses[self.component]["bending_mode_stress_positive"]
         )
         self.bending_mode_stresses_negative = np.array(
-            self.ofc_data.bending_mode_stresses[self.component][
-                "bending_mode_stress_negative"
-            ]
+            self.ofc_data.bending_mode_stresses[self.component]["bending_mode_stress_negative"]
         )
 
         dof_idx_name = f"{component}Bend"
 
         if dof_idx_name not in self.ofc_data.comp_dof_idx:
-            bend_comp = [
-                comp[:-4]
-                for comp in self.ofc_data.comp_dof_idx
-                if comp.endswith("Bend")
-            ]
+            bend_comp = [comp[:-4] for comp in self.ofc_data.comp_dof_idx if comp.endswith("Bend")]
             raise RuntimeError(
-                f"Component {component} not a bend mode component. "
-                f"Must be one of {bend_comp}."
+                f"Component {component} not a bend mode component. Must be one of {bend_comp}."
             )
         n_bending_modes = self.ofc_data.comp_dof_idx[dof_idx_name]["idxLength"]
 
@@ -108,9 +99,7 @@ class BendModeToForce:
         # y position in m) are not needed.
         usecols = np.arange(3, 3 + n_bending_modes)
 
-        self.rot_mat = np.array(self.ofc_data.bend_mode[component]["force"]["data"])[
-            :, usecols
-        ]
+        self.rot_mat = np.array(self.ofc_data.bend_mode[component]["force"]["data"])[:, usecols]
 
     def get_stresses_from_dof(self, dof: np.ndarray[float]) -> np.ndarray[float]:
         """Calculated mirror stress in psi per bending mode of the mirror.
@@ -129,8 +118,7 @@ class BendModeToForce:
         # bending mode stresses based on the sign of the DOF
         stresses = np.where(
             dof >= 0,
-            dof
-            * self.bending_mode_stresses_positive,  # Use positive stress values for positive DOF
+            dof * self.bending_mode_stresses_positive,  # Use positive stress values for positive DOF
             dof * self.bending_mode_stresses_negative,
         )  # Use negative stress values for negative DOF
 

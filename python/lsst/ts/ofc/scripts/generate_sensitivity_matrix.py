@@ -127,9 +127,7 @@ def double_zernike(
     # Compute Zernike coefficients
     coefs = []
     for thx_, thy_ in zip(thx, thy):
-        coefs.append(
-            batoid.zernike(optic, thx_, thy_, wavelength, jmax=jmax, eps=0.61, nx=255)
-        )
+        coefs.append(batoid.zernike(optic, thx_, thy_, wavelength, jmax=jmax, eps=0.61, nx=255))
     coefs = np.array(coefs)
 
     basis = galsim.zernike.zernikeBasis(kmax, thx, thy, R_outer=field)
@@ -262,9 +260,7 @@ def get_sensitivity_dz(
     return sensitivity_matrix
 
 
-def save_sensitivity_matrix(
-    path: str, instrument: str, sensitivity_matrix: np.ndarray
-) -> None:
+def save_sensitivity_matrix(path: str, instrument: str, sensitivity_matrix: np.ndarray) -> None:
     """Save intrinsic zernike coefficients to a fits file and a yaml file.
 
     Parameters
@@ -278,9 +274,7 @@ def save_sensitivity_matrix(
     """
 
     # Save yaml file with header and content shown as legacy yaml files.
-    with open(
-        f"{path}/{instrument.lower()}_sensitivity_dz_31_29_50.yaml", "w"
-    ) as yaml_file:
+    with open(f"{path}/{instrument.lower()}_sensitivity_dz_31_29_50.yaml", "w") as yaml_file:
         yaml_file.write(
             "--- \n \
             \n # Sensitivity matrix for the r band. \
@@ -319,9 +313,7 @@ def save_sensitivity_matrix(
     prihdr["Content"] = "Sensitivity matrix (k, j, dof)"
     prihdr["Dim"] = "(31,29,50)"
     hdu = fits.PrimaryHDU(sensitivity_matrix, header=prihdr)
-    hdu.writeto(
-        f"{path}/{instrument.lower()}_sensitivity_dz_31_29_50.fits", overwrite=True
-    )
+    hdu.writeto(f"{path}/{instrument.lower()}_sensitivity_dz_31_29_50.fits", overwrite=True)
 
 
 def main(args: argparse.Namespace) -> None:
@@ -342,14 +334,10 @@ def main(args: argparse.Namespace) -> None:
     # Load configuration
     config_dir = get_config_dir()
     try:
-        with open(
-            config_dir / "configurations" / f"{args.instrument.lower()}.yaml"
-        ) as fp:
+        with open(config_dir / "configurations" / f"{args.instrument.lower()}.yaml") as fp:
             config = yaml.safe_load(fp)
     except FileNotFoundError:
-        raise RuntimeError(
-            f"Configuration file for {args.instrument} not found in {config_dir}"
-        )
+        raise RuntimeError(f"Configuration file for {args.instrument} not found in {config_dir}")
 
     # Compute double zernike sensitivity matrix
     sensitivity_matrix = get_sensitivity_dz(config, args.instrument, args.filter)

@@ -109,10 +109,7 @@ class OFC:
         elif controller_name == "OIC":
             self.controller = OICController(self.ofc_data)
         else:
-            raise ValueError(
-                f"Unknown controller name: {controller_name}. "
-                f"Options are: 'PID', 'OIC'."
-            )
+            raise ValueError(f"Unknown controller name: {controller_name}. Options are: 'PID', 'OIC'.")
 
     def set_controller_filename(self, controller_filename: str) -> None:
         """Set the controller filename.
@@ -251,9 +248,7 @@ class OFC:
         if isinstance(self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"], float):
             trans_dof = self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"] * dof
         else:
-            inv_rot_mat = np.linalg.pinv(
-                self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"]
-            )
+            inv_rot_mat = np.linalg.pinv(self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"])
 
             trans_dof = inv_rot_mat.dot(dof.reshape(-1, 1)).ravel()
 
@@ -270,9 +265,7 @@ class OFC:
 
         self.lv_dof = np.zeros_like(self.controller.dof_state0)
 
-    def set_fwhm_data(
-        self, fwhm: np.ndarray[float], sensor_ids: np.ndarray[int]
-    ) -> None:
+    def set_fwhm_data(self, fwhm: np.ndarray[float], sensor_ids: np.ndarray[int]) -> None:
         """Set the list of FWHMSensorData of each CCD of camera.
         Parameters
         ----------

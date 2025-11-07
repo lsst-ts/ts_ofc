@@ -145,9 +145,7 @@ class TestPIDController(unittest.TestCase):
         new_state = 0.8 * np.ones(50)
         self.pid_controller.control_step(self.filter_name, new_state)
 
-        expected_derivative = 0.5 * (
-            (self.pid_controller.setpoint - new_state) - previous_derivative
-        )
+        expected_derivative = 0.5 * ((self.pid_controller.setpoint - new_state) - previous_derivative)
         np.testing.assert_array_equal(
             self.pid_controller.filtered_derivative,
             expected_derivative,
@@ -179,8 +177,7 @@ class TestPIDController(unittest.TestCase):
             self.pid_controller.setpoint - initial_state
         )
         np.testing.assert_array_equal(
-            self.pid_controller.previous_error
-            - (self.pid_controller.setpoint - initial_state),
+            self.pid_controller.previous_error - (self.pid_controller.setpoint - initial_state),
             expected_derivative,
             "Derivative calculation does not match expected.",
         )

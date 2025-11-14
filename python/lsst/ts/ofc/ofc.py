@@ -133,12 +133,17 @@ class OFC:
         self.ofc_data.controller["truncation_index"] = truncation_index
         self.state_estimator = StateEstimator(self.ofc_data)
 
+    def set_state_estimator(self) -> None:
+        """Set the state estimator."""
+        self.state_estimator = StateEstimator(self.ofc_data)
+
     def calculate_corrections(
         self,
         wfe: np.ndarray[float],
         sensor_ids: np.ndarray[int],
         filter_name: str,
         rotation_angle: float,
+        subtract_intrinsics: bool = True,
     ) -> list[Correction]:
         """Calculate the Hexapod, M1M3, and M2 corrections from the FWHM
         and wavefront error.
@@ -155,6 +160,9 @@ class OFC:
             Name of the filter used in the observations.
         rotation_angle : `float`
             Camera rotator angle (in degrees) during the observations.
+        subtract_intrinsics : `bool`, optional
+            Whether to subtract the intrinsic wavefront errors from the
+            measured wavefront errors. Default is `True`.
 
         Returns
         -------
@@ -197,6 +205,7 @@ class OFC:
             wfe,
             sensor_names,
             rotation_angle + self.ofc_data.rotation_offset,
+            subtract_intrinsics=subtract_intrinsics,
         )
 
         # Calculate the uk based on the control algorithm

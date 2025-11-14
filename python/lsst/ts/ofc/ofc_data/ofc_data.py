@@ -630,12 +630,16 @@ class OFCData(BaseOFCData):
         # Read measurement noise covariance matrix
         # ----------------------------------------
         if "noise_covariance_filename" not in self.controller:
-            covariance_filename = "default_noise_covariance.yaml"
+            if instrument == "lsstfam":
+                noise_covariance = np.eye(189 * 25)  # 189 sensors, 25 zernikes each
+            elif instrument == "lsst":
+                noise_covariance = np.eye(4 * 25)  # 4 sensors, 31 zernikes each
+            else:  # comcam
+                noise_covariance = np.eye(9 * 25)  # 9 sensors, 25 zernikes each
         else:
             covariance_filename = self.controller["noise_covariance_filename"]
-
-        configuration_path = self.config_dir / "noise_covariance" / covariance_filename
-        noise_covariance = np.array(self.load_yaml_file(configuration_path))
+            configuration_path = self.config_dir / "noise_covariance" / covariance_filename
+            noise_covariance = np.array(self.load_yaml_file(configuration_path))
 
         # Now all data was read successfully, time to set it up.
         # ------------------------------------------------------

@@ -124,6 +124,7 @@ class TestOFC(unittest.TestCase):
             sensor_ids=sensor_id_list_with_nans,
             filter_name=filter_name,
             rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
         )
 
         self.assertTrue(isinstance(m2_hex_corr, Correction))
@@ -200,6 +201,7 @@ class TestOFC(unittest.TestCase):
                     sensor_ids=self.sensor_id_list,
                     filter_name=filter_name,
                     rotation_angle=0.0,
+                    subtract_intrinsics=True,
                 )
                 self.assertTrue(np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr())))
                 self.assertTrue(np.allclose(cam_hex_corr(), np.zeros_like(cam_hex_corr())))
@@ -242,6 +244,7 @@ class TestOFC(unittest.TestCase):
             sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
             rotation_angle=0.0,
+            subtract_intrinsics=True,
         )
 
         # Retrieve camera hexapod corrections
@@ -298,6 +301,7 @@ class TestOFC(unittest.TestCase):
             sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
             rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
         )
 
         # Return corrections for camera hexapod.

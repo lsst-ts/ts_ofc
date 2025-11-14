@@ -82,6 +82,7 @@ class StateEstimator:
         wfe: np.ndarray[float],
         sensor_names: list,
         rotation_angle: float,
+        subtract_intrinsics: bool = True,
     ) -> np.ndarray[float]:
         """Compute the state in the basis of degrees of freedom.
 
@@ -97,6 +98,9 @@ class StateEstimator:
             List of sensor names.
         rotation_angle : `float`
             Rotation angle in degrees.
+        subtract_intrinsics : `bool`, optional
+            Whether to subtract the intrinsic wavefront errors from the
+            measured wavefront errors. Default is `True`.
 
         Returns
         -------
@@ -106,6 +110,25 @@ class StateEstimator:
 
         # Get the field angles for the sensors
         field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
+
+        n_zernikes = self.ofc_data.znmax - self.ofc_data.znmin + 1
+        n_sensors_cov = self.noise_covariance.shape[0] // n_zernikes
+        if len(sensor_names) != n_sensors_cov:
+            if len(sensor_names) < n_sensors_cov:
+                self.log.warning(
+                    f"Number of sensors ({len(sensor_names)}) less than "
+                    f"the noise covariance sensor matrix size ({n_sensors_cov}). "
+                    "This mode is not supported yet, so an identity matrix "
+                    "will be used for now."
+                )
+                noise_covariance_eval = np.eye(len(sensor_names) * n_zernikes)
+            else:
+                raise ValueError(
+                    f"Number of sensors ({len(sensor_names)}) exceeds "
+                    f"the noise covariance sensor matrix size ({n_sensors_cov})."
+                )
+        else:
+            noise_covariance_eval = self.noise_covariance
         field_x, field_y = zip(*field_angles)
 
         rotation_angle_rad = np.deg2rad(-rotation_angle)
@@ -166,8 +189,10 @@ class StateEstimator:
 
         # With the truncated sensitivity matrix, now include noise covariance
         # when computing the pseudo-inverse. We use the 1e-9 default rcond.
-        full_idx = np.concatenate([self.ofc_data.zn_idx + i * len(self.ofc_data.zn_idx) for i in range(4)])
-        used_noise_covariance = self.noise_covariance[np.ix_(full_idx, full_idx)]
+        full_idx = np.concatenate(
+            [self.ofc_data.zn_idx + i * len(self.ofc_data.zn_idx) for i in range(len(sensor_names))]
+        )
+        used_noise_covariance = noise_covariance_eval[np.ix_(full_idx, full_idx)]
         noise_cov_inv_sqrt = fractional_matrix_power(used_noise_covariance, -0.5)
         pinv_sensitivity_matrix = np.linalg.pinv(
             noise_cov_inv_sqrt @ truncated_sensitivity_matrix, rcond=RCOND_NOISE_COV
@@ -198,13 +223,17 @@ class StateEstimator:
         # y2_correction is a static correction for the
         # deviation currently set to zero.
         y2_correction = np.array([self.ofc_data.y2_correction[sensor] for sensor in sensor_names])
-        y = (
-            wfe[:, self.ofc_data.zn_idx]
-            - get_intrinsic_zernikes(self.ofc_data, filter_name, sensor_names, rotation_angle)[
-                :, self.ofc_data.zn_idx
-            ]
-            - y2_correction[:, self.ofc_data.zn_idx]
-        )
+        if subtract_intrinsics:
+            self.log.info("Subtracting intrinsic wavefront errors from measured wavefront errors.")
+            y = (
+                wfe[:, self.ofc_data.zn_idx]
+                - get_intrinsic_zernikes(self.ofc_data, filter_name, sensor_names, rotation_angle)[
+                    :, self.ofc_data.zn_idx
+                ]
+                - y2_correction[:, self.ofc_data.zn_idx]
+            )
+        else:
+            y = wfe[:, self.ofc_data.zn_idx] - y2_correction[:, self.ofc_data.zn_idx]
 
         # Reshape wavefront error to dimensions
         # (#zk * #sensors, 1) = (19 * #sensors, 1)

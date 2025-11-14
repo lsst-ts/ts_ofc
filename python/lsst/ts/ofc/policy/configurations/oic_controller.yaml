@@ -49,7 +49,6 @@ max_integral: [
   0.0, 0.0, 0.0, 0.0, 0.0,
 ]
 normalization_weights_filename: "range-fwhm.yaml"
-noise_covariance_filename: "default_noise_covariance.yaml"
 truncation_index: 12
 rotation_offset: 0.0 
 

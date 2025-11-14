@@ -34,22 +34,14 @@ class TestOFC(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the test case."""
         self.ofc_data = OFCData("lsst")
-        file_path = (
-            pathlib.Path(__file__).parent.absolute()
-            / "testData"
-            / "test_controller.yaml"
-        )
+        file_path = pathlib.Path(__file__).parent.absolute() / "testData" / "test_controller.yaml"
         self.ofc_data.controller_filename = file_path
 
         self.ofc_data.rotation_offset = 0.0
-        self.ofc_data.motion_penalty = (
-            0.0001  # Set small motion penalty to allow for larger corrections
-        )
+        self.ofc_data.motion_penalty = 0.0001  # Set small motion penalty to allow for larger corrections
         self.ofc = OFC(self.ofc_data)
         self.test_data_path = (
-            pathlib.Path(__file__).parent.absolute()
-            / "testData"
-            / "lsst_wfs_error_test_ofc.z4c"
+            pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_wfs_error_test_ofc.z4c"
         )
 
         self.wfe = np.loadtxt(self.test_data_path)
@@ -70,14 +62,8 @@ class TestOFC(unittest.TestCase):
 
         self.ofc.set_fwhm_data(fwhm_values, self.sensor_id_list)
 
-        self.assertTrue(
-            np.all(
-                self.sensor_name_list == self.ofc.controller.pssn_data["sensor_names"]
-            )
-        )
-        self.assertAlmostEqual(
-            self.ofc.controller.pssn_data["pssn"][0], 0.9139012, places=6
-        )
+        self.assertTrue(np.all(self.sensor_name_list == self.ofc.controller.pssn_data["sensor_names"]))
+        self.assertAlmostEqual(self.ofc.controller.pssn_data["pssn"][0], 0.9139012, places=6)
 
     def test_set_fwhm_data_fails(self) -> None:
         """Test the set_fwhm_data method when it fails."""
@@ -138,6 +124,7 @@ class TestOFC(unittest.TestCase):
             sensor_ids=sensor_id_list_with_nans,
             filter_name=filter_name,
             rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
         )
 
         self.assertTrue(isinstance(m2_hex_corr, Correction))
@@ -202,9 +189,7 @@ class TestOFC(unittest.TestCase):
 
         for filter_name in self.ofc.ofc_data.intrinsic_zk:
             with self.subTest(filter_name=filter_name):
-                wfe = get_intrinsic_zernikes(
-                    self.ofc_data, filter_name, self.sensor_name_list
-                )
+                wfe = get_intrinsic_zernikes(self.ofc_data, filter_name, self.sensor_name_list)
 
                 (
                     m2_hex_corr,
@@ -216,13 +201,10 @@ class TestOFC(unittest.TestCase):
                     sensor_ids=self.sensor_id_list,
                     filter_name=filter_name,
                     rotation_angle=0.0,
+                    subtract_intrinsics=True,
                 )
-                self.assertTrue(
-                    np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr()))
-                )
-                self.assertTrue(
-                    np.allclose(cam_hex_corr(), np.zeros_like(cam_hex_corr()))
-                )
+                self.assertTrue(np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr())))
+                self.assertTrue(np.allclose(cam_hex_corr(), np.zeros_like(cam_hex_corr())))
                 self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
                 self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
@@ -262,6 +244,7 @@ class TestOFC(unittest.TestCase):
             sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
             rotation_angle=0.0,
+            subtract_intrinsics=True,
         )
 
         # Retrieve camera hexapod corrections
@@ -318,6 +301,7 @@ class TestOFC(unittest.TestCase):
             sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
             rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
         )
 
         # Return corrections for camera hexapod.

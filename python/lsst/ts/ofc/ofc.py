@@ -109,10 +109,7 @@ class OFC:
         elif controller_name == "OIC":
             self.controller = OICController(self.ofc_data)
         else:
-            raise ValueError(
-                f"Unknown controller name: {controller_name}. "
-                f"Options are: 'PID', 'OIC'."
-            )
+            raise ValueError(f"Unknown controller name: {controller_name}. Options are: 'PID', 'OIC'.")
 
     def set_controller_filename(self, controller_filename: str) -> None:
         """Set the controller filename.
@@ -136,12 +133,17 @@ class OFC:
         self.ofc_data.controller["truncation_index"] = truncation_index
         self.state_estimator = StateEstimator(self.ofc_data)
 
+    def set_state_estimator(self) -> None:
+        """Set the state estimator."""
+        self.state_estimator = StateEstimator(self.ofc_data)
+
     def calculate_corrections(
         self,
         wfe: np.ndarray[float],
         sensor_ids: np.ndarray[int],
         filter_name: str,
         rotation_angle: float,
+        subtract_intrinsics: bool = True,
     ) -> list[Correction]:
         """Calculate the Hexapod, M1M3, and M2 corrections from the FWHM
         and wavefront error.
@@ -158,6 +160,9 @@ class OFC:
             Name of the filter used in the observations.
         rotation_angle : `float`
             Camera rotator angle (in degrees) during the observations.
+        subtract_intrinsics : `bool`, optional
+            Whether to subtract the intrinsic wavefront errors from the
+            measured wavefront errors. Default is `True`.
 
         Returns
         -------
@@ -200,6 +205,7 @@ class OFC:
             wfe,
             sensor_names,
             rotation_angle + self.ofc_data.rotation_offset,
+            subtract_intrinsics=subtract_intrinsics,
         )
 
         # Calculate the uk based on the control algorithm
@@ -251,9 +257,7 @@ class OFC:
         if isinstance(self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"], float):
             trans_dof = self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"] * dof
         else:
-            inv_rot_mat = np.linalg.pinv(
-                self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"]
-            )
+            inv_rot_mat = np.linalg.pinv(self.ofc_data.comp_dof_idx[dof_comp]["rot_mat"])
 
             trans_dof = inv_rot_mat.dot(dof.reshape(-1, 1)).ravel()
 
@@ -270,9 +274,7 @@ class OFC:
 
         self.lv_dof = np.zeros_like(self.controller.dof_state0)
 
-    def set_fwhm_data(
-        self, fwhm: np.ndarray[float], sensor_ids: np.ndarray[int]
-    ) -> None:
+    def set_fwhm_data(self, fwhm: np.ndarray[float], sensor_ids: np.ndarray[int]) -> None:
         """Set the list of FWHMSensorData of each CCD of camera.
         Parameters
         ----------

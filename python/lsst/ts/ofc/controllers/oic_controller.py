@@ -92,10 +92,7 @@ class OICController(BaseController):
         `numpy.ndarray`
             Calculated uk in the basis of degree of freedom (DOF).
         """
-        state_diff = (
-            self.dof_state[self.ofc_data.dof_idx]
-            - self.dof_state0[self.ofc_data.dof_idx]
-        )
+        state_diff = self.dof_state[self.ofc_data.dof_idx] - self.dof_state0[self.ofc_data.dof_idx]
         state_diff = state_diff.reshape(-1, 1)
 
         _qx = qx + self.ofc_data.motion_penalty**2 * mat_h.dot(state_diff)
@@ -201,9 +198,7 @@ class OICController(BaseController):
             If sensor names are not provided for full array mode instruments.
         """
         if self.ofc_data.name != "lsst" and sensor_names is None:
-            raise RuntimeError(
-                "sensor_names must be provided for full array mode instruments."
-            )
+            raise RuntimeError("sensor_names must be provided for full array mode instruments.")
 
         if self.ofc_data.xref not in self.ofc_data.xref_list:
             raise RuntimeError(
@@ -244,42 +239,24 @@ class OICController(BaseController):
                 or self.ofc_data.gq_weights is None
                 or self.ofc_data.gq_y2_correction is None
             ):
-                raise RuntimeError(
-                    "gq_points and gq_weights must be provided for LSST instrument."
-                )
+                raise RuntimeError("gq_points and gq_weights must be provided for LSST instrument.")
 
-            imqw = [
-                self.ofc_data.gq_weights[sensor]
-                for sensor in range(len(self.ofc_data.gq_weights))
-            ]
+            imqw = [self.ofc_data.gq_weights[sensor] for sensor in range(len(self.ofc_data.gq_weights))]
             field_angles = [
-                self.ofc_data.gq_points[sensor]
-                for sensor in range(len(self.ofc_data.gq_weights))
+                self.ofc_data.gq_points[sensor] for sensor in range(len(self.ofc_data.gq_weights))
             ]
-            y2c = np.array(
-                [self.ofc_data.gq_y2_correction[idx] for idx in range(len(imqw))]
-            )
+            y2c = np.array([self.ofc_data.gq_y2_correction[idx] for idx in range(len(imqw))])
         else:
             if sensor_names is None:
-                raise RuntimeError(
-                    "sensor_names must be provided for full array mode instruments."
-                )
+                raise RuntimeError("sensor_names must be provided for full array mode instruments.")
 
-            imqw = [
-                self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names
-            ]
-            field_angles = [
-                self.ofc_data.sample_points[sensor] for sensor in sensor_names
-            ]
-            y2c = np.array(
-                [self.ofc_data.y2_correction[sensor] for sensor in sensor_names]
-            )
+            imqw = [self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names]
+            field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
+            y2c = np.array([self.ofc_data.y2_correction[sensor] for sensor in sensor_names])
 
         # Compute normalized image quality weights
         if np.sum(imqw) == 0:
-            raise ValueError(
-                "Image quality weights sum is zero. Please check your weights."
-            )
+            raise ValueError("Image quality weights sum is zero. Please check your weights.")
 
         n_imqw = imqw / np.sum(imqw)
 
@@ -296,9 +273,7 @@ class OICController(BaseController):
         q_mat = 0
         for sen_mat, wgt, y2k in zip(sensitivity_matrix, n_imqw, y2c):
             y2k = y2k.reshape(-1, 1)
-            qx += wgt * sen_mat.T.dot(cc_mat).dot(
-                sen_mat.dot(_dof_state) + y2k[self.ofc_data.zn_idx]
-            )
+            qx += wgt * sen_mat.T.dot(cc_mat).dot(sen_mat.dot(_dof_state) + y2k[self.ofc_data.zn_idx])
             q_mat += wgt * sen_mat.T.dot(cc_mat).dot(sen_mat)
 
         # Calculate the F matrix.
@@ -311,9 +286,7 @@ class OICController(BaseController):
 
         mat_f = np.linalg.inv(self.ofc_data.motion_penalty**2 * mat_h + q_mat)
 
-        uk = getattr(self, f"calc_uk_{self.ofc_data.xref}")(
-            mat_f=mat_f, qx=qx, mat_h=mat_h
-        )
+        uk = getattr(self, f"calc_uk_{self.ofc_data.xref}")(mat_f=mat_f, qx=qx, mat_h=mat_h)
 
         return uk.ravel()
 
@@ -347,9 +320,7 @@ class OICController(BaseController):
         """
 
         if (self.ofc_data.name != "lsst") and (sensor_names is None):
-            raise RuntimeError(
-                "sensor_names must be provided for full array mode instruments."
-            )
+            raise RuntimeError("sensor_names must be provided for full array mode instruments.")
 
         correction = self.uk(filter_name, dof_state, sensor_names)
 
@@ -371,16 +342,10 @@ class OICController(BaseController):
             If `pssn_data` is not properly set.
         """
 
-        if (len(self.pssn_data["pssn"]) == 0) or (
-            len(self.pssn_data["sensor_names"]) == 0
-        ):
-            raise RuntimeError(
-                "PSSN data not set. Run `set_fwhm_data` with appropriate data."
-            )
+        if (len(self.pssn_data["pssn"]) == 0) or (len(self.pssn_data["sensor_names"]) == 0):
+            raise RuntimeError("PSSN data not set. Run `set_fwhm_data` with appropriate data.")
 
-        fwhm_gq = self.effective_fwhm_g4(
-            self.pssn_data["pssn"], self.pssn_data["sensor_names"]
-        )
+        fwhm_gq = self.effective_fwhm_g4(self.pssn_data["pssn"], self.pssn_data["sensor_names"])
 
         if fwhm_gq > self.fwhm_threshold:
             self.kp = 1.0

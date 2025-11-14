@@ -6,6 +6,30 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.4.0:
+
+v4.4.0
+======
+
+* Add subtract_intrinsics parameter to ofc and state_estimator to make removing intrinsic wavefront errors optional and allow processing directly wavefront deviation.
+* Make default noise_covariance to be identity matrix if not provided.
+* Add set_state_estimator method to OFC to reset the state estimator when the ofc_data is changed.
+
+
+.. _lsst.ts.ofc-4.3.0:
+
+v4.3.0
+======
+
+* Add noise covariance to the state estimation for GLS/MVUE estimates.
+
+.. _lsst.ts.ofc-4.2.3:
+
+v4.2.3
+======
+
+* Run ruff updated version on all ts_ofc files.
+
 .. _lsst.ts.ofc-4.2.2:
 
 v4.2.2

@@ -55,9 +55,7 @@ def save_intrinsic_zk(
         filter_name = ""
 
     # Save yaml file with header and content shown as legacy yaml files.
-    with open(
-        f"{path}/intrinsic_zk_{filter_name}_{kmax + 1}_29.yaml", "w"
-    ) as yaml_file:
+    with open(f"{path}/intrinsic_zk_{filter_name}_{kmax + 1}_29.yaml", "w") as yaml_file:
         yaml_file.write(
             f"--- \n \
             \n # Intrinsic Zk for the {filter_name} band. \
@@ -107,14 +105,10 @@ def main(args: argparse.Namespace) -> None:
     config_dir = get_config_dir()
 
     try:
-        with open(
-            config_dir / "configurations" / f"{args.instrument.lower()}.yaml"
-        ) as fp:
+        with open(config_dir / "configurations" / f"{args.instrument.lower()}.yaml") as fp:
             config = yaml.safe_load(fp)
     except FileNotFoundError:
-        raise RuntimeError(
-            f"Configuration file for {args.instrument} not found in {config_dir}"
-        )
+        raise RuntimeError(f"Configuration file for {args.instrument} not found in {config_dir}")
 
     # Compute intrinsic zernikes
     intrinsic = get_intrinsic_zk(

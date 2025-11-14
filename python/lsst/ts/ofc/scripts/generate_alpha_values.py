@@ -127,9 +127,7 @@ def get_alpha_values(
         fiducial = batoid.Optic.fromYaml(f"{instrument.upper()}_{band}.yaml")
 
     # Get the field angles of the gaussian quadrature points
-    field_angles = [
-        ofc_data.gq_points[sensor] for sensor in range(len(ofc_data.gq_weights))
-    ]
+    field_angles = [ofc_data.gq_points[sensor] for sensor in range(len(ofc_data.gq_weights))]
     field_x, field_y = zip(*field_angles)
 
     # Load the gaussian quadrature weights
@@ -160,9 +158,7 @@ def get_alpha_values(
                 # Calculate the wavefront without perturbation
                 # to retrieve the opd mask
                 # nx = 255 is the size of the grid to use (255x255)
-                opd_w = batoid.wavefront(
-                    fiducial, field_x, field_y, wavelength=wavelength, nx=255
-                )
+                opd_w = batoid.wavefront(fiducial, field_x, field_y, wavelength=wavelength, nx=255)
                 opd_size = opd_w.array.shape[0]
                 opd_grid_1d = np.linspace(-1, 1, opd_size)
                 opd_x, opd_y = np.meshgrid(opd_grid_1d, opd_grid_1d)
@@ -172,8 +168,7 @@ def get_alpha_values(
                 new_opd = opd_w.array.copy()
                 new_opd[non_masked] = galsim.zernike.Zernike(
                     np.concatenate([np.zeros(znmin), zk]),
-                    R_inner=config["pupil"]["radius_inner"]
-                    / config["pupil"]["radius_outer"],
+                    R_inner=config["pupil"]["radius_inner"] / config["pupil"]["radius_outer"],
                 )(opd_x[non_masked], opd_y[non_masked])
 
                 # Calculate PSSN from the new opd
@@ -184,9 +179,7 @@ def get_alpha_values(
 
             # Calculate the average PSSN value
             # among all the gaussian quadrature points
-            pssn_avg[id_zk, id_increment] = np.sum(
-                n_imqw * pssn_gq_points[id_zk, :, id_increment]
-            )
+            pssn_avg[id_zk, id_increment] = np.sum(n_imqw * pssn_gq_points[id_zk, :, id_increment])
 
         # Make the linear fit for 1 - PSSN = alpha * delta^2
         # where delta is the zernike increment in um
@@ -230,9 +223,7 @@ def main(args: argparse.Namespace) -> None:
         with open(config_dir / "configurations" / "lsst.yaml") as fp:
             config = yaml.safe_load(fp)
     except FileNotFoundError:
-        raise RuntimeError(
-            f"Configuration file for {args.instrument} not found in {config_dir}"
-        )
+        raise RuntimeError(f"Configuration file for {args.instrument} not found in {config_dir}")
 
     # Compute intrinsic zernikes
     alpha_values = get_alpha_values(

@@ -39,16 +39,11 @@ class TestSensitivityMatrix(unittest.TestCase):
 
         # Define the field angles for the 31 Gaussian Quadrature points
         self.field_angles = [
-            self.ofc_data.gq_points[sensor]
-            for sensor in range(len(self.ofc_data.gq_points))
+            self.ofc_data.gq_points[sensor] for sensor in range(len(self.ofc_data.gq_points))
         ]
-        self.unrotated_sensitivity_matrix = -self.sensitivity_matrix.evaluate(
-            field_angles=self.field_angles
-        )
+        self.unrotated_sensitivity_matrix = -self.sensitivity_matrix.evaluate(field_angles=self.field_angles)
 
-        self.unrotated_sensitivity_matrix[
-            ..., [0, 1, 3, 5, 6, 8] + list(range(30, 50))
-        ] *= -1
+        self.unrotated_sensitivity_matrix[..., [0, 1, 3, 5, 6, 8] + list(range(30, 50))] *= -1
 
         gq_sensitivity_matrix_file = Path(
             glob(
@@ -118,9 +113,7 @@ class TestSensitivityMatrix(unittest.TestCase):
             # Change the units of the tilts to degrees
             self.gq_sensitivity_matrix[:, :, [3, 4, 8, 9]] *= 3600
 
-    def mean_squared_residual(
-        self, new_array: np.ndarray, reference_array: np.ndarray
-    ) -> float:
+    def mean_squared_residual(self, new_array: np.ndarray, reference_array: np.ndarray) -> float:
         """Compute the mean squared residual between two arrays.
 
         Parameters
@@ -147,9 +140,7 @@ class TestSensitivityMatrix(unittest.TestCase):
         for dof in np.arange(10):
             assert (
                 self.mean_squared_residual(
-                    self.unrotated_sensitivity_matrix[
-                        ..., : self.gq_sensitivity_matrix.shape[1], dof
-                    ],
+                    self.unrotated_sensitivity_matrix[..., : self.gq_sensitivity_matrix.shape[1], dof],
                     self.gq_sensitivity_matrix[..., dof],
                 )
                 < 2e-4
@@ -193,9 +184,7 @@ class TestSensitivityMatrix(unittest.TestCase):
             rotated_sensitivity_matrix = -self.sensitivity_matrix.evaluate(
                 field_angles=self.field_angles, rotation_angle=angle
             )
-            rotated_sensitivity_matrix[
-                ..., [0, 1, 3, 5, 6, 8] + list(range(30, 50))
-            ] *= -1
+            rotated_sensitivity_matrix[..., [0, 1, 3, 5, 6, 8] + list(range(30, 50))] *= -1
 
             # Check for zernikes excited uniformally
             # accross the field (radial order 0)

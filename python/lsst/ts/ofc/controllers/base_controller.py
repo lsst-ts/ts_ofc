@@ -90,9 +90,7 @@ class BaseController:
         self._kp = self.ofc_data.controller["kp"]
         self._ki = self.ofc_data.controller["ki"]
         self._kd = self.ofc_data.controller["kd"]
-        self._derivative_filter_coeff = self.ofc_data.controller[
-            "derivative_filter_coeff"
-        ]
+        self._derivative_filter_coeff = self.ofc_data.controller["derivative_filter_coeff"]
         self.setpoint = np.array(self.ofc_data.controller["setpoint"])
 
         # Set initial state
@@ -101,8 +99,7 @@ class BaseController:
         for comp in self.ofc_data.comp_dof_idx:
             start_idx = self.ofc_data.comp_dof_idx[comp]["startIdx"]
             end_idx = (
-                self.ofc_data.comp_dof_idx[comp]["startIdx"]
-                + self.ofc_data.comp_dof_idx[comp]["idxLength"]
+                self.ofc_data.comp_dof_idx[comp]["startIdx"] + self.ofc_data.comp_dof_idx[comp]["idxLength"]
             )
 
             state0name = self.ofc_data.comp_dof_idx[comp]["state0name"]
@@ -117,10 +114,8 @@ class BaseController:
             else:
                 self.dof_state0[start_idx:end_idx] = np.array(
                     [
-                        self.ofc_data.dof_state0[state0name][f"mode{mode_idx+1}"]
-                        for mode_idx in range(
-                            self.ofc_data.comp_dof_idx[comp]["idxLength"]
-                        )
+                        self.ofc_data.dof_state0[state0name][f"mode{mode_idx + 1}"]
+                        for mode_idx in range(self.ofc_data.comp_dof_idx[comp]["idxLength"])
                     ]
                 )
 
@@ -194,9 +189,7 @@ class BaseController:
         """
         self.dof_state = self.dof_state0.copy()
 
-    def aggregate_state(
-        self, dof: np.ndarray[float] | list, dof_idx: np.ndarray[int] | list[int]
-    ) -> None:
+    def aggregate_state(self, dof: np.ndarray[float] | list, dof_idx: np.ndarray[int] | list[int]) -> None:
         """Aggregate the calculated degree of freedom (DOF) in the state.
 
         Parameters
@@ -289,19 +282,13 @@ class BaseController:
             + (1 - self.derivative_filter_coeff) * self.filtered_derivative
         )
 
-        uk = (
-            self.kp * error
-            + self.ki * self.integral
-            + self.kd * self.filtered_derivative
-        )
+        uk = self.kp * error + self.ki * self.integral + self.kd * self.filtered_derivative
 
         self.previous_error = error
 
         return uk
 
-    def effective_fwhm_g4(
-        self, pssn: np.ndarray[float], sensor_names: list[str]
-    ) -> float:
+    def effective_fwhm_g4(self, pssn: np.ndarray[float], sensor_names: list[str]) -> float:
         """Calculate the effective FWHM by Gaussian quadrature.
 
         FWHM: Full width at half maximum.
@@ -332,9 +319,7 @@ class BaseController:
         imqw = [self.ofc_data.image_quality_weights[sensor] for sensor in sensor_names]
 
         if np.sum(imqw) == 0:
-            raise ValueError(
-                "Image quality weights sum is zero. Please check your weights."
-            )
+            raise ValueError("Image quality weights sum is zero. Please check your weights.")
 
         n_imqw = imqw / np.sum(imqw)
 

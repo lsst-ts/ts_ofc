@@ -190,7 +190,10 @@ class StateEstimator:
         # With the truncated sensitivity matrix, now include noise covariance
         # when computing the pseudo-inverse. We use the 1e-9 default rcond.
         full_idx = np.concatenate(
-            [self.ofc_data.zn_idx + i * len(self.ofc_data.zn_idx) for i in range(len(sensor_names))]
+            [
+                self.ofc_data.zn_idx + i * (self.ofc_data.znmax - self.ofc_data.znmin + 1)
+                for i in range(len(sensor_names))
+            ]
         )
         used_noise_covariance = noise_covariance_eval[np.ix_(full_idx, full_idx)]
         noise_cov_inv_sqrt = fractional_matrix_power(used_noise_covariance, -0.5)

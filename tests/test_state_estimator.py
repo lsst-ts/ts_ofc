@@ -203,7 +203,9 @@ class TestStateEstimator(unittest.TestCase):
         state_estimator_identity = StateEstimator(self.ofc_data)
         state_estimator_covariance = StateEstimator(self.ofc_data)
 
-        full_idx = np.concatenate([self.ofc_data.zn_idx + i * len(self.ofc_data.zn_idx) for i in range(4)])
+        full_idx = np.concatenate(
+            [self.ofc_data.zn_idx + i * (self.ofc_data.znmax - self.ofc_data.znmin + 1) for i in range(4)]
+        )
         used_noise_covariance = self.noise_covariance[np.ix_(full_idx, full_idx)]
         state_estimator_covariance.noise_covariance = used_noise_covariance
 

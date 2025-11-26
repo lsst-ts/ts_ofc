@@ -78,24 +78,10 @@ class TestStateEstimator(unittest.TestCase):
         """
         return np.sum((new_array - reference_array) ** 2) / np.sum(reference_array**2)
 
-    def compute_sensitivity_matrix(self, field_angles: np.ndarray, rotation_angle: float) -> np.ndarray:
-        """Compute sensitivity matrix for the given
-        field angles and rotation angle.
-
-        Parameters
-        ----------
-        field_angles : np.ndarray
-            Field angles for the sensors.
-        rotation_angle : float
-            Rotation angle.
-
-        Returns
-        -------
-        np.ndarray
-            Sensitivity matrix.
-        """
+    def test_get_sensitivity_matrix(self) -> None:
+        """Test the get_sensitivity_matrix method."""
         # Evaluate sensitivity matrix at sensor positions
-        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(field_angles, rotation_angle)
+        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(self.field_angles, rotation_angle=0.0)
 
         # Select sensitivity matrix only at used zernikes
         sensitivity_matrix = sensitivity_matrix[:, self.dz_sensitivity_matrix.ofc_data.zn_idx, :]
@@ -108,12 +94,15 @@ class TestStateEstimator(unittest.TestCase):
         # Select sensitivity matrix only at used degrees of freedom
         sensitivity_matrix = sensitivity_matrix[..., self.dz_sensitivity_matrix.ofc_data.dof_idx]
 
-        return sensitivity_matrix
+        # Now compute using the class method
+        expected_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+
+        assert np.allclose(sensitivity_matrix, expected_matrix)
 
     def test_dof_state(self) -> None:
         """Test the dof_state method."""
         # Compute sensitivity matrix
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+        sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
 
         # Compute optical state estimate
         state = self.estimator.dof_state("R", self.wfe, self.sensor_name_list, rotation_angle=0.0)
@@ -145,7 +134,7 @@ class TestStateEstimator(unittest.TestCase):
         self.estimator.truncate_index = 46
 
         # Compute sensitivity matrix
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+        sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
 
         # Compute optical state estimate
         state = self.estimator.dof_state("R", self.wfe, self.sensor_name_list, rotation_angle=0.0)
@@ -163,7 +152,7 @@ class TestStateEstimator(unittest.TestCase):
         """Test the dof_state method when using normalization weights."""
         self.estimator.normalization_weights = self.normalization_weights
 
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+        sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
 
         state = self.estimator.dof_state("R", self.wfe, self.sensor_name_list, rotation_angle=0.0)
 
@@ -188,7 +177,7 @@ class TestStateEstimator(unittest.TestCase):
         self.assertEqual(len(state_random_covariance), n_values)
 
         # Check that the state is different when using noise covariance
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+        sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
         residual = self.mean_squared_residual(
             sensitivity_matrix @ state_random_covariance,
             sensitivity_matrix @ state_identity_covariance,
@@ -199,7 +188,7 @@ class TestStateEstimator(unittest.TestCase):
         """Test the dof_state resulting distribution when
         using noise covariance.
         """
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+        sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
         state_estimator_identity = StateEstimator(self.ofc_data)
         state_estimator_covariance = StateEstimator(self.ofc_data)
 
@@ -288,7 +277,7 @@ class TestStateEstimator(unittest.TestCase):
         self.dz_sensitivity_matrix.ofc_data.zn_selected = np.arange(4, 10)
 
         # Compute sensitivity matrix
-        sensitivity_matrix = self.compute_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+        sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
 
         # Set used Degrees of Freedom
         new_comp_dof_idx = dict(

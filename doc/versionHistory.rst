@@ -6,6 +6,13 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.5.0:
+
+v4.5.0
+======
+
+* Factored StateEstimator to make analyses of intermediate products easier.
+
 .. _lsst.ts.ofc-4.4.1:
 
 v4.4.1

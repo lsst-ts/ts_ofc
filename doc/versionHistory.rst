@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.ofc-4.4.1:
+
+v4.4.1
+======
+
+* Add default covariance matrix for eight sensors.
+* Fix noise covariance matrix indexing in state estimator.
+
 .. _lsst.ts.ofc-4.4.0:
 
 v4.4.0

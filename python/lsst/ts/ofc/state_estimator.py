@@ -107,98 +107,23 @@ class StateEstimator:
         numpy.ndarray
             Optical state in the basis of DOF.
         """
-
-        # Get the field angles for the sensors
+        # Get (truncated, normalized) sensitivity at sensor positions
         field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
-
-        n_zernikes = self.ofc_data.znmax - self.ofc_data.znmin + 1
-        n_sensors_cov = self.noise_covariance.shape[0] // n_zernikes
-        if len(sensor_names) != n_sensors_cov:
-            if len(sensor_names) < n_sensors_cov:
-                self.log.warning(
-                    f"Number of sensors ({len(sensor_names)}) less than "
-                    f"the noise covariance sensor matrix size ({n_sensors_cov}). "
-                    "This mode is not supported yet, so an identity matrix "
-                    "will be used for now."
-                )
-                noise_covariance_eval = np.eye(len(sensor_names) * n_zernikes)
-            else:
-                raise ValueError(
-                    f"Number of sensors ({len(sensor_names)}) exceeds "
-                    f"the noise covariance sensor matrix size ({n_sensors_cov})."
-                )
-        else:
-            noise_covariance_eval = self.noise_covariance
-        field_x, field_y = zip(*field_angles)
-
-        rotation_angle_rad = np.deg2rad(-rotation_angle)
-        rot_mat = np.array(
-            [
-                [np.cos(rotation_angle_rad), -np.sin(rotation_angle_rad)],
-                [np.sin(rotation_angle_rad), np.cos(rotation_angle_rad)],
-            ]
+        sensitivity_matrix = self.get_sensitivity_matrix(
+            field_angles,
+            rotation_angle,
+            normalize=True,
+            truncate=True,
         )
-        field_angles = np.array([field_x, field_y]).T @ rot_mat
 
-        # Evaluate sensitivity matrix at sensor positions
-        # The rotation angle is negative because the rotation
-        # in the uv-plane for the Double Zernike object
-        # needs to be in the opposite direction.
-        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(field_angles, 0.0)
-
-        # Select sensitivity matrix only at used degrees of freedom
-        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn_idx, :]
-
-        # Reshape sensitivity matrix to dimensions
-        # (#zk * #sensors, # dofs) = (19 * #sensors, 50)
-        size = sensitivity_matrix.shape[2]
-        sensitivity_matrix = sensitivity_matrix.reshape((-1, size))
-
-        # Select sensitivity matrix only at used degrees of freedom
-        sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
-
-        normalization_matrix = np.diag(self.normalization_weights[self.ofc_data.dof_idx])
-        sensitivity_matrix = sensitivity_matrix @ normalization_matrix
-
-        # Check the dimension of sensitivity matrix to see if we can invert it
-        num_zk, num_dof = sensitivity_matrix.shape
-        if num_zk < num_dof:
-            raise RuntimeError(f"Equation number ({num_zk}) < variable number ({num_dof}).")
-
-        # Compute the pseudo-inverse of the sensitivity matrix
-        # rcond sets the truncation of different modes.
-        # If rcond is None, it is computed from the singular values
-        # of the sensitivity matrix, using the truncation index as reference.
-        if self.rcond is None and self.truncate_index is None:
-            raise ValueError("Neither truncation index or threshold are set in the controller.")
-
-        # Handle truncation of the sensitivity matrix using SVD first.
-        # This ensures the v-modes will not depend on the noise covariance.
-        u, s, vh = np.linalg.svd(sensitivity_matrix, full_matrices=False)
-        if self.truncate_index is not None:
-            self.log.info("Setting rcond value from truncation index.")
-            if self.truncate_index >= len(s):
-                self.rcond = 0.99 * s[-1] / np.max(s)
-            else:
-                self.rcond = 0.99 * s[self.truncate_index - 1] / np.max(s)
-
-        cutoff = self.rcond * np.amax(s, axis=-1, keepdims=True)
-        large = s > cutoff
-        s[~large] = 0
-        truncated_sensitivity_matrix = u @ np.diag(s) @ vh
+        # Calculate inverse of noise covariance for sensors
+        noise_covariance = self.get_noise_covariance(sensor_names)
+        noise_cov_inv_sqrt = fractional_matrix_power(noise_covariance, -0.5)
 
         # With the truncated sensitivity matrix, now include noise covariance
         # when computing the pseudo-inverse. We use the 1e-9 default rcond.
-        full_idx = np.concatenate(
-            [
-                self.ofc_data.zn_idx + i * (self.ofc_data.znmax - self.ofc_data.znmin + 1)
-                for i in range(len(sensor_names))
-            ]
-        )
-        used_noise_covariance = noise_covariance_eval[np.ix_(full_idx, full_idx)]
-        noise_cov_inv_sqrt = fractional_matrix_power(used_noise_covariance, -0.5)
         pinv_sensitivity_matrix = np.linalg.pinv(
-            noise_cov_inv_sqrt @ truncated_sensitivity_matrix, rcond=RCOND_NOISE_COV
+            noise_cov_inv_sqrt @ sensitivity_matrix, rcond=RCOND_NOISE_COV
         )
 
         # Rotate the wavefront error to the same orientation as the
@@ -206,7 +131,7 @@ class StateEstimator:
         # the coefficients are in units of um which does not matter
         # here as we are only rotating them.
         # Note that we need to pad the wfe with zeros for the 4 first
-        # Zernike coefficients, since wfe goes from Z4-Z22
+        # Zernike coefficients, since wfe starts with Z4
         wfe = np.array(wfe)
         for idx in range(wfe.shape[0]):
             wfe_sensor = np.pad(wfe[idx, :], (self.ofc_data.znmin, 0))
@@ -247,6 +172,159 @@ class StateEstimator:
         # to retrieve the actual DOF values in the original 50 dimensional
         # basis. For more details, see equation (10) in arXiv:2406.04656.
         # For the noise covariance part, see description in SITCOMTN-129.
+        normalization_matrix = self.get_normalization_matrix()
         x = normalization_matrix @ pinv_sensitivity_matrix @ noise_cov_inv_sqrt @ y
 
         return x.ravel()
+
+    def get_normalization_matrix(self) -> np.ndarray[float]:
+        """Get the normalization matrix.
+
+        The normalization is defined in Eqs 9-11 of
+        https://ui.adsabs.harvard.edu/abs/2024ApJ...974..108M
+
+        Returns
+        -------
+        numpy.ndarray
+            Normalization matrix.
+        """
+        return np.diag(self.normalization_weights[self.ofc_data.dof_idx])
+
+    def get_sensitivity_matrix(
+        self,
+        field_angles: list,
+        rotation_angle: float,
+        normalize: bool = False,
+        truncate: bool = False,
+        check_invertible: bool = True,
+    ) -> np.ndarray[float]:
+        """Get the sensitivity matrix at the sensor positions.
+
+        The normalization is defined in Eqs 9-11 and the truncation in Eqs 2-7
+        of https://ui.adsabs.harvard.edu/abs/2024ApJ...974..108M
+
+        Parameters
+        ----------
+        field_angles : `list`
+            List of field angles at which to evaluate the sensitivity matrix.
+        rotation_angle : `float`
+            Rotation angle in degrees.
+        normalize : `bool`
+            Whether to normalize the sensitivity matrix.
+            Default is `False`.
+        truncate : `bool`
+            Whether to truncate the sensitivity matrix.
+            Default is `False`.
+        check_invertible : `bool`
+            Whether to check if the sensitivity matrix is invertible.
+            Default is `True`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Sensitivity matrix at the sensor positions.
+        """
+        # Get the field angles for the sensors
+        field_x, field_y = zip(*field_angles)
+
+        rotation_angle_rad = np.deg2rad(-rotation_angle)
+        rot_mat = np.array(
+            [
+                [np.cos(rotation_angle_rad), -np.sin(rotation_angle_rad)],
+                [np.sin(rotation_angle_rad), np.cos(rotation_angle_rad)],
+            ]
+        )
+        field_angles = np.array([field_x, field_y]).T @ rot_mat
+
+        # Evaluate sensitivity matrix at sensor positions
+        # The rotation angle is negative because the rotation
+        # in the uv-plane for the Double Zernike object
+        # needs to be in the opposite direction.
+        sensitivity_matrix = self.dz_sensitivity_matrix.evaluate(field_angles, 0.0)
+
+        # Select sensitivity matrix only at used degrees of freedom
+        sensitivity_matrix = sensitivity_matrix[:, self.ofc_data.zn_idx, :]
+
+        # Reshape sensitivity matrix to dimensions
+        # (#zk * #sensors, # dofs) = (19 * #sensors, 50)
+        size = sensitivity_matrix.shape[2]
+        sensitivity_matrix = sensitivity_matrix.reshape((-1, size))
+
+        # Select sensitivity matrix only at used degrees of freedom
+        sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
+
+        if normalize:
+            normalization_matrix = self.get_normalization_matrix()
+            sensitivity_matrix = sensitivity_matrix @ normalization_matrix
+
+        # Check the dimension of sensitivity matrix to see if we can invert it
+        num_zk, num_dof = sensitivity_matrix.shape
+        if num_zk < num_dof and check_invertible:
+            raise RuntimeError(f"Equation number ({num_zk}) < variable number ({num_dof}).")
+
+        if truncate:
+            # Compute the pseudo-inverse of the sensitivity matrix
+            # rcond sets the truncation of different modes.
+            # If rcond is None, it is computed from the singular values
+            # of the sensitivity matrix, using truncation index as reference.
+            if self.rcond is None and self.truncate_index is None:
+                raise ValueError("Neither truncation index or threshold are set in the controller.")
+
+            # Handle truncation of the sensitivity matrix using SVD first.
+            # This ensures the v-modes will not depend on the noise covariance.
+            u, s, vh = np.linalg.svd(sensitivity_matrix, full_matrices=False)
+            if self.truncate_index is not None:
+                self.log.info("Setting rcond value from truncation index.")
+                if self.truncate_index >= len(s):
+                    self.rcond = 0.99 * s[-1] / np.max(s)
+                else:
+                    self.rcond = 0.99 * s[self.truncate_index - 1] / np.max(s)
+
+            cutoff = self.rcond * np.amax(s, axis=-1, keepdims=True)
+            large = s > cutoff
+            s[~large] = 0
+            sensitivity_matrix = u @ np.diag(s) @ vh
+
+        return sensitivity_matrix
+
+    def get_noise_covariance(self, sensor_names: list) -> np.ndarray[float]:
+        """Get the noise covariance matrix.
+
+        Parameters
+        ----------
+        sensor_names : `list`
+            List of sensor names.
+
+        Returns
+        -------
+        numpy.ndarray
+            Noise covariance matrix.
+        """
+        n_zernikes = self.ofc_data.znmax - self.ofc_data.znmin + 1
+        n_sensors_cov = self.noise_covariance.shape[0] // n_zernikes
+        if len(sensor_names) != n_sensors_cov:
+            if len(sensor_names) < n_sensors_cov:
+                self.log.warning(
+                    f"Number of sensors ({len(sensor_names)}) less than "
+                    f"the noise covariance sensor matrix size ({n_sensors_cov}). "
+                    "This mode is not supported yet, so an identity matrix "
+                    "will be used for now."
+                )
+                noise_covariance_eval = np.eye(len(sensor_names) * n_zernikes)
+            else:
+                raise ValueError(
+                    f"Number of sensors ({len(sensor_names)}) exceeds "
+                    f"the noise covariance sensor matrix size ({n_sensors_cov})."
+                )
+        else:
+            noise_covariance_eval = self.noise_covariance
+
+        full_idx = np.concatenate(
+            [
+                self.ofc_data.zn_idx + i * (self.ofc_data.znmax - self.ofc_data.znmin + 1)
+                for i in range(len(sensor_names))
+            ]
+        )
+        used_noise_covariance = noise_covariance_eval[np.ix_(full_idx, full_idx)]
+
+        return used_noise_covariance

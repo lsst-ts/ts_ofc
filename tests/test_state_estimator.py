@@ -274,10 +274,11 @@ class TestStateEstimator(unittest.TestCase):
         """
         # Set zernike indices to Z4-Z9
         self.estimator.ofc_data.zn_selected = np.arange(4, 10)
-        self.dz_sensitivity_matrix.ofc_data.zn_selected = np.arange(4, 10)
 
         # Compute sensitivity matrix
-        sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+        sensitivity_matrix = self.estimator.get_sensitivity_matrix(
+            self.field_angles, rotation_angle=0.0, check_invertible=False
+        )
 
         # Set used Degrees of Freedom
         new_comp_dof_idx = dict(
@@ -298,7 +299,7 @@ class TestStateEstimator(unittest.TestCase):
         # Check derived wavefront from state estimate matches
         # the one from original dofs
         residual = self.mean_squared_residual(
-            sensitivity_matrix @ self.dofs, sensitivity_matrix[..., :n_values] @ state
+            sensitivity_matrix @ self.dofs, sensitivity_matrix[..., self.estimator.ofc_data.dof_idx] @ state
         )
         assert residual < 2e-2
 

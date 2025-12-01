@@ -76,6 +76,107 @@ class StateEstimator:
         self.rcond = ofc_data.controller.get("truncation_threshold", None)
         self.truncate_index = ofc_data.controller.get("truncation_index", None)
 
+    def dof_state(
+        self,
+        filter_name: str,
+        wfe: np.ndarray[float],
+        sensor_names: list,
+        rotation_angle: float,
+        subtract_intrinsics: bool = True,
+    ) -> np.ndarray[float]:
+        """Compute the state in the basis of degrees of freedom.
+
+        Solve y = A*x by x = pinv(A)*y.
+
+        Parameters
+        ----------
+        filter_name : `string`
+            Name of the filter. Must be in `self.intrinsic_zk`.
+        wfe : `numpy.ndarray`
+            Wavefront error im um.
+        sensor_names : `list`
+            List of sensor names.
+        rotation_angle : `float`
+            Rotation angle in degrees.
+        subtract_intrinsics : `bool`, optional
+            Whether to subtract the intrinsic wavefront errors from the
+            measured wavefront errors. Default is `True`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Optical state in the basis of DOF.
+        """
+        # Get (truncated, normalized) sensitivity at sensor positions
+        field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
+        sensitivity_matrix = self.get_sensitivity_matrix(
+            field_angles,
+            rotation_angle,
+            normalize=True,
+            truncate=True,
+        )
+
+        # Calculate inverse of noise covariance for sensors
+        noise_covariance = self.get_noise_covariance(sensor_names)
+        noise_cov_inv_sqrt = fractional_matrix_power(noise_covariance, -0.5)
+
+        # With the truncated sensitivity matrix, now include noise covariance
+        # when computing the pseudo-inverse. We use the 1e-9 default rcond.
+        pinv_sensitivity_matrix = np.linalg.pinv(
+            noise_cov_inv_sqrt @ sensitivity_matrix, rcond=RCOND_NOISE_COV
+        )
+
+        # Rotate the wavefront error to the same orientation as the
+        # sensitivity matrix. When creating galsim.Zernike object,
+        # the coefficients are in units of um which does not matter
+        # here as we are only rotating them.
+        # Note that we need to pad the wfe with zeros for the 4 first
+        # Zernike coefficients, since wfe starts with Z4
+        wfe = np.array(wfe)
+        for idx in range(wfe.shape[0]):
+            wfe_sensor = np.pad(wfe[idx, :], (self.ofc_data.znmin, 0))
+
+            zk_galsim = galsim.zernike.Zernike(
+                wfe_sensor,
+                R_outer=self.ofc_data.config["pupil"]["radius_outer"],
+                R_inner=self.ofc_data.config["pupil"]["radius_inner"],
+            )
+            # Note that we need to remove the first 4 Zernike coefficients
+            # since we padded the wfe with zeros for the 4 first Zernike
+            wfe[idx, :] = zk_galsim.rotate(np.deg2rad(rotation_angle)).coef[self.ofc_data.znmin :]
+
+        self.log.debug(f"Derotated wavefront error: {wfe}")
+        # Compute wavefront error deviation from the intrinsic wavefront error
+        # y = wfe - intrinsic_zk - y2_correction
+        # y2_correction is a static correction for the
+        # deviation currently set to zero.
+        y2_correction = np.array([self.ofc_data.y2_correction[sensor] for sensor in sensor_names])
+        if subtract_intrinsics:
+            self.log.info("Subtracting intrinsic wavefront errors from measured wavefront errors.")
+            y = (
+                wfe[:, self.ofc_data.zn_idx]
+                - get_intrinsic_zernikes(self.ofc_data, filter_name, sensor_names, rotation_angle)[
+                    :, self.ofc_data.zn_idx
+                ]
+                - y2_correction[:, self.ofc_data.zn_idx]
+            )
+        else:
+            y = wfe[:, self.ofc_data.zn_idx] - y2_correction[:, self.ofc_data.zn_idx]
+
+        # Reshape wavefront error to dimensions
+        # (#zk * #sensors, 1) = (19 * #sensors, 1)
+        y = y.reshape(-1, 1)
+
+        # Compute optical state estimate in the basis of DOF
+        # Because of normalization, we need to de-normalize the result
+        # to retrieve the actual DOF values in the original 50 dimensional
+        # basis. For more details, see equation (10) in arXiv:2406.04656.
+        # For the noise covariance part, see description in SITCOMTN-129.
+        normalization_matrix = self.get_normalization_matrix()
+        x = normalization_matrix @ pinv_sensitivity_matrix @ noise_cov_inv_sqrt @ y
+
+        return x.ravel()
+
     def get_normalization_matrix(self) -> np.ndarray[float]:
         """Get the normalization matrix.
 
@@ -227,104 +328,3 @@ class StateEstimator:
         used_noise_covariance = noise_covariance_eval[np.ix_(full_idx, full_idx)]
 
         return used_noise_covariance
-
-    def dof_state(
-        self,
-        filter_name: str,
-        wfe: np.ndarray[float],
-        sensor_names: list,
-        rotation_angle: float,
-        subtract_intrinsics: bool = True,
-    ) -> np.ndarray[float]:
-        """Compute the state in the basis of degrees of freedom.
-
-        Solve y = A*x by x = pinv(A)*y.
-
-        Parameters
-        ----------
-        filter_name : `string`
-            Name of the filter. Must be in `self.intrinsic_zk`.
-        wfe : `numpy.ndarray`
-            Wavefront error im um.
-        sensor_names : `list`
-            List of sensor names.
-        rotation_angle : `float`
-            Rotation angle in degrees.
-        subtract_intrinsics : `bool`, optional
-            Whether to subtract the intrinsic wavefront errors from the
-            measured wavefront errors. Default is `True`.
-
-        Returns
-        -------
-        numpy.ndarray
-            Optical state in the basis of DOF.
-        """
-        # Get (truncated, normalized) sensitivity at sensor positions
-        field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
-        sensitivity_matrix = self.get_sensitivity_matrix(
-            field_angles,
-            rotation_angle,
-            normalize=True,
-            truncate=True,
-        )
-
-        # Calculate inverse of noise covariance for sensors
-        noise_covariance = self.get_noise_covariance(sensor_names)
-        noise_cov_inv_sqrt = fractional_matrix_power(noise_covariance, -0.5)
-
-        # With the truncated sensitivity matrix, now include noise covariance
-        # when computing the pseudo-inverse. We use the 1e-9 default rcond.
-        pinv_sensitivity_matrix = np.linalg.pinv(
-            noise_cov_inv_sqrt @ sensitivity_matrix, rcond=RCOND_NOISE_COV
-        )
-
-        # Rotate the wavefront error to the same orientation as the
-        # sensitivity matrix. When creating galsim.Zernike object,
-        # the coefficients are in units of um which does not matter
-        # here as we are only rotating them.
-        # Note that we need to pad the wfe with zeros for the 4 first
-        # Zernike coefficients, since wfe starts with Z4
-        wfe = np.array(wfe)
-        for idx in range(wfe.shape[0]):
-            wfe_sensor = np.pad(wfe[idx, :], (self.ofc_data.znmin, 0))
-
-            zk_galsim = galsim.zernike.Zernike(
-                wfe_sensor,
-                R_outer=self.ofc_data.config["pupil"]["radius_outer"],
-                R_inner=self.ofc_data.config["pupil"]["radius_inner"],
-            )
-            # Note that we need to remove the first 4 Zernike coefficients
-            # since we padded the wfe with zeros for the 4 first Zernike
-            wfe[idx, :] = zk_galsim.rotate(np.deg2rad(rotation_angle)).coef[self.ofc_data.znmin :]
-
-        self.log.debug(f"Derotated wavefront error: {wfe}")
-        # Compute wavefront error deviation from the intrinsic wavefront error
-        # y = wfe - intrinsic_zk - y2_correction
-        # y2_correction is a static correction for the
-        # deviation currently set to zero.
-        y2_correction = np.array([self.ofc_data.y2_correction[sensor] for sensor in sensor_names])
-        if subtract_intrinsics:
-            self.log.info("Subtracting intrinsic wavefront errors from measured wavefront errors.")
-            y = (
-                wfe[:, self.ofc_data.zn_idx]
-                - get_intrinsic_zernikes(self.ofc_data, filter_name, sensor_names, rotation_angle)[
-                    :, self.ofc_data.zn_idx
-                ]
-                - y2_correction[:, self.ofc_data.zn_idx]
-            )
-        else:
-            y = wfe[:, self.ofc_data.zn_idx] - y2_correction[:, self.ofc_data.zn_idx]
-
-        # Reshape wavefront error to dimensions
-        # (#zk * #sensors, 1) = (19 * #sensors, 1)
-        y = y.reshape(-1, 1)
-
-        # Compute optical state estimate in the basis of DOF
-        # Because of normalization, we need to de-normalize the result
-        # to retrieve the actual DOF values in the original 50 dimensional
-        # basis. For more details, see equation (10) in arXiv:2406.04656.
-        # For the noise covariance part, see description in SITCOMTN-129.
-        normalization_matrix = self.get_normalization_matrix()
-        x = normalization_matrix @ pinv_sensitivity_matrix @ noise_cov_inv_sqrt @ y
-
-        return x.ravel()

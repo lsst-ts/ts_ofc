@@ -7,3 +7,4 @@ format-xmllint: true
 isort: false
 mypy: true
 ruff: true
+towncrier: true

@@ -22,6 +22,7 @@
 import unittest
 
 import numpy as np
+
 from lsst.ts.ofc import Correction
 from lsst.ts.ofc.utils import CorrectionType
 

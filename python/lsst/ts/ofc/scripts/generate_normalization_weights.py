@@ -24,6 +24,7 @@ import argparse
 
 import numpy as np
 import yaml
+
 from lsst.ts.wep.utils import convertZernikesToPsfWidth
 
 from .. import BendModeToForce, OFCData, SensitivityMatrix

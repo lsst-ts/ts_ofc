@@ -26,9 +26,10 @@ import batoid
 import galsim
 import numpy as np
 import yaml
+from tqdm import tqdm
+
 from lsst.ts.imsim import OpdMetrology
 from lsst.ts.ofc import OFCData
-from tqdm import tqdm
 
 
 def save_alpha_values(alpha_values: np.ndarray, path: str) -> None:

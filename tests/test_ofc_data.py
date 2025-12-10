@@ -23,6 +23,7 @@ import pathlib
 import unittest
 
 import numpy as np
+
 from lsst.ts.ofc import OFCData
 
 STD_TIMEOUT = 30

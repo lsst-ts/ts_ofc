@@ -21,6 +21,7 @@
 import unittest
 
 import numpy as np
+
 from lsst.ts.ofc import OFCData
 from lsst.ts.ofc.utils import (
     get_config_dir,

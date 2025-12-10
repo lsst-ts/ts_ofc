@@ -17,6 +17,22 @@ Version History
 
 .. towncrier release notes start
 
+v4.6.0 (2025-12-10)
+===================
+
+Documentation
+-------------
+
+- * Changed version history to use towncrier.
+  * Added README in doc/news to explain new documentation workflow. (`DM-53241 <https://rubinobs.atlassian.net//browse/DM-53241>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Run with new ruff settings from ts_pre_commit_conf (v0.9.20). (`DM-53557 <https://rubinobs.atlassian.net//browse/DM-53557>`_)
+
+
 .. _lsst.ts.ofc-4.5.0:
 
 v4.5.0

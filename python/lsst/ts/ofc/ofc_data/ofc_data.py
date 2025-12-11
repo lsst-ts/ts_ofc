@@ -633,7 +633,7 @@ class OFCData(BaseOFCData):
             if instrument == "lsstfam":
                 noise_covariance = np.eye(189 * 25)  # 189 sensors, 25 zernikes each
             elif instrument == "lsst":
-                noise_covariance = np.eye(4 * 25)  # 4 sensors, 31 zernikes each
+                noise_covariance = np.eye(8 * 25)  # 8 sensors, 25 zernikes each
             else:  # comcam
                 noise_covariance = np.eye(9 * 25)  # 9 sensors, 25 zernikes each
         else:

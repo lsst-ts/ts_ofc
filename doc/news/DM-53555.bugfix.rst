@@ -1,1 +1,0 @@
-Make default covariance have 8 detectors for lsst instrument.

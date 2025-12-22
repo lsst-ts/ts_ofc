@@ -17,6 +17,15 @@ Version History
 
 .. towncrier release notes start
 
+v4.6.1 (2025-12-22)
+===================
+
+Bug Fixes
+---------
+
+- Make default covariance have 8 detectors for lsst instrument. (`DM-53555 <https://rubinobs.atlassian.net//browse/DM-53555>`_)
+
+
 v4.6.0 (2025-12-10)
 ===================
 

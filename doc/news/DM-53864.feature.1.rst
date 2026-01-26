@@ -1,0 +1,1 @@
+Modified gain properties in BaseController to handle array inputs for per-DOF or per-vmode gains.

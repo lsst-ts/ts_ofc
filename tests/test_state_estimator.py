@@ -123,6 +123,30 @@ class TestStateEstimator(unittest.TestCase):
         residual = self.mean_squared_residual(sensitivity_matrix @ self.dofs, sensitivity_matrix @ state)
         assert residual < 3e-2
 
+    def test_roadtrip_dofs_to_vmodes_and_back(self) -> None:
+        """Test the conversion from dofs to v-modes and back."""
+        # Generate a random DOF state
+        rng = np.random.default_rng(42)
+        dof_state = rng.normal(loc=0.0, scale=1.0, size=len(self.estimator.ofc_data.dof_idx))
+
+        # Convert to v-modes
+        vmode_state = self.estimator.get_vmodes_from_dofs(
+            dof_state, sensor_names=self.sensor_name_list, rotation_angle=0.0
+        )
+
+        # Convert back to dofs
+        recovered_dof_state = self.estimator.get_dofs_from_vmodes(
+            vmode_state, sensor_names=self.sensor_name_list, rotation_angle=0.0
+        )
+
+        # Check that the recovered DOF state matches the original
+        np.testing.assert_array_almost_equal(
+            recovered_dof_state,
+            dof_state,
+            decimal=6,
+            err_msg="Recovered DOF state does not match the original.",
+        )
+
     def test_dof_state_raises_if_no_truncation_method(self) -> None:
         """Test dof_state raises an error if both rcond
         and truncate_index are None.

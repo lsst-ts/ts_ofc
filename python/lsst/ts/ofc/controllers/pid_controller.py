@@ -34,6 +34,7 @@ class PIDController(BaseController):
         filter_name: str,
         dof_state: np.ndarray[float],
         sensor_names: list[str] | None = None,
+        control_vmodes: bool = False,
     ) -> np.ndarray[float]:
         """Estimate the control offset for the given DOF state.
 
@@ -45,6 +46,8 @@ class PIDController(BaseController):
             Optical state in the basis of DOF.
         sensor_names : `list` [`string`]
             List of sensor names.
+        control_vmodes : `bool`, optional
+            Whether to control in v-modes space. Default is `False`.
 
         Returns
         -------

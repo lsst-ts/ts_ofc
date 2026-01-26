@@ -153,6 +153,24 @@ class TestPIDController(unittest.TestCase):
             "Derivative calculation does not match expected.",
         )
 
+    def test_proportional_gain_array(self) -> None:
+        """Test setting proportional gain as an array."""
+        kp_array = np.linspace(0.5, 1.5, len(self.pid_controller.ofc_data.dof_idx))
+        self.pid_controller.kp = kp_array
+        self.pid_controller.ki = 0.0
+        self.pid_controller.kd = 0.0
+
+        initial_state = 0.7 * np.ones(50)
+        uk = self.pid_controller.control_step(self.filter_name, initial_state)
+
+        expected_uk = kp_array * (self.pid_controller.setpoint - initial_state)
+        np.testing.assert_array_almost_equal(
+            uk,
+            expected_uk,
+            decimal=5,
+            err_msg="PID control output with gain array does not match expected values.",
+        )
+
     def test_integral_behavior(self) -> None:
         """Test integral behavior over multiple steps."""
         initial_state = 0.7 * np.ones(50)

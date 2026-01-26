@@ -177,6 +177,91 @@ class StateEstimator:
 
         return x.ravel()
 
+    def get_vmodes_from_dofs(
+        self,
+        dof: np.ndarray[float],
+        *,
+        sensor_names: list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"],
+        rotation_angle: float = 0.0,
+    ) -> np.ndarray[float]:
+        """Get the v-modes from the DOF state.
+
+        Parameters
+        ----------
+        dof : `numpy.ndarray`
+            Optical state in the basis of DOF. Vector of length 50 but
+            only the used DOF will be considered.
+        sensor_names : `list`, optional
+            List of sensor names. Default is
+            `["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]`.
+        rotation_angle : `float`, optional
+            Rotation angle in degrees. Default is `0.0`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Optical state in the basis of v-modes. Vector of length
+            matching the number of used DOF.
+        """
+        # Get the normalization matrix
+        normalization_matrix = self.get_normalization_matrix()
+
+        # Get the v-modes matrix
+        field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
+        sensitivity_matrix = self.get_sensitivity_matrix(
+            field_angles,
+            rotation_angle=rotation_angle,
+            normalize=True,
+            truncate=False,
+            check_invertible=False,
+        )
+
+        u, s, vh = np.linalg.svd(sensitivity_matrix, full_matrices=False)
+        dof_tilde = np.linalg.solve(normalization_matrix, dof[self.ofc_data.dof_idx])
+        return vh @ dof_tilde
+
+    def get_dofs_from_vmodes(
+        self,
+        v_modes: np.ndarray[float],
+        *,
+        sensor_names: list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"],
+        rotation_angle: float = 0.0,
+    ) -> np.ndarray[float]:
+        """Get the DOF state from the v-modes.
+
+        Parameters
+        ----------
+        v_modes : `numpy.ndarray`
+            Optical state in the basis of v-modes. The length
+            should match that of the number of used DOF.
+        sensor_names : `list`, optional
+            List of sensor names. Default is
+            `["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]`.
+        rotation_angle : `float`, optional
+            Rotation angle in degrees. Default is `0.0`.
+        Returns
+        -------
+        numpy.ndarray
+            Optical state in the basis of DOF. Returns vector
+            with dimension 50, with unused DOF set to zero.
+        """
+        # Get the normalization matrix
+        normalization_matrix = self.get_normalization_matrix()
+
+        # Get the v-modes matrix
+        field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
+        sensitivity_matrix = self.get_sensitivity_matrix(
+            field_angles,
+            rotation_angle=rotation_angle,
+            normalize=True,
+            truncate=False,
+            check_invertible=False,
+        )
+        u, s, vh = np.linalg.svd(sensitivity_matrix, full_matrices=False)
+        dofs = np.zeros(len(self.normalization_weights))
+        dofs[self.ofc_data.dof_idx] = normalization_matrix @ vh.T @ v_modes
+        return dofs
+
     def get_normalization_matrix(self) -> np.ndarray[float]:
         """Get the normalization matrix.
 

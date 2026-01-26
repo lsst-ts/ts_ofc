@@ -295,6 +295,7 @@ class OICController(BaseController):
         filter_name: str,
         dof_state: np.ndarray[float],
         sensor_names: list[str] | None = None,
+        control_vmodes: bool = False,
     ) -> np.ndarray[float]:
         """Estimate uk in the basis of degree of freedom (DOF) with gain
         compensation.
@@ -307,6 +308,8 @@ class OICController(BaseController):
             Optical state in the basis of DOF.
         sensor_names : `list` [`string`] or `None`
             List of sensor names.
+        control_vmodes : `bool`, optional
+            Whether to control in v-modes space. Default is `False`.
 
         Returns
         -------
@@ -322,10 +325,13 @@ class OICController(BaseController):
         if (self.ofc_data.name != "lsst") and (sensor_names is None):
             raise RuntimeError("sensor_names must be provided for full array mode instruments.")
 
+        if control_vmodes:
+            raise NotImplementedError("Control in v-modes space is not allowed in OIC mode.")
+
         correction = self.uk(filter_name, dof_state, sensor_names)
 
         # Initialize the control effort with the proportional term
-        if self.kp < 0.0 or self.kp is None:
+        if self.kp is None or np.any(np.asarray(self.kp) < 0.0):
             self.set_pssn_gain()
 
         control_effort = self.calculate_pid_step(correction)

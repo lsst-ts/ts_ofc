@@ -129,6 +129,7 @@ class TestOFC(unittest.TestCase):
             filter_name=filter_name,
             rotation_angle=rotation_angle,
             subtract_intrinsics=True,
+            control_vmodes=False,
         )
 
         self.assertTrue(isinstance(m2_hex_corr, Correction))

@@ -1,1 +1,0 @@
-Update default y2 correction to match that used on-sky for the overall focus offset.

@@ -213,8 +213,10 @@ class OFC:
         )
 
         if control_vmodes:
+            optical_state_dofs = np.zeros(self.ofc_data.ndofs)
+            optical_state_dofs[self.ofc_data.dof_idx] += optical_state
             optical_state = self.state_estimator.get_vmodes_from_dofs(
-                optical_state,
+                optical_state_dofs,
                 sensor_names=sensor_names,
                 rotation_angle=rotation_angle + self.ofc_data.rotation_offset,
             )
@@ -226,7 +228,7 @@ class OFC:
         if control_vmodes:
             uk = self.state_estimator.get_dofs_from_vmodes(
                 uk, sensor_names=sensor_names, rotation_angle=rotation_angle + self.ofc_data.rotation_offset
-            )
+            )[self.ofc_data.dof_idx]
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)

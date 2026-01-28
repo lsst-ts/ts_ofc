@@ -69,6 +69,18 @@ class TestOICController(unittest.TestCase):
         assert self.mean_squared_residual(sum_uk[25], 1.5) < 5e-2
         assert self.mean_squared_residual(sum_uk[45], 1.5) < 5e-2
 
+    def test_control_step_with_vmodes(self) -> None:
+        """Test control_step method with control in v-modes space."""
+        self.ofc_data.xref = "x0"
+
+        # check that it raises runtime error if control_vmodes is True
+        with self.assertRaises(RuntimeError):
+            self.controller.control_step(
+                filter_name=self.filter_name,
+                dof_state=self.controller.dof_state0,
+                control_vmodes=True,
+            )
+
     def test_set_aggregated_state(self) -> None:
         """Test the set_aggregated_state method."""
         new_state = np.ones(50)
@@ -136,7 +148,12 @@ class TestOICController(unittest.TestCase):
         for gain in {0.0, 0.25, 0.5, 0.75, 1.0}:
             with self.subTest(gain=gain):
                 self.controller.kp = gain
-                self.assertEqual(self.controller.kp, gain)
+                np.testing.assert_array_almost_equal(
+                    self.controller.kp,
+                    np.ones(self.ofc_data.ndofs) * gain,
+                    decimal=5,
+                    err_msg="Proportional gain does not match expected values.",
+                )
 
     def test_set_pssn_gain_unconfigured(self) -> None:
         """Test setting the PSSN gain without FWHM data."""
@@ -152,7 +169,12 @@ class TestOICController(unittest.TestCase):
 
         self.controller.set_pssn_gain()
 
-        self.assertTrue(self.controller.kp, self.controller.default_gain)
+        np.testing.assert_array_almost_equal(
+            self.controller.kp,
+            np.ones(self.ofc_data.ndofs) * self.controller.default_gain,
+            decimal=5,
+            err_msg="Proportional gain does not match expected values.",
+        )
 
         fwhm_values = np.ones((4, 19))
 
@@ -160,7 +182,12 @@ class TestOICController(unittest.TestCase):
 
         self.controller.set_pssn_gain()
 
-        self.assertTrue(self.controller.kp, 1.0)
+        np.testing.assert_array_almost_equal(
+            self.controller.kp,
+            np.ones(self.ofc_data.ndofs),
+            decimal=5,
+            err_msg="Proportional gain does not match expected values for larger FWHM.",
+        )
 
     def test_pssn_data(self) -> None:
         """Test the pssn_data property."""

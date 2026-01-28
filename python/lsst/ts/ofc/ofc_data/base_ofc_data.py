@@ -121,6 +121,8 @@ class BaseOFCData:
     znmax: int = 28  # Max number of zernikes used (to be filtered with zn3Idx)
     znmin: int = 4  # Min number of zernikes used (to be filtered with zn3Idx)
 
+    ndofs: int = 50  # Number of degrees of freedom
+
     # Degree of freedom indices
     dof_indices: dict = field(default_factory=default_dof_indices)
 

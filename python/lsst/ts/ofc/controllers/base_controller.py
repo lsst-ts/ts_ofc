@@ -87,9 +87,9 @@ class BaseController:
         self.ofc_data = ofc_data
 
         # Set gains and setpoint
-        self._kp = self.ofc_data.controller["kp"]
-        self._ki = self.ofc_data.controller["ki"]
-        self._kd = self.ofc_data.controller["kd"]
+        self._kp = self.format_gain_array(self.ofc_data.controller["kp"], label="kp")
+        self._ki = self.format_gain_array(self.ofc_data.controller["ki"], label="ki")
+        self._kd = self.format_gain_array(self.ofc_data.controller["kd"], label="kd")
         self._derivative_filter_coeff = self.ofc_data.controller["derivative_filter_coeff"]
         self.setpoint = np.array(self.ofc_data.controller["setpoint"])
 
@@ -129,44 +129,95 @@ class BaseController:
         # Initialize PSSN data
         self.pssn_data: dict = dict(sensor_names=[], pssn=[])
 
+    def format_gain_array(self, value: float | np.ndarray[float], label: str = "") -> np.ndarray[float]:
+        """Set gain array.
+
+        Parameters
+        ----------
+        value : `float` or `numpy.ndarray`
+            Gain value.
+        label : `str`, optional
+            Label for logging purposes.
+
+        Returns
+        -------
+        gain_array : `numpy.ndarray`
+            Gain array.
+
+        Raises
+        ------
+        ValueError
+            If length of gain array does not match number of DOFs.
+        """
+        if isinstance(value, np.ndarray):
+            if len(value) != self.ofc_data.ndofs:
+                raise ValueError(
+                    f"Length of {label or 'gain'} array ({len(value)}) "
+                    f"does not match number of DOFs ({self.ofc_data.ndofs})."
+                )
+            return value
+        else:
+            return np.full(self.ofc_data.ndofs, value)
+
     @property
-    def kp(self) -> float:
+    def kp(self) -> np.ndarray[float]:
         """Proportional gain."""
         return self._kp
 
     @kp.setter
-    def kp(self, value: float) -> None:
-        self._kp = value
+    def kp(self, value: float | np.ndarray[float]) -> None:
+        """Set proportional gain.
+
+        Parameters
+        ----------
+        value : `float` or `numpy.ndarray`
+            Proportional gain.
+        """
+        self._kp = self.format_gain_array(value, label="kp")
 
     @property
-    def ki(self) -> float:
+    def ki(self) -> np.ndarray[float]:
         """Integral gain.
 
         Returns
         -------
-        `float`
+        `np.ndarray[float]`
             Integral gain.
         """
         return self._ki
 
     @ki.setter
-    def ki(self, value: float) -> None:
-        self._ki = value
+    def ki(self, value: float | np.ndarray[float]) -> None:
+        """Set integral gain.
+
+        Parameters
+        ----------
+        value : `float` or `numpy.ndarray`
+            Integral gain.
+        """
+        self._ki = self.format_gain_array(value, label="ki")
 
     @property
-    def kd(self) -> float:
+    def kd(self) -> np.ndarray[float]:
         """Derivative gain.
 
         Returns
         -------
-        `float`
+        `np.ndarray[float]`
             Derivative gain.
         """
         return self._kd
 
     @kd.setter
-    def kd(self, value: float) -> None:
-        self._kd = value
+    def kd(self, value: float | np.ndarray[float]) -> None:
+        """Set derivative gain.
+
+        Parameters
+        ----------
+        value : `float` or `numpy.ndarray`
+            Derivative gain.
+        """
+        self._kd = self.format_gain_array(value, label="kd")
 
     @property
     def derivative_filter_coeff(self) -> float:
@@ -203,7 +254,7 @@ class BaseController:
 
     @property
     def aggregated_state(self) -> np.ndarray[float]:
-        """Returns the aggregated state.
+        """Returns the aggregated state in the basis of dofs.
 
         Returns
         -------
@@ -213,7 +264,7 @@ class BaseController:
         return self.dof_state
 
     def set_aggregated_state(self, value: np.ndarray[float]) -> None:
-        """Set the aggregated state.
+        """Set the aggregated state in the basis of dofs.
 
         Parameters
         ----------
@@ -234,6 +285,7 @@ class BaseController:
         filter_name: str,
         dof_state: np.ndarray[float],
         sensor_names: list[str] | None = None,
+        control_vmodes: bool = False,
     ) -> np.ndarray[float]:
         """Estimate uk in the basis of degree of freedom (DOF).
 
@@ -245,6 +297,8 @@ class BaseController:
             Optical state in the basis of DOF.
         sensor_names : `list` [`string`]
             List of sensor names.
+        control_vmodes : `bool`, optional
+            Whether to control in v-modes space. Default is `False`.
 
         Raises
         ------
@@ -265,7 +319,8 @@ class BaseController:
         Returns
         -------
         uk : `numpy.ndarray`
-            Calculated uk in the basis of DOF.
+            Calculated uk in the basis of the state provided,
+            either dofs or v-modes.
         """
         error = self.setpoint[self.ofc_data.dof_idx] - state
         self.integral += error
@@ -282,7 +337,11 @@ class BaseController:
             + (1 - self.derivative_filter_coeff) * self.filtered_derivative
         )
 
-        uk = self.kp * error + self.ki * self.integral + self.kd * self.filtered_derivative
+        uk = (
+            self.kp[self.ofc_data.dof_idx] * error
+            + self.ki[self.ofc_data.dof_idx] * self.integral
+            + self.kd[self.ofc_data.dof_idx] * self.filtered_derivative
+        )
 
         self.previous_error = error
 

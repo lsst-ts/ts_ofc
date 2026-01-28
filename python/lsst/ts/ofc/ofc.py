@@ -144,6 +144,7 @@ class OFC:
         filter_name: str,
         rotation_angle: float,
         subtract_intrinsics: bool = True,
+        control_vmodes: bool = False,
     ) -> list[Correction]:
         """Calculate the Hexapod, M1M3, and M2 corrections from the FWHM
         and wavefront error.
@@ -163,6 +164,8 @@ class OFC:
         subtract_intrinsics : `bool`, optional
             Whether to subtract the intrinsic wavefront errors from the
             measured wavefront errors. Default is `True`.
+        control_vmodes : `bool`, optional
+            Whether to control in v-modes space. Default is `False`.
 
         Returns
         -------
@@ -189,6 +192,7 @@ class OFC:
             f"and ofc_data threshold {self.ofc_data.controller.get('truncation_threshold', None)} "
             f"state estimator rcond {self.state_estimator.rcond} "
             f"zn_selected {self.ofc_data.zn_selected}"
+            f"control_vmodes {control_vmodes}, subtract_intrinsics {subtract_intrinsics}"
         )
         # Remove NaN values and corresponding sensor_ids
         valid_indices = ~np.isnan(wfe).any(axis=1)
@@ -208,8 +212,23 @@ class OFC:
             subtract_intrinsics=subtract_intrinsics,
         )
 
-        # Calculate the uk based on the control algorithm
-        uk = -self.controller.control_step(filter_name, optical_state, sensor_names)
+        if control_vmodes:
+            optical_state_dofs = np.zeros(self.ofc_data.ndofs)
+            optical_state_dofs[self.ofc_data.dof_idx] += optical_state
+            optical_state = self.state_estimator.get_vmodes_from_dofs(
+                optical_state_dofs,
+                sensor_names=sensor_names,
+                rotation_angle=rotation_angle + self.ofc_data.rotation_offset,
+            )
+
+        uk = -self.controller.control_step(
+            filter_name, optical_state, sensor_names, control_vmodes=control_vmodes
+        )
+
+        if control_vmodes:
+            uk = self.state_estimator.get_dofs_from_vmodes(
+                uk, sensor_names=sensor_names, rotation_angle=rotation_angle + self.ofc_data.rotation_offset
+            )[self.ofc_data.dof_idx]
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)

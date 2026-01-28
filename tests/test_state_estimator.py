@@ -62,6 +62,10 @@ class TestStateEstimator(unittest.TestCase):
 
         self.field_angles = [self.ofc_data.sample_points[sensor] for sensor in self.sensor_name_list]
 
+        self.y2_correction = np.array(
+            [self.ofc_data.y2_correction[sensor] for sensor in self.sensor_name_list]
+        )
+
     def mean_squared_residual(self, new_array: np.ndarray, reference_array: np.ndarray) -> float:
         """Compute the mean squared residual between two arrays.
 
@@ -106,7 +110,9 @@ class TestStateEstimator(unittest.TestCase):
         sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
 
         # Compute optical state estimate
-        state = self.estimator.dof_state("R", self.wfe, self.sensor_name_list, rotation_angle=0.0)
+        state = self.estimator.dof_state(
+            "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
+        )
 
         # Check number of degrees of freedom matches the specified
         n_values = len(self.estimator.ofc_data.dof_idx)
@@ -117,6 +123,30 @@ class TestStateEstimator(unittest.TestCase):
         residual = self.mean_squared_residual(sensitivity_matrix @ self.dofs, sensitivity_matrix @ state)
         assert residual < 3e-2
 
+    def test_roadtrip_dofs_to_vmodes_and_back(self) -> None:
+        """Test the conversion from dofs to v-modes and back."""
+        # Generate a random DOF state
+        rng = np.random.default_rng(42)
+        dof_state = rng.normal(loc=0.0, scale=1.0, size=len(self.estimator.ofc_data.dof_idx))
+
+        # Convert to v-modes
+        vmode_state = self.estimator.get_vmodes_from_dofs(
+            dof_state, sensor_names=self.sensor_name_list, rotation_angle=0.0
+        )
+
+        # Convert back to dofs
+        recovered_dof_state = self.estimator.get_dofs_from_vmodes(
+            vmode_state, sensor_names=self.sensor_name_list, rotation_angle=0.0
+        )
+
+        # Check that the recovered DOF state matches the original
+        np.testing.assert_array_almost_equal(
+            recovered_dof_state,
+            dof_state,
+            decimal=6,
+            err_msg="Recovered DOF state does not match the original.",
+        )
+
     def test_dof_state_raises_if_no_truncation_method(self) -> None:
         """Test dof_state raises an error if both rcond
         and truncate_index are None.
@@ -125,7 +155,9 @@ class TestStateEstimator(unittest.TestCase):
         self.estimator.truncate_index = None
 
         with self.assertRaises(ValueError):
-            self.estimator.dof_state("R", self.wfe, self.sensor_name_list, rotation_angle=0.0)
+            self.estimator.dof_state(
+                "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
+            )
 
     def test_dof_state_with_truncation_index(self) -> None:
         """Test the dof_state method."""
@@ -138,7 +170,9 @@ class TestStateEstimator(unittest.TestCase):
         sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
 
         # Compute optical state estimate
-        state = self.estimator.dof_state("R", self.wfe, self.sensor_name_list, rotation_angle=0.0)
+        state = self.estimator.dof_state(
+            "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
+        )
 
         # Check number of degrees of freedom matches the specified
         n_values = len(self.estimator.ofc_data.dof_idx)
@@ -155,7 +189,9 @@ class TestStateEstimator(unittest.TestCase):
 
         sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
 
-        state = self.estimator.dof_state("R", self.wfe, self.sensor_name_list, rotation_angle=0.0)
+        state = self.estimator.dof_state(
+            "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
+        )
 
         n_values = len(self.estimator.ofc_data.dof_idx)
         self.assertEqual(len(state), n_values)
@@ -166,12 +202,12 @@ class TestStateEstimator(unittest.TestCase):
     def test_dof_state_with_noise_covariance(self) -> None:
         """Test the dof_state method when using noise covariance."""
         state_identity_covariance = self.estimator.dof_state(
-            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
+            "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
         )
 
         self.estimator.noise_covariance = self.noise_covariance
         state_random_covariance = self.estimator.dof_state(
-            "R", self.wfe, self.sensor_name_list, rotation_angle=0.0
+            "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
         )
 
         n_values = len(self.estimator.ofc_data.dof_idx)
@@ -291,7 +327,9 @@ class TestStateEstimator(unittest.TestCase):
         self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
 
         # Compute optical state estimate
-        state = self.estimator.dof_state("R", self.wfe, self.sensor_name_list, rotation_angle=0.0)
+        state = self.estimator.dof_state(
+            "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
+        )
 
         # Check number of degrees of freedom matches the specified
         n_values = len(self.estimator.ofc_data.dof_idx)

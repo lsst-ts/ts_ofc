@@ -48,6 +48,9 @@ class TestOFC(unittest.TestCase):
         self.wfe = np.loadtxt(self.test_data_path)
         self.sensor_id_list = [191, 195, 199, 203]
         self.sensor_name_list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]
+        self.y2_correction = np.array(
+            [self.ofc_data.y2_correction[sensor] for sensor in self.sensor_name_list]
+        )
 
     def test_init_lv_dof(self) -> None:
         """Test the initialization of the last-value degrees of freedom."""
@@ -126,6 +129,7 @@ class TestOFC(unittest.TestCase):
             filter_name=filter_name,
             rotation_angle=rotation_angle,
             subtract_intrinsics=True,
+            control_vmodes=False,
         )
 
         self.assertTrue(isinstance(m2_hex_corr, Correction))
@@ -198,7 +202,7 @@ class TestOFC(unittest.TestCase):
                     m1m3_corr,
                     m2_corr,
                 ) = self.ofc.calculate_corrections(
-                    wfe=wfe,
+                    wfe=wfe + self.y2_correction,
                     sensor_ids=self.sensor_id_list,
                     filter_name=filter_name,
                     rotation_angle=0.0,
@@ -241,7 +245,7 @@ class TestOFC(unittest.TestCase):
             m1m3_corr,
             m2_corr,
         ) = self.ofc.calculate_corrections(
-            wfe=wfe,
+            wfe=wfe + self.y2_correction,
             sensor_ids=self.sensor_id_list,
             filter_name=filter_name,
             rotation_angle=0.0,

@@ -17,6 +17,29 @@ Version History
 
 .. towncrier release notes start
 
+v4.7.0 (2026-01-27)
+===================
+
+New Features
+------------
+
+- Modified gain properties in BaseController to handle array inputs for per-DOF or per-vmode gains. (`DM-53864 <https://rubinobs.atlassian.net//browse/DM-53864>`_)
+- Updated OICController to reject control in vmode basis. (`DM-53864 <https://rubinobs.atlassian.net//browse/DM-53864>`_)
+- Added new methods get_dofs_from_vmodes and get_vmodes_from_dofs to StateEstimator for dof to vmode conversions. (`DM-53864 <https://rubinobs.atlassian.net//browse/DM-53864>`_)
+
+
+Bug Fixes
+---------
+
+- Fixed issue when using vmodes and a subset of degrees of freedom. (`RSO-91 <https://rubinobs.atlassian.net//browse/RSO-91>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Update default y2 correction to match that used on-sky for the overall focus offset. (`DM-53823 <https://rubinobs.atlassian.net//browse/DM-53823>`_)
+
+
 v4.6.1 (2025-12-22)
 ===================
 

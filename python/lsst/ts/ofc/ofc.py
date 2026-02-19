@@ -151,7 +151,7 @@ class OFC:
         Parameters
         ----------
         wfe : `np.ndarray[float]`
-            An array of arrays (e.g. 2-d array) with wavefront erros. Each
+            An array of arrays (e.g. 2-d array) with wavefront errors. Each
             element contains an array of wavefront errors (in um) for a
             particular detector/field.
         sensor_ids: np.ndarray[int]

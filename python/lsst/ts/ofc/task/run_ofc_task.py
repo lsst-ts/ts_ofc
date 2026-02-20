@@ -26,6 +26,7 @@ from typing import Any
 import numpy as np
 from astropy.table import Table
 
+import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
 from lsst.afw.cameraGeom import Camera
 from lsst.fgcmcal.utilities import lookupStaticCalibrations
@@ -66,7 +67,11 @@ class RunOfcTaskConfig(
     pipeBase.PipelineTaskConfig,
     pipelineConnections=RunOfcTaskConnections,  # type: ignore
 ):
-    pass
+    dofIndices: pexConfig.Field = pexConfig.ListField(
+        dtype=int,
+        doc="List of indices of up to 50 degrees of freedom to use for OFC.",
+        default=tuple(range(50)),
+    )
 
 
 class RunOfcTask(pipeBase.PipelineTask):
@@ -77,6 +82,8 @@ class RunOfcTask(pipeBase.PipelineTask):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
+
+        self.dof_indices = self.config.dofIndices
 
     @timeMethod
     def run(self, aggregateZernikesAvg: Table, camera: Camera) -> pipeBase.Struct:
@@ -118,15 +125,27 @@ class RunOfcTask(pipeBase.PipelineTask):
 
         ofc_calc = OFC(ofc_data)
         noll_indices = aggregateZernikesAvg.meta["nollIndices"]
-        ofc_calc.ofc_data.znmin = np.min(noll_indices)
-        ofc_calc.ofc_data.zn_selected = np.arange(np.min(noll_indices), np.max(noll_indices) + 1)
+        ofc_calc.ofc_data.zn_selected = noll_indices
 
-        ofc_calc.reset()
+        use_dofs = np.isin(np.arange(50), self.dof_indices)
+        print(f"Using DOF indices: {np.where(use_dofs)[0]}")
+
+        ofc_calc.ofc_data.comp_dof_idx = {
+            "m2HexPos": np.array([val for val in use_dofs[:5]], dtype=bool),
+            "camHexPos": np.array([val for val in use_dofs[5:10]], dtype=bool),
+            "M1M3Bend": np.array([val for val in use_dofs[10:30]], dtype=bool),
+            "M2Bend": np.array([val for val in use_dofs[30:]], dtype=bool),
+        }
+        ofc_calc.controller.reset_history()
+
+        self.ofc_calc = ofc_calc
+
         ofc_calc.calculate_corrections(
-            np.array([makeDense(zern, noll_indices) for zern in aggregateZernikesAvg["zk_deviation_CCS"]]),
+            np.array([makeDense(wfe, noll_indices) for wfe in aggregateZernikesAvg["zk_deviation_CCS"]]),
             sensor_ids=[camera[det].getId() for det in aggregateZernikesAvg["detector"]],
             filter_name=aggregateZernikesAvg.meta["band"],
             rotation_angle=aggregateZernikesAvg.meta["rotAngle"],
+            subtract_intrinsics=False,
         )
         aggregated_state = ofc_calc.controller.aggregated_state
 

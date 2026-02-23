@@ -32,7 +32,6 @@ from lsst.afw.cameraGeom import Camera
 from lsst.fgcmcal.utilities import lookupStaticCalibrations
 from lsst.pipe.base import connectionTypes as ct
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.wep.utils import makeDense
 from lsst.utils.timer import timeMethod
 
 
@@ -72,6 +71,17 @@ class RunOfcTaskConfig(
         doc="List of indices of up to 50 degrees of freedom to use for OFC.",
         default=tuple(range(50)),
     )
+    subtractIntrinsics: pexConfig.Field = pexConfig.Field(
+        dtype=bool,
+        doc="Whether to subtract the intrinsic Zernike coefficients"
+        + " from the input table before running OFC.",
+        default=False,
+    )
+    tableColumnName: pexConfig.Field = pexConfig.Field(
+        dtype=str,
+        doc="Name of the column in the input table that contains the Zernike " + "coefficients.",
+        default="zk_deviation_CCS",
+    )
 
 
 class RunOfcTask(pipeBase.PipelineTask):
@@ -79,11 +89,14 @@ class RunOfcTask(pipeBase.PipelineTask):
 
     ConfigClass = RunOfcTaskConfig
     _DefaultName = "runOfcTask"
+    config: RunOfcTaskConfig
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
         self.dof_indices = self.config.dofIndices
+        self.column_name = self.config.tableColumnName
+        self.subtract_intrinsics = self.config.subtractIntrinsics
 
     @timeMethod
     def run(self, aggregateZernikesAvg: Table, camera: Camera) -> pipeBase.Struct:
@@ -106,7 +119,7 @@ class RunOfcTask(pipeBase.PipelineTask):
 
         return pipeBase.Struct(ofcCorrections=ofcCorrections)
 
-    def _runOfc(self, aggregateZernikesAvg, camera):
+    def _runOfc(self, aggregateZernikesAvg: Table, camera: Camera) -> np.ndarray:
         """Run OFC on a visit-level table of donuts and Zernikes. This is a
         separate method so that it can be easily tested.
 
@@ -116,6 +129,12 @@ class RunOfcTask(pipeBase.PipelineTask):
             Visit-level table of donuts and Zernikes.
         camera : `lsst.afw.cameraGeom.Camera`
             Camera object.
+
+        Returns
+        -------
+        ofcCorrections : `numpy.ndarray`
+            Corrections for the individual componets. Order is: M2 Hexapod,
+            Camera Hexapod, M1M3 and M2.
         """
 
         if camera.getName() == "LSSTCam":
@@ -125,10 +144,12 @@ class RunOfcTask(pipeBase.PipelineTask):
 
         ofc_calc = OFC(ofc_data)
         noll_indices = aggregateZernikesAvg.meta["nollIndices"]
+        j_max = max(noll_indices)
+        j_min = min(noll_indices)
         ofc_calc.ofc_data.zn_selected = noll_indices
 
         use_dofs = np.isin(np.arange(50), self.dof_indices)
-        print(f"Using DOF indices: {np.where(use_dofs)[0]}")
+        self.log.info(f"Using DOF indices: {np.where(use_dofs)[0]}")
 
         ofc_calc.ofc_data.comp_dof_idx = {
             "m2HexPos": np.array([val for val in use_dofs[:5]], dtype=bool),
@@ -140,12 +161,19 @@ class RunOfcTask(pipeBase.PipelineTask):
 
         self.ofc_calc = ofc_calc
 
+        wfe_list = list()
+        for wfe in aggregateZernikesAvg[self.column_name]:
+            zern_out = np.zeros(j_max - j_min + 1)
+            for i, noll in enumerate(noll_indices):
+                zern_out[noll - j_min] = wfe[i]
+            wfe_list.append(zern_out)
+
         ofc_calc.calculate_corrections(
-            np.array([makeDense(wfe, noll_indices) for wfe in aggregateZernikesAvg["zk_deviation_CCS"]]),
+            np.array(wfe_list),
             sensor_ids=[camera[det].getId() for det in aggregateZernikesAvg["detector"]],
             filter_name=aggregateZernikesAvg.meta["band"],
             rotation_angle=aggregateZernikesAvg.meta["rotAngle"],
-            subtract_intrinsics=False,
+            subtract_intrinsics=self.subtract_intrinsics,
         )
         aggregated_state = ofc_calc.controller.aggregated_state
 

@@ -212,6 +212,9 @@ class OFCData(BaseOFCData):
         self._dof_idx = np.arange(sum([self.comp_dof_idx[comp]["idxLength"] for comp in self.comp_dof_idx]))
         self._dof_idx_mask = np.ones_like(self._dof_idx, dtype=bool)
 
+        # Set default reference point strategy
+        self._xref = "x00"
+
     @property
     def name(self) -> str | None:
         if not self.start_task.done() or self.start_task.result() is None:
@@ -254,10 +257,7 @@ class OFCData(BaseOFCData):
         `string`
             Reference point strategy.
         """
-        if self._xref is None:
-            return "x00"
-        else:
-            return self._xref
+        return self._xref
 
     @xref.setter
     def xref(self, value: str) -> None:
@@ -688,6 +688,9 @@ class OFCData(BaseOFCData):
 
         if "name" not in self.controller:
             raise ValueError("Required key 'name' is missing in the controller configuration.")
+        self.controller["name"] = self.controller_filename.split("_")[
+            0
+        ].upper()  # Set controller name based on filename
 
         if "normalization_weights_filename" not in self.controller:
             raise ValueError(

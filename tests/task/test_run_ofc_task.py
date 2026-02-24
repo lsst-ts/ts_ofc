@@ -27,6 +27,7 @@ from astropy.table import Table
 import lsst.pipe.base as pipeBase
 from lsst.afw.cameraGeom import DetectorType
 from lsst.obs.lsst import LsstCam
+from lsst.ts.ofc.controllers import OICController, PIDController
 from lsst.ts.ofc.task.run_ofc_task import RunOfcTask, RunOfcTaskConfig
 
 
@@ -101,16 +102,55 @@ class TestRunOfcTask(unittest.TestCase):
         self.assertEqual(task.dof_indices, tuple(range(50)))
         self.assertFalse(task.subtract_intrinsics)
         self.assertEqual(task.column_name, "zk_deviation_CCS")
+        self.assertEqual(task.controller_name, "OIC")
+        self.assertIsNone(task.truncation_index)
 
         # Test custom values
         dof_indices = [0, 1, 2, 3, 4, 5, 31]
         config.dofIndices = dof_indices
         config.subtractIntrinsics = True
         config.tableColumnName = "zk_deviation"
+        config.controllerName = "PID"
+        config.truncationIndex = 5
         task = RunOfcTask(config=config)
         self.assertEqual(task.dof_indices, dof_indices)
         self.assertTrue(task.subtract_intrinsics)
         self.assertEqual(task.column_name, "zk_deviation")
+        self.assertEqual(task.controller_name, "PID")
+        self.assertEqual(task.truncation_index, 5)
+
+    def testOFCCalcControllerConfig(self) -> None:
+        zern_table = self.makeTestZernikeTable()
+
+        config = RunOfcTaskConfig()
+        config.dofIndices = [0, 1, 2, 3, 4, 5, 31]
+        task = RunOfcTask(config=config)
+
+        task.run(zern_table, LsstCam.getCamera())
+        self.assertIsInstance(task.ofc_calc.controller, OICController)
+
+        config.controllerName = "PID"
+        task = RunOfcTask(config=config)
+        task.run(zern_table, LsstCam.getCamera())
+        self.assertIsInstance(task.ofc_calc.controller, PIDController)
+
+    def testOFCCalcTruncationIndexConfig(self) -> None:
+        zern_table = self.makeTestZernikeTable()
+
+        config = RunOfcTaskConfig()
+        config.dofIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 31]
+        config.truncationIndex = 5
+        task = RunOfcTask(config=config)
+
+        task.run(zern_table, LsstCam.getCamera())
+        self.assertEqual(task.ofc_calc.ofc_data.controller["truncation_index"], 5)
+
+        config.truncationIndex = 1
+        task = RunOfcTask(config=config)
+        task_out = task.run(zern_table, LsstCam.getCamera())
+        self.assertEqual(task.ofc_calc.ofc_data.controller["truncation_index"], 1)
+        # Truncation index of 1 should give nearly zero correction on first dof
+        self.assertAlmostEqual(task_out.ofcCorrections[0], 0.0, delta=1e-9)
 
     def testRunOfcTask(self) -> None:
         """Test the RunOfcTask class."""

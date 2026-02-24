@@ -83,6 +83,16 @@ class RunOfcTaskConfig(
         doc="Name of the column in the input table that contains the Zernike " + "coefficients.",
         default="zk_deviation_CCS",
     )
+    controllerName: pexConfig.Field = pexConfig.Field(
+        dtype=str,
+        doc="Name of the OFC controller to use. 'OIC' or 'PID' are currently supported.",
+        default="OIC",
+    )
+    truncationIndex: pexConfig.Field = pexConfig.Field(
+        dtype=int,
+        doc="Truncation index for the Zernike polynomials.",
+        optional=True,
+    )
 
 
 class RunOfcTask(pipeBase.PipelineTask):
@@ -100,6 +110,8 @@ class RunOfcTask(pipeBase.PipelineTask):
         self.dof_indices = self.config.dofIndices
         self.column_name = self.config.tableColumnName
         self.subtract_intrinsics = self.config.subtractIntrinsics
+        self.controller_name = self.config.controllerName
+        self.truncation_index = self.config.truncationIndex
 
         # Useful if running interactively to have access
         # to the OFC object after the task has run
@@ -132,10 +144,18 @@ class RunOfcTask(pipeBase.PipelineTask):
             raise ValueError(f"Unsupported camera {camera.getName()}")
 
         self.ofc_calc = OFC(ofc_data)
+
         noll_indices = aggregateZernikesAvg.meta["nollIndices"]
         j_max = max(noll_indices)
         j_min = min(noll_indices)
         self.ofc_calc.ofc_data.zn_selected = noll_indices
+
+        print(self.ofc_calc.ofc_data.controller)
+        self.ofc_calc.set_controller(self.controller_name)
+        if self.truncation_index is not None:
+            self.log.info(f"Setting truncation index to {self.truncation_index}")
+            self.ofc_calc.set_truncation_index(self.truncation_index)
+        print(self.ofc_calc.ofc_data.controller)
 
         used_dofs = np.isin(np.arange(50), self.dof_indices)
         self.log.info(f"Using DOF indices: {np.where(used_dofs)[0]}")

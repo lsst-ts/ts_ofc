@@ -21,7 +21,7 @@
 
 __all__ = ["RunOfcTaskConnections", "RunOfcTaskConfig", "RunOfcTask"]
 
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from astropy.table import Table
@@ -90,6 +90,7 @@ class RunOfcTask(pipeBase.PipelineTask):
     ConfigClass = RunOfcTaskConfig
     _DefaultName = "runOfcTask"
     config: RunOfcTaskConfig
+    ofc_calc: Optional[OFC]
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)

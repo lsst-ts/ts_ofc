@@ -688,9 +688,6 @@ class OFCData(BaseOFCData):
 
         if "name" not in self.controller:
             raise ValueError("Required key 'name' is missing in the controller configuration.")
-        self.controller["name"] = (
-            str(self.controller_filename).split("_")[0].upper()
-        )  # Set controller name based on filename
 
         if "normalization_weights_filename" not in self.controller:
             raise ValueError(
@@ -710,6 +707,7 @@ class OFCData(BaseOFCData):
             )
 
         if self.controller["name"] not in ["PID", "OIC"]:
+            print(self.controller["name"])
             raise ValueError("Controller 'name' must be either 'PID' or 'OIC'.")
 
         # check if the zn_selected key is present in

@@ -688,9 +688,9 @@ class OFCData(BaseOFCData):
 
         if "name" not in self.controller:
             raise ValueError("Required key 'name' is missing in the controller configuration.")
-        self.controller["name"] = self.controller_filename.split("_")[
-            0
-        ].upper()  # Set controller name based on filename
+        self.controller["name"] = (
+            str(self.controller_filename).split("_")[0].upper()
+        )  # Set controller name based on filename
 
         if "normalization_weights_filename" not in self.controller:
             raise ValueError(

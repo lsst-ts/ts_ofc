@@ -57,7 +57,7 @@ class RunOfcTaskConnections(
     ofcCorrections = ct.Output(
         doc="Visit-level table of OFC corrections",
         dimensions=("visit", "instrument"),
-        storageClass="AstropyTable",
+        storageClass="ArrowAstropy",
         name="ofcCorrections",
     )
 
@@ -94,9 +94,14 @@ class RunOfcTask(pipeBase.PipelineTask):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
+        # Set instance variables from config
         self.dof_indices = self.config.dofIndices
         self.column_name = self.config.tableColumnName
         self.subtract_intrinsics = self.config.subtractIntrinsics
+
+        # Useful if running interactively to have access
+        # to the OFC object after the task has run
+        self.ofc_calc = None
 
     @timeMethod
     def run(self, aggregateZernikesAvg: Table, camera: Camera) -> pipeBase.Struct:
@@ -112,29 +117,11 @@ class RunOfcTask(pipeBase.PipelineTask):
         Returns
         -------
         `lsst.pipe.base.Struct`
-            A struct containing the visit-level table of OFC corrections.
-        """
-
-        ofcCorrections = self._runOfc(aggregateZernikesAvg, camera)
-
-        return pipeBase.Struct(ofcCorrections=ofcCorrections)
-
-    def _runOfc(self, aggregateZernikesAvg: Table, camera: Camera) -> np.ndarray:
-        """Run OFC on a visit-level table of donuts and Zernikes. This is a
-        separate method so that it can be easily tested.
-
-        Parameters
-        ----------
-        aggregateZernikesAvg : `lsst.afw.table.Table`
-            Visit-level table of donuts and Zernikes.
-        camera : `lsst.afw.cameraGeom.Camera`
-            Camera object.
-
-        Returns
-        -------
-        ofcCorrections : `numpy.ndarray`
-            Corrections for the individual componets. Order is: M2 Hexapod,
-            Camera Hexapod, M1M3 and M2.
+            A struct containing:
+                - ofcCorrections : `numpy.ndarray`
+                  Corrections for the individual componets.
+                  Order is: M2 Hexapod, Camera Hexapod,
+                  M1M3 and M2.
         """
 
         if camera.getName() == "LSSTCam":
@@ -142,25 +129,27 @@ class RunOfcTask(pipeBase.PipelineTask):
         else:
             raise ValueError(f"Unsupported camera {camera.getName()}")
 
-        ofc_calc = OFC(ofc_data)
+        self.ofc_calc = OFC(ofc_data)
         noll_indices = aggregateZernikesAvg.meta["nollIndices"]
         j_max = max(noll_indices)
         j_min = min(noll_indices)
-        ofc_calc.ofc_data.zn_selected = noll_indices
+        self.ofc_calc.ofc_data.zn_selected = noll_indices
 
-        use_dofs = np.isin(np.arange(50), self.dof_indices)
-        self.log.info(f"Using DOF indices: {np.where(use_dofs)[0]}")
+        used_dofs = np.isin(np.arange(50), self.dof_indices)
+        self.log.info(f"Using DOF indices: {np.where(used_dofs)[0]}")
 
-        ofc_calc.ofc_data.comp_dof_idx = {
-            "m2HexPos": np.array([val for val in use_dofs[:5]], dtype=bool),
-            "camHexPos": np.array([val for val in use_dofs[5:10]], dtype=bool),
-            "M1M3Bend": np.array([val for val in use_dofs[10:30]], dtype=bool),
-            "M2Bend": np.array([val for val in use_dofs[30:]], dtype=bool),
+        self.ofc_calc.ofc_data.comp_dof_idx = {
+            "m2HexPos": np.array([val for val in used_dofs[:5]], dtype=bool),
+            "camHexPos": np.array([val for val in used_dofs[5:10]], dtype=bool),
+            "M1M3Bend": np.array([val for val in used_dofs[10:30]], dtype=bool),
+            "M2Bend": np.array([val for val in used_dofs[30:]], dtype=bool),
         }
-        ofc_calc.controller.reset_history()
+        self.log.info(f"Component DOFs: {self.ofc_calc.ofc_data.comp_dof_idx}")
+        self.ofc_calc.controller.reset_history()
 
-        self.ofc_calc = ofc_calc
-
+        # If we require ts_wep as a prerequisite for functionality
+        # in the future, we can replace this with makeDense from ts_wep.utils.
+        # But for now we avoid the dependency on ts_wep with this.
         wfe_list = list()
         for wfe in aggregateZernikesAvg[self.column_name]:
             zern_out = np.zeros(j_max - j_min + 1)
@@ -168,13 +157,13 @@ class RunOfcTask(pipeBase.PipelineTask):
                 zern_out[noll - j_min] = wfe[i]
             wfe_list.append(zern_out)
 
-        ofc_calc.calculate_corrections(
+        self.ofc_calc.calculate_corrections(
             np.array(wfe_list),
             sensor_ids=[camera[det].getId() for det in aggregateZernikesAvg["detector"]],
             filter_name=aggregateZernikesAvg.meta["band"],
             rotation_angle=aggregateZernikesAvg.meta["rotAngle"],
             subtract_intrinsics=self.subtract_intrinsics,
         )
-        aggregated_state = ofc_calc.controller.aggregated_state
+        aggregated_state = self.ofc_calc.controller.aggregated_state
 
-        return aggregated_state
+        return pipeBase.Struct(ofcCorrections=aggregated_state)

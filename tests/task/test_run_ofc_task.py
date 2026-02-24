@@ -125,19 +125,10 @@ class TestRunOfcTask(unittest.TestCase):
         self.assertIsInstance(task_out.ofcCorrections, np.ndarray)
         self.assertEqual(len(task_out.ofcCorrections), 50)
 
-    def testRunOFC(self) -> None:
-        """Test the _runOfc method of RunOfcTask."""
-        config = RunOfcTaskConfig()
-        config.dofIndices = [0, 1, 2, 3, 4, 5, 31]
-        task = RunOfcTask(config=config)
-
-        zern_table = self.makeTestZernikeTable()
-        ofc_corrections = task._runOfc(zern_table, LsstCam.getCamera())
-        # Test that the output is an array of the expected shape and values
-        self.assertIsInstance(ofc_corrections, np.ndarray)
-        self.assertEqual(len(ofc_corrections), 50)
-        # Test that the corrections for the specified DOF indices
-        # are non-zero and the rest are zero
+        # Test that the corrections for the DOFs are non-zero
+        # and the rest are zero
         zero_vals = np.isin(np.arange(50), config.dofIndices, invert=True)
-        np.testing.assert_array_equal(ofc_corrections[zero_vals], np.zeros(50 - len(config.dofIndices)))
-        self.assertTrue(np.all(ofc_corrections[config.dofIndices]))
+        np.testing.assert_array_equal(
+            task_out.ofcCorrections[zero_vals], np.zeros(50 - len(config.dofIndices))
+        )
+        self.assertTrue(np.all(task_out.ofcCorrections[config.dofIndices]))

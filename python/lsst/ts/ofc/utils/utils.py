@@ -19,11 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["get_pkg_root", "get_config_dir", "get_filter_name", "rot_1d_array"]
+__all__ = ["get_pkg_root", "get_config_dir", "get_filter_name", "rot_1d_array", "get_dof_names"]
 
 import pathlib
 
 import numpy as np
+import yaml
 
 
 def get_pkg_root() -> pathlib.Path:
@@ -87,3 +88,40 @@ def rot_1d_array(array: np.ndarray[float], rot_mat: np.ndarray[float]) -> np.nda
     rot_array = rot_mat.dot(array2d)
 
     return rot_array.ravel()
+
+
+def get_dof_names(filepath: str, indices: list[int] | None = None) -> list[str]:
+    """
+    Returns DOF names for the given indices,
+    or all DOFs if no indices provided.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the YAML file.
+    indices : list[int], optional
+        List of zero-based indices. If None, returns all DOFs.
+
+    Returns
+    -------
+    list[str]
+        List of strings like 'M2Hexapod.dZ' or 'M1M3Bending.mode3'.
+
+    Raises
+    ------
+    IndexError
+        If any index is out of range.
+    """
+    with open(filepath, "r") as f:
+        data = yaml.safe_load(f)
+
+    dof_names = [f"{section}.{key}" for section, entries in data.items() for key in entries]
+
+    if indices is None:
+        return dof_names
+
+    out_of_range = [i for i in indices if i < 0 or i >= len(dof_names)]
+    if out_of_range:
+        raise IndexError(f"Indices {out_of_range} are out of range (0–{len(dof_names) - 1}).")
+
+    return [dof_names[i] for i in indices]

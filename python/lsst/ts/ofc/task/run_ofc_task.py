@@ -32,6 +32,7 @@ from lsst.afw.cameraGeom import Camera
 from lsst.fgcmcal.utilities import lookupStaticCalibrations
 from lsst.pipe.base import connectionTypes as ct
 from lsst.ts.ofc import OFC, OFCData
+from lsst.ts.ofc.utils import get_config_dir, get_dof_names
 from lsst.utils.timer import timeMethod
 
 
@@ -138,6 +139,8 @@ class RunOfcTask(pipeBase.PipelineTask):
 
         used_dofs = np.isin(np.arange(50), self.dof_indices)
         self.log.info(f"Using DOF indices: {np.where(used_dofs)[0]}")
+        dof_name_file = get_config_dir() / "state0_in_dof.yaml"
+        self.log.info(f"DOF Names: {get_dof_names(dof_name_file, self.dof_indices)}")
 
         self.ofc_calc.ofc_data.comp_dof_idx = {
             "m2HexPos": np.array([val for val in used_dofs[:5]], dtype=bool),
@@ -145,7 +148,6 @@ class RunOfcTask(pipeBase.PipelineTask):
             "M1M3Bend": np.array([val for val in used_dofs[10:30]], dtype=bool),
             "M2Bend": np.array([val for val in used_dofs[30:]], dtype=bool),
         }
-        self.log.info(f"Component DOFs: {self.ofc_calc.ofc_data.comp_dof_idx}")
         self.ofc_calc.controller.reset_history()
 
         # If we require ts_wep as a prerequisite for functionality

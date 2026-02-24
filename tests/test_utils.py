@@ -25,6 +25,7 @@ import numpy as np
 from lsst.ts.ofc import OFCData
 from lsst.ts.ofc.utils import (
     get_config_dir,
+    get_dof_names,
     get_filter_name,
     get_pkg_root,
     rot_1d_array,
@@ -115,6 +116,27 @@ class TestUtils(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             get_intrinsic_zernikes(self.ofc_data, "bad_filter_name", sensor_names)
+
+    def test_get_dof_names_single(self) -> None:
+        yaml_file = get_config_dir() / "state0_in_dof.yaml"
+        self.assertEqual(get_dof_names(yaml_file, [0]), ["M2Hexapod.dZ"])
+
+    def test_get_dof_names_multiple(self) -> None:
+        yaml_file = get_config_dir() / "state0_in_dof.yaml"
+        self.assertEqual(
+            get_dof_names(yaml_file, [0, 5, 10, 30]),
+            ["M2Hexapod.dZ", "cameraHexapod.dZ", "M1M3Bending.mode1", "M2Bending.mode1"],
+        )
+
+    def test_index_out_of_range(self) -> None:
+        yaml_file = get_config_dir() / "state0_in_dof.yaml"
+        with self.assertRaises(IndexError):
+            get_dof_names(yaml_file, [99])
+
+    def test_partial_out_of_range(self) -> None:
+        yaml_file = get_config_dir() / "state0_in_dof.yaml"
+        with self.assertRaises(IndexError):
+            get_dof_names(yaml_file, [0, 99])
 
 
 if __name__ == "__main__":

@@ -29,10 +29,9 @@ from astropy.table import Table
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
 from lsst.afw.cameraGeom import Camera
-from lsst.fgcmcal.utilities import lookupStaticCalibrations
 from lsst.pipe.base import connectionTypes as ct
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.ofc.utils import get_config_dir, get_dof_names
+from lsst.ts.ofc.utils import get_dof_names
 from lsst.utils.timer import timeMethod
 
 
@@ -50,10 +49,9 @@ class RunOfcTaskConnections(
     camera = ct.PrerequisiteInput(
         name="camera",
         storageClass="Camera",
-        doc="Input camera to construct complete exposures.",
+        doc="Camera Geometry",
         dimensions=["instrument"],
         isCalibration=True,
-        lookupFunction=lookupStaticCalibrations,
     )
     ofcCorrections = ct.Output(
         doc="Visit-level table of OFC corrections",
@@ -150,17 +148,14 @@ class RunOfcTask(pipeBase.PipelineTask):
         j_min = min(noll_indices)
         self.ofc_calc.ofc_data.zn_selected = noll_indices
 
-        print(self.ofc_calc.ofc_data.controller)
         self.ofc_calc.set_controller(self.controller_name)
         if self.truncation_index is not None:
             self.log.info(f"Setting truncation index to {self.truncation_index}")
             self.ofc_calc.set_truncation_index(self.truncation_index)
-        print(self.ofc_calc.ofc_data.controller)
 
         used_dofs = np.isin(np.arange(50), self.dof_indices)
         self.log.info(f"Using DOF indices: {np.where(used_dofs)[0]}")
-        dof_name_file = get_config_dir() / "state0_in_dof.yaml"
-        self.log.info(f"DOF Names: {get_dof_names(dof_name_file, self.dof_indices)}")
+        self.log.info(f"DOF Names: {get_dof_names(self.dof_indices)}")
 
         self.ofc_calc.ofc_data.comp_dof_idx = {
             "m2HexPos": np.array([val for val in used_dofs[:5]], dtype=bool),
@@ -176,8 +171,7 @@ class RunOfcTask(pipeBase.PipelineTask):
         wfe_list = list()
         for wfe in aggregateZernikesAvg[self.column_name]:
             zern_out = np.zeros(j_max - j_min + 1)
-            for i, noll in enumerate(noll_indices):
-                zern_out[noll - j_min] = wfe[i]
+            zern_out[noll_indices - j_min] = wfe
             wfe_list.append(zern_out)
 
         self.ofc_calc.calculate_corrections(

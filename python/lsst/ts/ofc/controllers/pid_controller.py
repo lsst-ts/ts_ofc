@@ -19,11 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
-
 import numpy as np
 
-from .. import OFCData
 from . import BaseController
 
 __all__ = ["PIDController"]
@@ -31,10 +28,6 @@ __all__ = ["PIDController"]
 
 class PIDController(BaseController):
     """PID controller."""
-
-    def __init__(self, ofc_data: OFCData, log: logging.Logger | None = None) -> None:
-        super().__init__(ofc_data, log)
-        self.ofc_data.controller["name"] = "PID"
 
     def control_step(
         self,

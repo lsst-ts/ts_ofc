@@ -90,15 +90,13 @@ def rot_1d_array(array: np.ndarray[float], rot_mat: np.ndarray[float]) -> np.nda
     return rot_array.ravel()
 
 
-def get_dof_names(filepath: str, indices: list[int] | None = None) -> list[str]:
+def get_dof_names(indices: list[int] | None = None) -> list[str]:
     """
     Returns DOF names for the given indices,
     or all DOFs if no indices provided.
 
     Parameters
     ----------
-    filepath : str
-        Path to the YAML file.
     indices : list[int], optional
         List of zero-based indices. If None, returns all DOFs.
 
@@ -112,6 +110,7 @@ def get_dof_names(filepath: str, indices: list[int] | None = None) -> list[str]:
     IndexError
         If any index is out of range.
     """
+    filepath = get_config_dir() / "state0_in_dof.yaml"
     with open(filepath, "r") as f:
         data = yaml.safe_load(f)
 

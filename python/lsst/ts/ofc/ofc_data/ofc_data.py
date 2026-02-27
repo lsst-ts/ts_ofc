@@ -707,7 +707,6 @@ class OFCData(BaseOFCData):
             )
 
         if self.controller["name"] not in ["PID", "OIC"]:
-            print(self.controller["name"])
             raise ValueError("Controller 'name' must be either 'PID' or 'OIC'.")
 
         # check if the zn_selected key is present in

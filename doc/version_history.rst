@@ -17,6 +17,20 @@ Version History
 
 .. towncrier release notes start
 
+v4.8.0 (2026-03-17)
+===================
+
+New Features
+------------
+
+- Made vmodes independent of rotator angle. (`DM-54413 <https://rubinobs.atlassian.net//browse/DM-54413>`_)
+
+- Simplified matrix inversion in state estimator. (`DM-54413 <https://rubinobs.atlassian.net//browse/DM-54413>`_)
+
+- Added new logging to debug PID loop. (`DM-54413 <https://rubinobs.atlassian.net//browse/DM-54413>`_)
+- Make default controller init.yaml instead of oic_controller.yaml to avoid confusion (`DM-54413 <https://rubinobs.atlassian.net//browse/DM-54413>`_)
+
+
 v4.7.0 (2026-01-27)
 ===================
 

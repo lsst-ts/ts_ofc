@@ -29,6 +29,7 @@ from scipy.linalg import fractional_matrix_power
 
 from . import SensitivityMatrix
 from .ofc_data import OFCData
+from .utils import ControlBasis
 from .utils.ofc_data_helpers import get_intrinsic_zernikes
 
 RCOND_NOISE_COV = 1e-9
@@ -65,16 +66,36 @@ class StateEstimator:
         else:
             self.log = log.getChild(type(self).__name__)
 
+        self._ofc_data: OFCData | None = None
         self.ofc_data = ofc_data
 
-        # Constuct the double zernike sensitivity matrix
-        self.dz_sensitivity_matrix = SensitivityMatrix(self.ofc_data)
+    @property
+    def ofc_data(self) -> OFCData:
+        if self._ofc_data is None:
+            raise RuntimeError("ofc_data has not been initialized.")
+        return self._ofc_data
 
+    @ofc_data.setter
+    def ofc_data(self, ofc_data: OFCData) -> None:
+        self._ofc_data = ofc_data
+        self._update_from_ofc_data(ofc_data)
+
+    def refresh_from_ofc_data(self) -> None:
+        self._update_from_ofc_data(self.ofc_data)
+
+    def _update_from_ofc_data(self, ofc_data: OFCData) -> None:
+        self.dz_sensitivity_matrix = SensitivityMatrix(ofc_data)
         self.normalization_weights = ofc_data.normalization_weights
         self.noise_covariance = ofc_data.noise_covariance
-
         self.rcond = ofc_data.controller.get("truncation_threshold", None)
         self.truncate_index = ofc_data.controller.get("truncation_index", None)
+        self.normalization_matrix = self.get_normalization_matrix()
+
+        dz_sens_matrix = ofc_data.sensitivity_matrix.reshape(-1, ofc_data.ndofs)[:, ofc_data.dof_idx]
+        self.U, self.S, self.Vh = np.linalg.svd(
+            dz_sens_matrix @ self.normalization_matrix,
+            full_matrices=False,
+        )
 
     def dof_state(
         self,
@@ -83,6 +104,7 @@ class StateEstimator:
         sensor_names: list,
         rotation_angle: float,
         subtract_intrinsics: bool = True,
+        basis: ControlBasis = ControlBasis.DoF,
     ) -> np.ndarray[float]:
         """Compute the state in the basis of degrees of freedom.
 
@@ -101,6 +123,9 @@ class StateEstimator:
         subtract_intrinsics : `bool`, optional
             Whether to subtract the intrinsic wavefront errors from the
             measured wavefront errors. Default is `True`.
+        basis : `ControlBasis`, optional
+            What basis to return the state in. Either dof-space (DoF) or
+            v-mode space (VMode). Default is DoF.
 
         Returns
         -------
@@ -110,21 +135,12 @@ class StateEstimator:
         # Get (truncated, normalized) sensitivity at sensor positions
         field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
         sensitivity_matrix = self.get_sensitivity_matrix(
-            field_angles,
-            rotation_angle,
-            normalize=True,
-            truncate=True,
+            field_angles, rotation_angle, normalize=True, truncate=True, basis=ControlBasis.VMode
         )
 
         # Calculate inverse of noise covariance for sensors
         noise_covariance = self.get_noise_covariance(sensor_names)
         noise_cov_inv_sqrt = fractional_matrix_power(noise_covariance, -0.5)
-
-        # With the truncated sensitivity matrix, now include noise covariance
-        # when computing the pseudo-inverse. We use the 1e-9 default rcond.
-        pinv_sensitivity_matrix = np.linalg.pinv(
-            noise_cov_inv_sqrt @ sensitivity_matrix, rcond=RCOND_NOISE_COV
-        )
 
         # Rotate the wavefront error to the same orientation as the
         # sensitivity matrix. When creating galsim.Zernike object,
@@ -165,25 +181,25 @@ class StateEstimator:
 
         # Reshape wavefront error to dimensions
         # (#zk * #sensors, 1) = (19 * #sensors, 1)
-        y = y.reshape(-1, 1)
+        y = y.ravel()
 
         # Compute optical state estimate in the basis of DOF
         # Because of normalization, we need to de-normalize the result
         # to retrieve the actual DOF values in the original 50 dimensional
         # basis. For more details, see equation (10) in arXiv:2406.04656.
         # For the noise covariance part, see description in SITCOMTN-129.
-        normalization_matrix = self.get_normalization_matrix()
-        x = normalization_matrix @ pinv_sensitivity_matrix @ noise_cov_inv_sqrt @ y
+        sens_v_w = noise_cov_inv_sqrt @ sensitivity_matrix
+        y_w = noise_cov_inv_sqrt @ y
+        v_state, *_ = np.linalg.lstsq(sens_v_w, y_w, rcond=None)
 
-        return x.ravel()
+        if basis == ControlBasis.DoF:
+            return self.get_dofs_from_vmodes(v_state)
+        elif basis == ControlBasis.VMode:
+            return v_state
+        else:
+            raise RuntimeError("Basis used for state estimation is no allowed.")
 
-    def get_vmodes_from_dofs(
-        self,
-        dof: np.ndarray[float],
-        *,
-        sensor_names: list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"],
-        rotation_angle: float = 0.0,
-    ) -> np.ndarray[float]:
+    def get_vmodes_from_dofs(self, dof: np.ndarray[float]) -> np.ndarray[float]:
         """Get the v-modes from the DOF state.
 
         Parameters
@@ -191,11 +207,6 @@ class StateEstimator:
         dof : `numpy.ndarray`
             Optical state in the basis of DOF. Vector of length 50 but
             only the used DOF will be considered.
-        sensor_names : `list`, optional
-            List of sensor names. Default is
-            `["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]`.
-        rotation_angle : `float`, optional
-            Rotation angle in degrees. Default is `0.0`.
 
         Returns
         -------
@@ -203,30 +214,13 @@ class StateEstimator:
             Optical state in the basis of v-modes. Vector of length
             matching the number of used DOF.
         """
-        # Get the normalization matrix
-        normalization_matrix = self.get_normalization_matrix()
-
-        # Get the v-modes matrix
-        field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
-        sensitivity_matrix = self.get_sensitivity_matrix(
-            field_angles,
-            rotation_angle=rotation_angle,
-            normalize=True,
-            truncate=False,
-            check_invertible=False,
+        return (
+            np.linalg.inv(self.normalization_matrix)
+            @ dof[self.ofc_data.dof_idx]
+            @ self.Vh[: self.truncate_index].T
         )
 
-        u, s, vh = np.linalg.svd(sensitivity_matrix, full_matrices=False)
-        dof_tilde = np.linalg.solve(normalization_matrix, dof[self.ofc_data.dof_idx])
-        return vh @ dof_tilde
-
-    def get_dofs_from_vmodes(
-        self,
-        v_modes: np.ndarray[float],
-        *,
-        sensor_names: list = ["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"],
-        rotation_angle: float = 0.0,
-    ) -> np.ndarray[float]:
+    def get_dofs_from_vmodes(self, v_modes: np.ndarray[float]) -> np.ndarray[float]:
         """Get the DOF state from the v-modes.
 
         Parameters
@@ -234,33 +228,14 @@ class StateEstimator:
         v_modes : `numpy.ndarray`
             Optical state in the basis of v-modes. The length
             should match that of the number of used DOF.
-        sensor_names : `list`, optional
-            List of sensor names. Default is
-            `["R00_SW0", "R04_SW0", "R40_SW0", "R44_SW0"]`.
-        rotation_angle : `float`, optional
-            Rotation angle in degrees. Default is `0.0`.
         Returns
         -------
         numpy.ndarray
             Optical state in the basis of DOF. Returns vector
             with dimension 50, with unused DOF set to zero.
         """
-        # Get the normalization matrix
-        normalization_matrix = self.get_normalization_matrix()
-
-        # Get the v-modes matrix
-        field_angles = [self.ofc_data.sample_points[sensor] for sensor in sensor_names]
-        sensitivity_matrix = self.get_sensitivity_matrix(
-            field_angles,
-            rotation_angle=rotation_angle,
-            normalize=True,
-            truncate=False,
-            check_invertible=False,
-        )
-        u, s, vh = np.linalg.svd(sensitivity_matrix, full_matrices=False)
-        dofs = np.zeros(len(self.normalization_weights))
-        dofs[self.ofc_data.dof_idx] = normalization_matrix @ vh.T @ v_modes
-        return dofs
+        weighted_v_modes = v_modes @ self.Vh[: self.truncate_index]
+        return self.normalization_matrix @ weighted_v_modes
 
     def get_normalization_matrix(self) -> np.ndarray[float]:
         """Get the normalization matrix.
@@ -282,6 +257,7 @@ class StateEstimator:
         normalize: bool = False,
         truncate: bool = False,
         check_invertible: bool = True,
+        basis: ControlBasis = ControlBasis.DoF,
     ) -> np.ndarray[float]:
         """Get the sensitivity matrix at the sensor positions.
 
@@ -303,6 +279,9 @@ class StateEstimator:
         check_invertible : `bool`
             Whether to check if the sensitivity matrix is invertible.
             Default is `True`.
+        basis : `ControlBasis`
+            What basis to return sensitivity matrix in. Either dof-space (DoF)
+            or v-mode space (VMode).
 
         Returns
         -------
@@ -339,38 +318,41 @@ class StateEstimator:
         sensitivity_matrix = sensitivity_matrix[..., self.ofc_data.dof_idx]
 
         if normalize:
-            normalization_matrix = self.get_normalization_matrix()
-            sensitivity_matrix = sensitivity_matrix @ normalization_matrix
+            sensitivity_matrix = sensitivity_matrix @ self.normalization_matrix
 
         # Check the dimension of sensitivity matrix to see if we can invert it
         num_zk, num_dof = sensitivity_matrix.shape
         if num_zk < num_dof and check_invertible:
             raise RuntimeError(f"Equation number ({num_zk}) < variable number ({num_dof}).")
 
+        sensitivity_matrix_v = sensitivity_matrix @ self.Vh.T
         if truncate:
             # Compute the pseudo-inverse of the sensitivity matrix
             # rcond sets the truncation of different modes.
             # If rcond is None, it is computed from the singular values
             # of the sensitivity matrix, using truncation index as reference.
-            if self.rcond is None and self.truncate_index is None:
-                raise ValueError("Neither truncation index or threshold are set in the controller.")
+            if self.truncate_index is None:
+                raise ValueError(
+                    "Truncation index set incorrectly in the controller. "
+                    "Configured to truncate but truncation index is 'None', "
+                    "check OFC configuration."
+                )
+            elif self.truncate_index > len(self.ofc_data.dof_idx):
+                self.log.warning(
+                    f"Truncation index ({self.truncate_index}) exceeds the "
+                    f"number of used DOF ({len(self.ofc_data.dof_idx)}). "
+                )
 
-            # Handle truncation of the sensitivity matrix using SVD first.
-            # This ensures the v-modes will not depend on the noise covariance.
-            u, s, vh = np.linalg.svd(sensitivity_matrix, full_matrices=False)
-            if self.truncate_index is not None:
-                self.log.info("Setting rcond value from truncation index.")
-                if self.truncate_index >= len(s):
-                    self.rcond = 0.99 * s[-1] / np.max(s)
-                else:
-                    self.rcond = 0.99 * s[self.truncate_index - 1] / np.max(s)
+            sensitivity_matrix_v = sensitivity_matrix @ self.Vh[: self.truncate_index].T
 
-            cutoff = self.rcond * np.amax(s, axis=-1, keepdims=True)
-            large = s > cutoff
-            s[~large] = 0
-            sensitivity_matrix = u @ np.diag(s) @ vh
+            sensitivity_matrix = sensitivity_matrix_v @ self.Vh[: self.truncate_index]
 
-        return sensitivity_matrix
+        if basis == ControlBasis.DoF:
+            return sensitivity_matrix
+        elif basis == ControlBasis.VMode:
+            return sensitivity_matrix_v
+        else:
+            raise RuntimeError("Basis used for sensitivity matrix is no allowed.")
 
     def get_noise_covariance(self, sensor_names: list) -> np.ndarray[float]:
         """Get the noise covariance matrix.

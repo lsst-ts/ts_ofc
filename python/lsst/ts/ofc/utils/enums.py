@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["CorrectionType"]
+__all__ = ["CorrectionType", "ControlBasis"]
 
 from enum import IntEnum, auto
 
@@ -28,3 +28,8 @@ class CorrectionType(IntEnum):
     POSITION = 1
     FORCE = auto()
     UNKNOWN = auto()
+
+
+class ControlBasis(IntEnum):
+    DoF = auto()
+    VMode = auto()

@@ -165,7 +165,7 @@ class OFCData(BaseOFCData):
         self.start_task.set_result(None)
 
         # Initialize controller configuration
-        self._controller_filename = "oic_controller.yaml"
+        self._controller_filename = "init.yaml"
 
         # Zernike indices used
         self._zn_idx = np.arange(self.znmax - self.znmin + 1, dtype=int)

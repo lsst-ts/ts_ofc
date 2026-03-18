@@ -28,7 +28,7 @@ import numpy as np
 from . import BendModeToForce, Correction, StateEstimator
 from .controllers import BaseController, OICController, PIDController
 from .ofc_data import OFCData
-from .utils import CorrectionType, get_filter_name
+from .utils import ControlBasis, CorrectionType, get_filter_name
 from .utils.ofc_data_helpers import get_sensor_names
 
 
@@ -105,9 +105,9 @@ class OFC:
             Name of the controller. Options are: "PID", "OIC".
         """
         if controller_name == "PID":
-            self.controller: BaseController = PIDController(self.ofc_data)
+            self.controller: BaseController = PIDController(self.ofc_data, log=self.log)
         elif controller_name == "OIC":
-            self.controller = OICController(self.ofc_data)
+            self.controller = OICController(self.ofc_data, log=self.log)
         else:
             raise ValueError(f"Unknown controller name: {controller_name}. Options are: 'PID', 'OIC'.")
 
@@ -210,25 +210,15 @@ class OFC:
             sensor_names,
             rotation_angle + self.ofc_data.rotation_offset,
             subtract_intrinsics=subtract_intrinsics,
+            basis=ControlBasis.VMode if control_vmodes else ControlBasis.DoF,
         )
-
-        if control_vmodes:
-            optical_state_dofs = np.zeros(self.ofc_data.ndofs)
-            optical_state_dofs[self.ofc_data.dof_idx] += optical_state
-            optical_state = self.state_estimator.get_vmodes_from_dofs(
-                optical_state_dofs,
-                sensor_names=sensor_names,
-                rotation_angle=rotation_angle + self.ofc_data.rotation_offset,
-            )
 
         uk = -self.controller.control_step(
             filter_name, optical_state, sensor_names, control_vmodes=control_vmodes
         )
 
         if control_vmodes:
-            uk = self.state_estimator.get_dofs_from_vmodes(
-                uk, sensor_names=sensor_names, rotation_angle=rotation_angle + self.ofc_data.rotation_offset
-            )[self.ofc_data.dof_idx]
+            uk = self.state_estimator.get_dofs_from_vmodes(uk)[self.ofc_data.dof_idx]
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)

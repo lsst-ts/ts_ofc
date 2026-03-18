@@ -323,12 +323,16 @@ class BaseController:
             either dofs or v-modes.
         """
         error = self.setpoint[self.ofc_data.dof_idx] - state
+        pid_log_message = f"Error before any gains in whichever basis PID is {self.integral}.\n"
+
         self.integral += error
+        pid_log_message += f"Integral component before clipping is {self.integral}.\n"
         self.integral = np.clip(
             self.integral,
             -self.ofc_data.max_integral[self.ofc_data.dof_idx],
             self.ofc_data.max_integral[self.ofc_data.dof_idx],
         )
+        pid_log_message += f"Integral component is {self.integral}.\n"
         derivative = error - self.previous_error
 
         # Apply low-pass filter to the derivative term
@@ -342,7 +346,8 @@ class BaseController:
             + self.ki[self.ofc_data.dof_idx] * self.integral
             + self.kd[self.ofc_data.dof_idx] * self.filtered_derivative
         )
-
+        pid_log_message += f"Corrections after Kp/Ki/Kd gains is {self.integral}."
+        self.log.info(pid_log_message)
         self.previous_error = error
 
         return uk

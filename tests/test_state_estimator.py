@@ -38,7 +38,6 @@ class TestStateEstimator(unittest.TestCase):
         self.ofc_data.controller_filename = file_path
 
         self.estimator = StateEstimator(self.ofc_data)
-        self.estimator.rcond = 1e-7
 
         self.wfe = np.loadtxt(
             pathlib.Path(__file__).parent.absolute() / "testData" / "lsst_wfs_error_iter0.z4c"
@@ -130,14 +129,10 @@ class TestStateEstimator(unittest.TestCase):
         dof_state = rng.normal(loc=0.0, scale=1.0, size=len(self.estimator.ofc_data.dof_idx))
 
         # Convert to v-modes
-        vmode_state = self.estimator.get_vmodes_from_dofs(
-            dof_state, sensor_names=self.sensor_name_list, rotation_angle=0.0
-        )
+        vmode_state = self.estimator.get_vmodes_from_dofs(dof_state)
 
         # Convert back to dofs
-        recovered_dof_state = self.estimator.get_dofs_from_vmodes(
-            vmode_state, sensor_names=self.sensor_name_list, rotation_angle=0.0
-        )
+        recovered_dof_state = self.estimator.get_dofs_from_vmodes(vmode_state)
 
         # Check that the recovered DOF state matches the original
         np.testing.assert_array_almost_equal(
@@ -325,6 +320,7 @@ class TestStateEstimator(unittest.TestCase):
             M2Bend=np.zeros(20, dtype=bool),
         )
         self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
+        self.estimator.refresh_from_ofc_data()
 
         # Compute optical state estimate
         state = self.estimator.dof_state(
@@ -356,6 +352,7 @@ class TestStateEstimator(unittest.TestCase):
         )
         new_comp_dof_idx["M1M3Bend"][:10] = True
         self.estimator.ofc_data.comp_dof_idx = new_comp_dof_idx
+        self.estimator.refresh_from_ofc_data()
 
         # Check that optical state estimation raises error
         # when # dofs > # zernikes

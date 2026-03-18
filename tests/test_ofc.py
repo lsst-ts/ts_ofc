@@ -226,6 +226,7 @@ class TestOFC(unittest.TestCase):
         )
         self.ofc.ofc_data.comp_dof_idx = new_comp_dof_idx
         self.ofc.controller.reset_history()
+        self.ofc.set_truncation_index(5)
 
         self.ofc_data.controller["kp"] = 1  # gain
 

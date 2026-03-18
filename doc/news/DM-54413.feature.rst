@@ -1,0 +1,4 @@
+* Made vmodes independent of rotator angle.
+* Simplified matrix inversion in state estimator.
+* Added new logging to debug PID loop.
+* Make default controller init.yaml instead of oic_controller.yaml to avoid confusion

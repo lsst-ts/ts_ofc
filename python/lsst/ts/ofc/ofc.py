@@ -218,7 +218,7 @@ class OFC:
         )
 
         if control_vmodes:
-            uk = self.state_estimator.get_dofs_from_vmodes(uk)[self.ofc_data.dof_idx]
+            uk = self.state_estimator.get_dofs_from_vmodes(uk)
 
         # Assign the value to the last visit DOF
         self.set_last_visit_dof(uk)

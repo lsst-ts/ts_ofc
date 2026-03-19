@@ -195,7 +195,9 @@ class StateEstimator:
         if basis == ControlBasis.DoF:
             return self.get_dofs_from_vmodes(v_state)
         elif basis == ControlBasis.VMode:
-            return v_state
+            v_state_padded = np.zeros(len(self.ofc_data.dof_idx))
+            v_state_padded[: len(v_state)] = v_state
+            return v_state_padded
         else:
             raise RuntimeError("Basis used for state estimation is no allowed.")
 

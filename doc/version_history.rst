@@ -17,6 +17,16 @@ Version History
 
 .. towncrier release notes start
 
+v4.8.1 (2026-03-18)
+===================
+
+Bug Fixes
+---------
+
+- * Fix PID logging messages to not return the smae value all the time. (`DM-54435 <https://rubinobs.atlassian.net//browse/DM-54435>`_)
+- * Make sure vmodes dimensions match the setpoints by padding them with zeros. (`DM-54435 <https://rubinobs.atlassian.net//browse/DM-54435>`_)
+
+
 v4.8.0 (2026-03-17)
 ===================
 

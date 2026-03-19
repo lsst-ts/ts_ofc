@@ -323,7 +323,7 @@ class BaseController:
             either dofs or v-modes.
         """
         error = self.setpoint[self.ofc_data.dof_idx] - state
-        pid_log_message = f"Error before any gains in whichever basis PID is {self.integral}.\n"
+        pid_log_message = f"Error before any gains in whichever basis PID is {error}.\n"
 
         self.integral += error
         pid_log_message += f"Integral component before clipping is {self.integral}.\n"
@@ -346,7 +346,7 @@ class BaseController:
             + self.ki[self.ofc_data.dof_idx] * self.integral
             + self.kd[self.ofc_data.dof_idx] * self.filtered_derivative
         )
-        pid_log_message += f"Corrections after Kp/Ki/Kd gains is {self.integral}."
+        pid_log_message += f"Corrections after Kp/Ki/Kd gains is {uk}."
         self.log.info(pid_log_message)
         self.previous_error = error
 

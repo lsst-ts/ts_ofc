@@ -236,7 +236,7 @@ class StateEstimator:
             Optical state in the basis of DOF. Returns vector
             with dimension 50, with unused DOF set to zero.
         """
-        weighted_v_modes = v_modes @ self.Vh[: self.truncate_index]
+        weighted_v_modes = v_modes[: self.truncate_index] @ self.Vh[: self.truncate_index]
         return self.normalization_matrix @ weighted_v_modes
 
     def get_normalization_matrix(self) -> np.ndarray[float]:

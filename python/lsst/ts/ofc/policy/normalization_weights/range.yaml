@@ -1,0 +1,68 @@
+---
+# Normalization weights for the degrees of freedom
+# Description: Normalization weights for the sensitivity matrix
+#
+# The normalization weights are used to normalize
+# the sensitivity matrix and be able to operate in
+# a different basis. The normalization weights are
+# effectively a rescaling diagonal matix that is
+# applied to the sensitivity to equalize the relevance
+# of the different degrees of freedom (namelly, the
+# different units and ranges of the degrees of freedom).
+# The default is simply an identity (weights = 1)),
+# which means that the sensitivity matrix is not
+# normalized in any way. Units can be dimensionless.
+# The reduced basis weights units are um of range * arcsec of FWHM.
+# But the matrix is denormalized before retrieving the optical state,
+# so it should not be relevant.
+
+- 5900.
+- 6700.
+- 6700.
+- 0.12
+- 0.12
+- 8700.
+- 7600.
+- 7600.
+- 0.24
+- 0.24
+- 0.45413045
+- 0.45243766
+- 0.08771258
+- 0.06697294
+- 0.06603379
+- 0.02352388
+- 0.02127324
+- 0.0220605
+- 0.01947111
+- 0.01376368
+- 0.01319953
+- 0.00908752
+- 0.00929749
+- 0.00930008
+- 0.00408714
+- 0.00444724
+- 0.00590511
+- 0.00599045
+- 0.00487274
+- 0.00220591
+- 0.96374756
+- 0.96802693
+- 0.13688774
+- 0.12518405
+- 0.07429941
+- 0.03062769
+- 0.0310315
+- 0.03596418
+- 0.03584434
+- 0.01699159
+- 0.01689383
+- 0.01446863
+- 0.01467367
+- 0.00874435
+- 0.00736087
+- 0.00680974
+- 0.00709834
+- 0.00246636
+- 0.00169895
+- 0.00166498

@@ -191,7 +191,8 @@ class OFC:
             f"state estimator truncation index {self.state_estimator.truncate_index} "
             f"and ofc_data threshold {self.ofc_data.controller.get('truncation_threshold', None)} "
             f"state estimator rcond {self.state_estimator.rcond} "
-            f"zn_selected {self.ofc_data.zn_selected}"
+            f"zn_selected {self.ofc_data.zn_selected} "
+            f"vmodes_selected {self.ofc_data.vmodes_selected} "
             f"control_vmodes {control_vmodes}, subtract_intrinsics {subtract_intrinsics}"
         )
         # Remove NaN values and corresponding sensor_ids

@@ -161,6 +161,46 @@ class TestOFC(unittest.TestCase):
             ):
                 assert np.abs(expected_value - computed_value) < 1e-1
 
+    def test_calculate_corrections_with_selected_vmodes_in_dof_mode(self) -> None:
+        """Test that explicit v-mode selection affects DOF-mode corrections."""
+        filter_name = "R"
+        rotation_angle = 0.0
+
+        self.ofc.ofc_data.xref = "0"
+        self.ofc_data.controller["kp"] = 0.4
+        self.ofc.controller.dof_state0[45] = 0.1
+        self.ofc.controller.reset_dof_state()
+        self.ofc.ofc_data.vmodes_selected = None
+
+        # Calculate corrections with automatic v-mode selection
+        self.ofc.calculate_corrections(
+            wfe=self.wfe,
+            sensor_ids=self.sensor_id_list,
+            filter_name=filter_name,
+            rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
+            control_vmodes=False,
+        )
+        baseline_lv_dof = self.ofc.lv_dof.copy()
+
+        self.ofc.reset()
+        self.ofc.ofc_data.vmodes_selected = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+        self.ofc.state_estimator.refresh_from_ofc_data()
+
+        # Calculate corrections with explicit v-mode selection
+        self.ofc.calculate_corrections(
+            wfe=self.wfe,
+            sensor_ids=self.sensor_id_list,
+            filter_name=filter_name,
+            rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
+            control_vmodes=False,
+        )
+
+        # Check that the last-visit DOF has changed, indicating that the
+        # selected v-modes affected the correction calculation.
+        self.assertFalse(np.allclose(self.ofc.lv_dof, baseline_lv_dof))
+
     def test_get_state_correction_from_last_visit(self) -> None:
         """Test the get_state_correction_from_last_visit method."""
         new_comp_dof_idx = dict(

@@ -1,0 +1,1 @@
+Add ``set_vmodes_selected`` method to ``OFC`` class for explicit v-mode selection, matching the pattern used by ``set_truncation_index``.

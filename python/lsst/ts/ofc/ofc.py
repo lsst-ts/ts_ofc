@@ -133,6 +133,18 @@ class OFC:
         self.ofc_data.controller["truncation_index"] = truncation_index
         self.state_estimator = StateEstimator(self.ofc_data)
 
+    def set_vmodes_selected(self, vmodes_selected: list[int] | None) -> None:
+        """Set the explicit v-mode selection.
+
+        Parameters
+        ----------
+        vmodes_selected : `list` [`int`] or `None`
+            V-mode indices (1-based) to use. If `None`, revert to
+            automatic truncation-based selection.
+        """
+        self.ofc_data.vmodes_selected = np.array(vmodes_selected) if vmodes_selected is not None else None
+        self.state_estimator.refresh_from_ofc_data()
+
     def set_state_estimator(self) -> None:
         """Set the state estimator."""
         self.state_estimator = StateEstimator(self.ofc_data)

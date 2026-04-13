@@ -310,6 +310,24 @@ class TestOFC(unittest.TestCase):
         self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
         self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
 
+    def test_set_vmodes_selected(self) -> None:
+        """Test set_vmodes_selected sets the selection and refreshes
+        the state estimator cache."""
+        # Default is None (automatic truncation)
+        self.assertIsNone(self.ofc.ofc_data.vmodes_selected)
+        original_vh = self.ofc.state_estimator.effective_vh.copy()
+
+        # Set explicit selection
+        self.ofc.set_vmodes_selected([1, 3, 5])
+        np.testing.assert_array_equal(self.ofc.ofc_data.vmodes_selected, np.array([1, 3, 5]))
+        self.assertEqual(self.ofc.state_estimator.effective_vh.shape[0], 3)
+        self.assertFalse(np.array_equal(self.ofc.state_estimator.effective_vh, original_vh))
+
+        # Clear selection
+        self.ofc.set_vmodes_selected(None)
+        self.assertIsNone(self.ofc.ofc_data.vmodes_selected)
+        np.testing.assert_array_equal(self.ofc.state_estimator.effective_vh, original_vh)
+
     def test_get_correction(self) -> None:
         """Test the get_correction method."""
         # First time of calculation

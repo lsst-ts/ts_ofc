@@ -1,0 +1,1 @@
+Generalize gneerate normalization weights to allow for multiple r_i and f_i exponents.

@@ -105,7 +105,8 @@ class TestOFCData(unittest.TestCase):
 
     def test_selected_vmodes_idx(self) -> None:
         """Test the selected vmodes property."""
-        self.assertIsNone(self.ofc_data.vmodes_selected)
+        # Default returns all v-modes
+        np.testing.assert_array_equal(self.ofc_data.vmodes_selected, self.ofc_data.default_vmodes_selected)
 
         new_vmodes_selected = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
         self.ofc_data.vmodes_selected = new_vmodes_selected
@@ -114,19 +115,20 @@ class TestOFCData(unittest.TestCase):
 
         # Check that selecting v-modes below 1 raises an error
         with self.assertRaises(ValueError):
-            self.ofc_data.vmodes_selected = [0, 1]
+            self.ofc_data.vmodes_selected = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
         # Raise an error if selecting v-modes above the number of DOFs
         with self.assertRaises(ValueError):
-            self.ofc_data.vmodes_selected = [1, 51]
+            self.ofc_data.vmodes_selected = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 51]
 
-        # Check that selecting duplicate v-modes raises an error
-        with self.assertRaises(ValueError):
-            self.ofc_data.vmodes_selected = [1, 1]
+        # Check that duplicates are removed and result is unique
+        self.ofc_data.vmodes_selected = [1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 10, 11]
+        result = self.ofc_data.vmodes_selected
+        self.assertEqual(len(result), len(np.unique(result)))
 
-        # Check that setting vmodes_selected to None clears the selection
+        # Check that setting vmodes_selected to None reverts to default
         self.ofc_data.vmodes_selected = None
-        self.assertIsNone(self.ofc_data.vmodes_selected)
+        np.testing.assert_array_equal(self.ofc_data.vmodes_selected, self.ofc_data.default_vmodes_selected)
 
     def test_comp_dof_idx(self) -> None:
         """Test the comp_dof_idx property."""

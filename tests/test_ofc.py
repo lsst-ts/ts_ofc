@@ -313,8 +313,10 @@ class TestOFC(unittest.TestCase):
     def test_set_vmodes_selected(self) -> None:
         """Test set_vmodes_selected sets the selection and refreshes
         the state estimator cache."""
-        # Default is None (automatic truncation)
-        self.assertIsNone(self.ofc.ofc_data.vmodes_selected)
+        # Default returns all v-modes
+        np.testing.assert_array_equal(
+            self.ofc.ofc_data.vmodes_selected, self.ofc.ofc_data.default_vmodes_selected
+        )
         original_vh = self.ofc.state_estimator.effective_vh.copy()
 
         # Set explicit selection
@@ -323,9 +325,11 @@ class TestOFC(unittest.TestCase):
         self.assertEqual(self.ofc.state_estimator.effective_vh.shape[0], 3)
         self.assertFalse(np.array_equal(self.ofc.state_estimator.effective_vh, original_vh))
 
-        # Clear selection
+        # Clear selection reverts to default
         self.ofc.set_vmodes_selected(None)
-        self.assertIsNone(self.ofc.ofc_data.vmodes_selected)
+        np.testing.assert_array_equal(
+            self.ofc.ofc_data.vmodes_selected, self.ofc.ofc_data.default_vmodes_selected
+        )
         np.testing.assert_array_equal(self.ofc.state_estimator.effective_vh, original_vh)
 
     def test_get_correction(self) -> None:

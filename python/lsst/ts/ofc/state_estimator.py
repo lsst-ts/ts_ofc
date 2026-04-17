@@ -112,7 +112,9 @@ class StateEstimator:
         If ``vmodes_selected`` is set explicitly in ``ofc_data``, those
         indices are used (converted from 1-based to 0-based). Otherwise,
         automatic selection is performed using either ``truncation_index``
-        or ``truncation_threshold`` (rcond).
+        or ``truncation_threshold`` (rcond). These two are mutually
+        exclusive (enforced by ``configure_controller``); if both are
+        somehow set, ``truncation_index`` takes precedence.
 
         Returns
         -------
@@ -155,7 +157,7 @@ class StateEstimator:
     def _pad_vmode_vector(self, v_modes: np.ndarray[float]) -> np.ndarray[float]:
         """Pad a compact v-mode vector to the full active DOF dimension."""
         padded_v_modes = np.zeros(len(self.ofc_data.dof_idx))
-        padded_v_modes[self.effective_vmode_idx] = np.asarray(v_modes)
+        padded_v_modes[self.effective_vmode_idx] = v_modes
         return padded_v_modes
 
     def dof_state(
@@ -266,8 +268,8 @@ class StateEstimator:
         Parameters
         ----------
         dof : `numpy.ndarray`
-            Optical state in the basis of DOF. Vector of length 50 but
-            only the used DOF will be considered.
+            Optical state in the basis of DOF. Accepts either a vector
+            with the number of used DOFs or the full DOF dimension.
 
         Returns
         -------
@@ -276,7 +278,6 @@ class StateEstimator:
             same dimension as the number of used DOF, with unselected modes
             padded with zeros.
         """
-        dof = np.asarray(dof)
         if len(dof) == len(self.ofc_data.dof_idx):
             active_dof = dof
         elif len(dof) == self.ofc_data.ndofs:

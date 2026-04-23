@@ -1,0 +1,1 @@
+Added new range 0.5 fwhm -0.5 normalization weights and made them the default.

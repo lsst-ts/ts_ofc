@@ -59,7 +59,7 @@ max_integral: [
   0.0, 0.0, 0.0, 0.0, 0.0,
   0.0, 0.0, 0.0, 0.0, 0.0,
 ]
-normalization_weights_filename: "range-fwhm.yaml"
+normalization_weights_filename: "range0.5_fwhm-0.5.yaml"
 truncation_index: 12
 rotation_offset: 0.0 
 

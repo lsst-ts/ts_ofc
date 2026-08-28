@@ -8,6 +8,8 @@ config.log
 *.pyc
 *_wrap.cc
 *Lib.py
+*.egg-info/
+build/
 
 # Built by sconsUtils
 version.py
@@ -35,3 +37,4 @@ pytest_session.txt
 .clang-format
 .ruff.toml
 towncrier.toml
+.LICENSE.txt

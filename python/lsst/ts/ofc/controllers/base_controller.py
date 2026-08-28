@@ -20,6 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+from collections import deque
 
 import numpy as np
 
@@ -63,12 +64,14 @@ class BaseController:
         Logger class used for logging operations.
     ofc_data : `OFCData`
         OFC data.
-    previous_error : `np.array`
-        Previous error.
+    previous_error : `collections.deque`
+        List of previous errors.
     pssn_data : `dict`
         PSSN data.
     setpoint : `np.array`
         Setpoint for the PID controller.
+    use_leaky_integrator : `bool`
+        Whether to use the leaky integrator for the integral term.
     """
 
     # Eta in FWHM calculation.
@@ -92,6 +95,9 @@ class BaseController:
         self._kd = self.format_gain_array(self.ofc_data.controller["kd"], label="kd")
         self._derivative_filter_coeff = self.ofc_data.controller["derivative_filter_coeff"]
         self.setpoint = np.array(self.ofc_data.controller["setpoint"])
+        self._n_iterms = self.ofc_data.n_iterms
+        self._i_factor = self.ofc_data.i_factor
+        self.use_leaky_integrator = self.ofc_data.use_leaky_integrator
 
         # Set initial state
         self.dof_state0 = np.zeros(len(self.ofc_data.dof_idx))
@@ -122,7 +128,10 @@ class BaseController:
         self.dof_state = self.dof_state0.copy()
 
         # Initialize previous error and integral
-        self.previous_error = np.zeros(len(self.ofc_data.dof_idx))
+        # Leaky integral weights can just be calculated once
+        # at the beginning
+        self.previous_error: deque[np.ndarray] = deque(maxlen=self._n_iterms)
+        self._set_integral_weights()
         self.integral = np.zeros(len(self.ofc_data.dof_idx))
         self.filtered_derivative = np.zeros(len(self.ofc_data.dof_idx))
 
@@ -273,11 +282,25 @@ class BaseController:
         """
         self.dof_state[self.ofc_data.dof_idx] = value
 
+    def _set_integral_weights(self) -> None:
+        """Set leaky integral weights for the active DOFs.
+
+        The weights array has one row per retained error sample and one column
+        per active DOF. Older errors receive exponentially smaller weights,
+        while the newest error has weight 1.
+        """
+        self.integral_weights: np.ndarray = np.array(
+            [(self._i_factor**i) * np.ones(len(self.ofc_data.dof_idx)) for i in range(self._n_iterms)]
+        )
+        # Flip the order so that the newest error is last
+        self.integral_weights = self.integral_weights[::-1]
+
     def reset_history(self) -> None:
         """Reset the history of the controller."""
         self.dof_state0 = self.dof_state.copy()
         self.integral = np.zeros(len(self.ofc_data.dof_idx))
-        self.previous_error = np.zeros(len(self.ofc_data.dof_idx))
+        self.previous_error = deque(maxlen=self._n_iterms)
+        self._set_integral_weights()
         self.filtered_derivative = np.zeros(len(self.ofc_data.dof_idx))
 
     def control_step(
@@ -324,8 +347,21 @@ class BaseController:
         """
         error = self.setpoint[self.ofc_data.dof_idx] - state
         pid_log_message = f"Error before any gains in whichever basis PID is {error}.\n"
+        previous_error = (
+            self.previous_error[-1] if len(self.previous_error) > 0 else np.zeros(len(self.ofc_data.dof_idx))
+        )
+        derivative = error - previous_error
+        self.previous_error.append(error)
 
-        self.integral += error
+        if self.use_leaky_integrator:
+            if self.integral_weights.shape[1] != len(self.ofc_data.dof_idx):
+                self.integral_weights = self.integral_weights[:, self.ofc_data.dof_idx]
+            self.integral = np.sum(
+                self.integral_weights[-len(self.previous_error) :] * np.array(self.previous_error),
+                axis=0,
+            )
+        else:
+            self.integral += error
         pid_log_message += f"Integral component before clipping is {self.integral}.\n"
         self.integral = np.clip(
             self.integral,
@@ -333,14 +369,12 @@ class BaseController:
             self.ofc_data.max_integral[self.ofc_data.dof_idx],
         )
         pid_log_message += f"Integral component is {self.integral}.\n"
-        derivative = error - self.previous_error
 
         # Apply low-pass filter to the derivative term
         self.filtered_derivative = (
             self.derivative_filter_coeff * derivative
             + (1 - self.derivative_filter_coeff) * self.filtered_derivative
         )
-
         uk = (
             self.kp[self.ofc_data.dof_idx] * error
             + self.ki[self.ofc_data.dof_idx] * self.integral
@@ -348,7 +382,6 @@ class BaseController:
         )
         pid_log_message += f"Corrections after Kp/Ki/Kd gains is {uk}."
         self.log.info(pid_log_message)
-        self.previous_error = error
 
         return uk
 

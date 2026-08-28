@@ -38,7 +38,6 @@ class TestPIDController(unittest.TestCase):
         self.pid_controller.ki = 0.1
         self.pid_controller.kd = 0.05
         self.pid_controller.setpoint = np.ones(50)
-        self.pid_controller.previous_error = np.zeros(50)
         self.pid_controller.integral = np.zeros(50)
 
         self.filter_name = "R"
@@ -73,8 +72,23 @@ class TestPIDController(unittest.TestCase):
         """
         integral = self.pid_controller.integral.copy()
         error = self.pid_controller.setpoint - dof_state
-        integral += error
-        derivative = error - self.pid_controller.previous_error
+        if self.pid_controller.use_leaky_integrator:
+            previous_error = list(self.pid_controller.previous_error) + [error]
+            maxlen = self.pid_controller.previous_error.maxlen
+            assert maxlen is not None
+            previous_error = previous_error[-maxlen:]
+            integral = np.sum(
+                self.pid_controller.integral_weights[-len(previous_error) :] * np.array(previous_error),
+                axis=0,
+            )
+        else:
+            integral += error
+        previous_error = (
+            self.pid_controller.previous_error[-1]
+            if len(self.pid_controller.previous_error) > 0
+            else np.zeros(len(self.pid_controller.ofc_data.dof_idx))
+        )
+        derivative = error - previous_error
         uk = (
             self.pid_controller.kp * error
             + self.pid_controller.ki * integral
@@ -107,7 +121,6 @@ class TestPIDController(unittest.TestCase):
         self.pid_controller.control_step(self.filter_name, self.dof_state)
 
         final_integral = self.pid_controller.integral.copy()
-        final_previous_error = self.pid_controller.previous_error.copy()
 
         self.pid_controller.reset_history()
 
@@ -120,20 +133,11 @@ class TestPIDController(unittest.TestCase):
         ):
             raise AssertionError("Integral history not reset correctly.")
 
-        if np.array_equal(
-            self.pid_controller.previous_error,
-            final_previous_error,
-        ):
-            raise AssertionError("Previous error not reset correctly.")
-
         np.testing.assert_array_equal(
             self.pid_controller.integral,
             np.zeros(len(self.pid_controller.ofc_data.dof_idx)),
         )
-        np.testing.assert_array_equal(
-            self.pid_controller.previous_error,
-            np.zeros(len(self.pid_controller.ofc_data.dof_idx)),
-        )
+        self.assertEqual(len(self.pid_controller.previous_error), 0)
 
     def test_derivative_filter(self) -> None:
         """Test derivative filter."""
@@ -171,8 +175,9 @@ class TestPIDController(unittest.TestCase):
             err_msg="PID control output with gain array does not match expected values.",
         )
 
-    def test_integral_behavior(self) -> None:
-        """Test integral behavior over multiple steps."""
+    def test_cumulative_integral_behavior(self) -> None:
+        """Test cumulative integral behavior over multiple steps."""
+        self.pid_controller.use_leaky_integrator = False
         initial_state = 0.7 * np.ones(50)
         self.pid_controller.control_step(self.filter_name, initial_state)
         self.pid_controller.control_step(self.filter_name, initial_state)
@@ -181,6 +186,33 @@ class TestPIDController(unittest.TestCase):
             self.pid_controller.integral.squeeze(),
             2 * (self.pid_controller.setpoint - initial_state),
             "Integral not accumulating correctly.",
+        )
+
+    def test_leaky_integral_behavior(self) -> None:
+        """Test leaky integral behavior over multiple steps."""
+        self.pid_controller.use_leaky_integrator = True
+        initial_state = 0.7 * np.ones(50)
+        error = self.pid_controller.setpoint - initial_state
+
+        self.pid_controller.control_step(self.filter_name, initial_state)
+        np.testing.assert_array_equal(
+            self.pid_controller.integral.squeeze(),
+            error,
+            "Leaky integral should include the current error.",
+        )
+
+        self.pid_controller.control_step(self.filter_name, initial_state)
+        np.testing.assert_array_almost_equal(
+            self.pid_controller.integral.squeeze(),
+            (1 + self.ofc_data.i_factor) * error,
+            err_msg="Leaky integral should include current and previous errors.",
+        )
+
+        self.pid_controller.control_step(self.filter_name, initial_state)
+        np.testing.assert_array_almost_equal(
+            self.pid_controller.integral.squeeze(),
+            (1 + self.ofc_data.i_factor + self.ofc_data.i_factor**2) * error,
+            err_msg="Leaky integral should weight older errors by i_factor.",
         )
 
     def test_derivative_behavior(self) -> None:
@@ -196,7 +228,7 @@ class TestPIDController(unittest.TestCase):
             self.pid_controller.setpoint - initial_state
         )
         np.testing.assert_array_equal(
-            self.pid_controller.previous_error - (self.pid_controller.setpoint - initial_state),
+            self.pid_controller.previous_error[-1] - (self.pid_controller.setpoint - initial_state),
             expected_derivative,
             "Derivative calculation does not match expected.",
         )

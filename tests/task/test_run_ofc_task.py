@@ -1,0 +1,174 @@
+# This file is part of ts_ofc.
+#
+# Developed for Vera Rubin Observatory.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import unittest
+
+import numpy as np
+from astropy.table import Table
+
+import lsst.pipe.base as pipeBase
+from lsst.afw.cameraGeom import DetectorType
+from lsst.obs.lsst import LsstCam
+from lsst.ts.ofc.controllers import OICController, PIDController
+from lsst.ts.ofc.task.run_ofc_task import RunOfcTask, RunOfcTaskConfig
+
+
+class TestRunOfcTask(unittest.TestCase):
+    """Test the RunOfcTask class."""
+
+    def makeTestZernikeTable(
+        self,
+        detector_type: str | None = None,
+        noll_indices: list[int] | None = None,
+        band: str = "r",
+        rot_angle: float = 0.0,
+    ) -> Table:
+        """Create a minimal aggregateZernikesAvg-style table for testing.
+
+        Parameters
+        ----------
+        detector_type : str, optional
+            Type of detector to use. Can be "wavefront" or "science".
+            Defaults to "wavefront".
+        noll_indices : list of int, optional
+            Noll indices for Zernike coefficients. Defaults to [4..21].
+        band : str
+            Filter band name to store in table metadata.
+        rot_angle : float
+            Rotation angle (degrees) to store in table metadata.
+
+        Returns
+        -------
+        table : `astropy.table.Table`
+
+        Raises
+        ------
+        ValueError
+            If an invalid detector_type is provided.
+        """
+        if noll_indices is None:
+            noll_indices = np.arange(4, 23)  # 18 Zernikes
+
+        n_zk = len(noll_indices)
+        camera = LsstCam.getCamera()
+
+        if detector_type in ["wavefront", None]:
+            detector_names = [det.getName() for det in camera if det.getType() == DetectorType.WAVEFRONT]
+        elif detector_type == "science":
+            detector_names = [det.getName() for det in camera if det.getType() == DetectorType.SCIENCE]
+        else:
+            raise ValueError(f"Invalid detector_type: {detector_type}")
+
+        rng = np.random.default_rng(42)
+        zk_data = rng.normal(scale=50e-9, size=(len(detector_names), n_zk))  # ~50 nm RMS, in meters
+
+        table = Table(
+            {
+                "detector": detector_names,
+                "zk_deviation_CCS": zk_data,
+            }
+        )
+        table.meta["nollIndices"] = noll_indices
+        table.meta["band"] = band
+        table.meta["rotAngle"] = rot_angle
+
+        return table
+
+    def testValidateConfig(self) -> None:
+        """
+        Test that the RunOfcTaskConfig variables appear in the task correctly.
+        """
+        config = RunOfcTaskConfig()
+        task = RunOfcTask(config=config)
+        # Test default values
+        self.assertEqual(task.dof_indices, tuple(range(50)))
+        self.assertFalse(task.subtract_intrinsics)
+        self.assertEqual(task.column_name, "zk_deviation_CCS")
+        self.assertEqual(task.controller_name, "OIC")
+        self.assertIsNone(task.truncation_index)
+
+        # Test custom values
+        dof_indices = [0, 1, 2, 3, 4, 5, 31]
+        config.dofIndices = dof_indices
+        config.subtractIntrinsics = True
+        config.tableColumnName = "zk_deviation"
+        config.controllerName = "PID"
+        config.truncationIndex = 5
+        task = RunOfcTask(config=config)
+        self.assertEqual(task.dof_indices, dof_indices)
+        self.assertTrue(task.subtract_intrinsics)
+        self.assertEqual(task.column_name, "zk_deviation")
+        self.assertEqual(task.controller_name, "PID")
+        self.assertEqual(task.truncation_index, 5)
+
+    def testOFCCalcControllerConfig(self) -> None:
+        zern_table = self.makeTestZernikeTable()
+
+        config = RunOfcTaskConfig()
+        config.dofIndices = [0, 1, 2, 3, 4, 5, 31]
+        task = RunOfcTask(config=config)
+
+        task.run(zern_table, LsstCam.getCamera())
+        self.assertIsInstance(task.ofc_calc.controller, OICController)
+
+        config.controllerName = "PID"
+        task = RunOfcTask(config=config)
+        task.run(zern_table, LsstCam.getCamera())
+        self.assertIsInstance(task.ofc_calc.controller, PIDController)
+
+    def testOFCCalcTruncationIndexConfig(self) -> None:
+        zern_table = self.makeTestZernikeTable()
+
+        config = RunOfcTaskConfig()
+        config.dofIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 31]
+        config.truncationIndex = 5
+        task = RunOfcTask(config=config)
+
+        task.run(zern_table, LsstCam.getCamera())
+        self.assertEqual(task.ofc_calc.ofc_data.controller["truncation_index"], 5)
+
+        config.truncationIndex = 1
+        task = RunOfcTask(config=config)
+        task_out = task.run(zern_table, LsstCam.getCamera())
+        self.assertEqual(task.ofc_calc.ofc_data.controller["truncation_index"], 1)
+        # Truncation index of 1 should give nearly zero correction on first dof
+        self.assertAlmostEqual(task_out.ofcCorrections[0], 0.0, delta=1e-9)
+
+    def testRunOfcTask(self) -> None:
+        """Test the RunOfcTask class."""
+        config = RunOfcTaskConfig()
+        config.dofIndices = [0, 1, 2, 3, 4, 5, 31]
+        task = RunOfcTask(config=config)
+
+        zern_table = self.makeTestZernikeTable()
+        task_out = task.run(zern_table, LsstCam.getCamera())
+        # Test that the output is a Struct with the expected attributes
+        self.assertIsInstance(task_out, pipeBase.Struct)
+        self.assertIsInstance(task_out.ofcCorrections, np.ndarray)
+        self.assertEqual(len(task_out.ofcCorrections), 50)
+
+        # Test that the corrections for the DOFs are non-zero
+        # and the rest are zero
+        zero_vals = np.isin(np.arange(50), config.dofIndices, invert=True)
+        np.testing.assert_array_equal(
+            task_out.ofcCorrections[zero_vals], np.zeros(50 - len(config.dofIndices))
+        )
+        self.assertTrue(np.all(task_out.ofcCorrections[config.dofIndices]))

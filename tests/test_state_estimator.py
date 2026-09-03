@@ -142,17 +142,80 @@ class TestStateEstimator(unittest.TestCase):
             err_msg="Recovered DOF state does not match the original.",
         )
 
+    def test_get_vmodes_from_dofs_respects_selected_vmodes(self) -> None:
+        """Test explicit v-mode selection overrides automatic truncation."""
+        self.estimator.rcond = None
+        self.estimator.truncate_index = 10
+        self.estimator.ofc_data.vmodes_selected = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+        self.estimator.refresh_from_ofc_data()
+
+        # Generate a random DOF state
+        rng = np.random.default_rng(123)
+        dof_state = rng.normal(loc=0.0, scale=1.0, size=len(self.estimator.ofc_data.dof_idx))
+        vmode_state = self.estimator.get_vmodes_from_dofs(dof_state)
+
+        # Check that selected v-modes are populated and unselected are zero
+        selected_idx = self.estimator.ofc_data.vmodes_selected - 1
+        unselected_idx = np.setdiff1d(np.arange(len(vmode_state)), selected_idx)
+        expected_selected = (
+            np.linalg.inv(self.estimator.normalization_matrix) @ dof_state @ self.estimator.Vh[selected_idx].T
+        )
+
+        # Check selected v-modes match expected values
+        np.testing.assert_array_almost_equal(vmode_state[selected_idx], expected_selected)
+        self.assertTrue(np.allclose(vmode_state[unselected_idx], 0.0))
+
+        # Check that converting back to dofs recovers the expected DOF state
+        recovered_dof_state = self.estimator.get_dofs_from_vmodes(vmode_state)
+        expected_dof_state = self.estimator.normalization_matrix @ (
+            expected_selected @ self.estimator.Vh[selected_idx]
+        )
+        np.testing.assert_array_almost_equal(recovered_dof_state, expected_dof_state)
+
     def test_dof_state_raises_if_no_truncation_method(self) -> None:
-        """Test dof_state raises an error if both rcond
+        """Test that refreshing the estimator raises an error if both rcond
         and truncate_index are None.
         """
-        self.estimator.rcond = None
-        self.estimator.truncate_index = None
+        self.estimator.ofc_data.controller.pop("truncation_index", None)
+        self.estimator.ofc_data.controller.pop("truncation_threshold", None)
 
         with self.assertRaises(ValueError):
-            self.estimator.dof_state(
-                "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
-            )
+            self.estimator.refresh_from_ofc_data()
+
+    def test_dof_state_with_truncation_threshold(self) -> None:
+        """Test dof_state method when truncation is configured by threshold."""
+        self.estimator.truncate_index = None
+        self.estimator.rcond = 1e-7
+        self.estimator.refresh_from_ofc_data()
+
+        sensitivity_matrix = self.estimator.get_sensitivity_matrix(self.field_angles, rotation_angle=0.0)
+        state = self.estimator.dof_state(
+            "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
+        )
+
+        self.assertEqual(len(state), len(self.estimator.ofc_data.dof_idx))
+
+        residual = self.mean_squared_residual(sensitivity_matrix @ self.dofs, sensitivity_matrix @ state)
+        assert residual < 3e-2
+
+    def test_dof_state_with_selected_vmodes_constrains_subspace(self) -> None:
+        """Test that explicit v-mode selection constrains the DOF estimate."""
+        self.estimator.rcond = None
+        self.estimator.truncate_index = 2
+        self.estimator.ofc_data.vmodes_selected = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+        self.estimator.refresh_from_ofc_data()
+
+        state = self.estimator.dof_state(
+            "R", self.wfe + self.y2_correction, self.sensor_name_list, rotation_angle=0.0
+        )
+
+        full_vmode_state = np.linalg.inv(self.estimator.normalization_matrix) @ state @ self.estimator.Vh.T
+        unselected_idx = np.setdiff1d(
+            np.arange(len(full_vmode_state)), self.estimator.ofc_data.vmodes_selected - 1
+        )
+
+        self.assertEqual(len(state), len(self.estimator.ofc_data.dof_idx))
+        self.assertTrue(np.allclose(full_vmode_state[unselected_idx], 0.0, atol=1e-8))
 
     def test_dof_state_with_truncation_index(self) -> None:
         """Test the dof_state method."""

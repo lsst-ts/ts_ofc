@@ -1,0 +1,1 @@
+Compute and cache the effective v-mode basis (``effective_vmode_idx``, ``effective_vh``) during estimator refresh, replacing per-call recomputation. Use the effective v-mode subset consistently in sensitivity projection and DOF/v-mode conversions, with zero-padding for unselected modes.

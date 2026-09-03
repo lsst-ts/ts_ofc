@@ -12,6 +12,7 @@
 # n_iterms is the maximum number of error terms to be included in the PID integral
 # i_factor is the factor by which older errors are reduced in the leaky integrator
 # zn_selected is the zernike coefficients selected to be used by the controller in Noll index
+# vmodes_selected optionally overrides automatic truncation and selects explicit v-modes in the estimator basis
 # setpoint is the setpoint for each degree of freedom (array of 50 elements)
 
 description: Default controller.

@@ -161,6 +161,83 @@ class TestOFC(unittest.TestCase):
             ):
                 assert np.abs(expected_value - computed_value) < 1e-1
 
+    def _find_dominant_vmode(self, filter_name: str, rotation_angle: float) -> tuple[int, np.ndarray]:
+        """Find the most excited v-mode for the test WFE.
+
+        Returns
+        -------
+        dominant_vmode_1based : `int`
+            1-based index of the dominant v-mode.
+        dominant_vmode_direction : `np.ndarray`
+            DOF-space direction of the dominant v-mode (row of Vh).
+        """
+        from lsst.ts.ofc.utils import ControlBasis
+
+        dof_state = self.ofc.state_estimator.dof_state(
+            filter_name,
+            self.wfe,
+            self.sensor_name_list,
+            rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
+            basis=ControlBasis.DoF,
+        )
+        vmode_state = self.ofc.state_estimator.get_vmodes_from_dofs(dof_state)
+        dominant_idx_0based = int(np.argmax(np.abs(vmode_state)))
+        return dominant_idx_0based + 1, self.ofc.state_estimator.Vh[dominant_idx_0based]
+
+    def test_calculate_corrections_with_selected_vmodes_in_dof_mode(self) -> None:
+        """Test that removing the dominant v-mode changes corrections.
+
+        Identifies the most excited v-mode from the test WFE. Removing
+        it from vmodes_selected should produce different corrections
+        compared to the baseline with all v-modes.
+        """
+        filter_name = "R"
+        rotation_angle = 0.0
+
+        self.ofc.ofc_data.xref = "0"
+        self.ofc_data.controller["kp"] = 0.4
+
+        # Find the dominant v-mode
+        self.ofc.ofc_data.vmodes_selected = None
+        self.ofc.state_estimator.refresh_from_ofc_data()
+        dominant_vmode, _ = self._find_dominant_vmode(filter_name, rotation_angle)
+
+        print(f"Dominant v-mode: {dominant_vmode}")
+
+        # Baseline corrections with all v-modes
+        self.ofc.calculate_corrections(
+            wfe=self.wfe,
+            sensor_ids=self.sensor_id_list,
+            filter_name=filter_name,
+            rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
+            control_vmodes=False,
+        )
+        baseline_lv_dof = self.ofc.lv_dof.copy()
+
+        # Removing the dominant v-mode should change corrections
+        all_vmodes = list(range(1, len(self.ofc_data.dof_idx) + 1))
+        all_vmodes.remove(dominant_vmode)
+        self.ofc.reset()
+        self.ofc.set_vmodes_selected(all_vmodes)
+
+        self.ofc.calculate_corrections(
+            wfe=self.wfe,
+            sensor_ids=self.sensor_id_list,
+            filter_name=filter_name,
+            rotation_angle=rotation_angle,
+            subtract_intrinsics=True,
+            control_vmodes=False,
+        )
+        self.assertFalse(
+            np.allclose(self.ofc.lv_dof, baseline_lv_dof, atol=1e-4),
+            f"Removing dominant v-mode {dominant_vmode} should change corrections.",
+        )
+
+        # Restore default
+        self.ofc.set_vmodes_selected(None)
+
     def test_get_state_correction_from_last_visit(self) -> None:
         """Test the get_state_correction_from_last_visit method."""
         new_comp_dof_idx = dict(
@@ -269,6 +346,28 @@ class TestOFC(unittest.TestCase):
         self.assertTrue(np.allclose(m2_hex_corr(), np.zeros_like(m2_hex_corr())))
         self.assertTrue(np.allclose(m1m3_corr(), np.zeros_like(m1m3_corr())))
         self.assertTrue(np.allclose(m2_corr(), np.zeros_like(m2_corr())))
+
+    def test_set_vmodes_selected(self) -> None:
+        """Test set_vmodes_selected sets the selection and refreshes
+        the state estimator cache."""
+        # Default returns all v-modes
+        np.testing.assert_array_equal(
+            self.ofc.ofc_data.vmodes_selected, self.ofc.ofc_data.default_vmodes_selected
+        )
+        original_vh = self.ofc.state_estimator.effective_vh.copy()
+
+        # Set explicit selection
+        self.ofc.set_vmodes_selected([1, 3, 5])
+        np.testing.assert_array_equal(self.ofc.ofc_data.vmodes_selected, np.array([1, 3, 5]))
+        self.assertEqual(self.ofc.state_estimator.effective_vh.shape[0], 3)
+        self.assertFalse(np.array_equal(self.ofc.state_estimator.effective_vh, original_vh))
+
+        # Clear selection reverts to default
+        self.ofc.set_vmodes_selected(None)
+        np.testing.assert_array_equal(
+            self.ofc.ofc_data.vmodes_selected, self.ofc.ofc_data.default_vmodes_selected
+        )
+        np.testing.assert_array_equal(self.ofc.state_estimator.effective_vh, original_vh)
 
     def test_get_correction(self) -> None:
         """Test the get_correction method."""

@@ -1,0 +1,261 @@
+# This file is part of ts_ofc.
+#
+# Developed for the Vera C. Rubin Observatory Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+import unittest
+
+import numpy as np
+
+from lsst.ts.ofc import (
+    RBR_DEFAULT_KAPPA,
+    RBR_DEFAULT_POWER,
+    DoubleZernikeStateEstimator,
+    OFCData,
+    achieved_residual,
+    invert_range_penalty,
+    invert_truncated,
+)
+
+I_ZS = [j for j in range(4, 27) if j not in (20, 21)]
+K_MIN = 1
+K_MAX = 6
+N_KEEP = 34
+N_DOF = 50
+
+# Allowed ranges r_j that the shipped normalization weights were generated
+# with, in each DOF's own unit. Pinned so a change to the stroke or force-range
+# configuration is visible here rather than silently rescaling the penalty.
+EXPECTED_RANGES = {
+    0: (5900.0, "um, M2 piston"),
+    1: (6700.0, "um, M2 decenter y"),
+    3: (0.12, "arcsec, M2 tilt x"),
+    12: (0.0877126, "um, M1M3 bending mode 3"),
+    21: (0.00908752, "um, M1M3 bending mode 12"),
+}
+
+
+class TestRangeBoundedRecovery(unittest.TestCase):
+    """Test Range-Bounded Recovery and the allowed-range vector."""
+
+    def setUp(self) -> None:
+        self.ofc_data = OFCData("lsst")
+        self.estimator = DoubleZernikeStateEstimator(self.ofc_data, I_ZS, K_MIN, K_MAX, N_KEEP, n_dof=N_DOF)
+        self.v_retained = self.estimator.V[:, self.estimator.keep_idx]
+        self.sigma = self.estimator.Sigma[self.estimator.keep_idx]
+        self.weights = self.estimator.normalization_weights
+        self.ranges = self.estimator.dof_ranges()
+
+        # Scaled so the unregularized solution lands well outside the allowed
+        # range on the stiff bending modes, which is the regime RBR exists for.
+        self.rng = np.random.default_rng(11)
+        self.wavefront = self.rng.normal(scale=0.05, size=len(self.estimator.kj_grid))
+
+    def solve_truncated(self) -> np.ndarray:
+        return invert_truncated(
+            self.wavefront, self.estimator.U_eff, self.sigma, self.v_retained, self.weights
+        )
+
+    def solve_rbr(self, **kwargs: dict):
+        return invert_range_penalty(
+            self.wavefront,
+            self.estimator.U_eff,
+            self.sigma,
+            self.v_retained,
+            self.weights,
+            self.ranges,
+            **kwargs,
+        )
+
+    def test_dof_ranges_values(self) -> None:
+        """The allowed ranges are the configured strokes and force ranges."""
+        ranges = self.ofc_data.dof_ranges()
+        self.assertEqual(ranges.shape, (50,))
+        for index, (expected, description) in EXPECTED_RANGES.items():
+            self.assertAlmostEqual(
+                ranges[index],
+                expected,
+                places=6,
+                msg=f"DOF {index} ({description})",
+            )
+
+    def test_dof_ranges_all_positive(self) -> None:
+        """Every range is strictly positive, as the penalty divides by it."""
+        ranges = self.ofc_data.dof_ranges()
+        self.assertTrue(np.all(np.isfinite(ranges)))
+        self.assertTrue(np.all(ranges > 0))
+
+    def test_rigid_body_ranges_far_exceed_bending(self) -> None:
+        """Hexapod strokes are orders of magnitude above bending amplitudes.
+
+        This is why the penalty normalizes per DOF: an unnormalized bound could
+        not hold micrometre-scale hexapod motion and sub-micrometre bending
+        amplitudes in the same expression.
+        """
+        ranges = self.ofc_data.dof_ranges()
+        self.assertGreater(np.min(ranges[:3]), 1e3)
+        self.assertLess(np.max(ranges[10:50]), 1e1)
+
+    def test_penalty_off_limit_is_truncated(self) -> None:
+        """A knee pushed to infinity returns the unregularized solution.
+
+        Guards the choice to solve in the retained mode coefficients: a solve
+        in the DOF basis would fill the discarded null directions with noise
+        and fail this.
+        """
+        np.testing.assert_allclose(self.solve_rbr(kappa=1e12), self.solve_truncated(), rtol=1e-9, atol=1e-12)
+
+    def test_reduces_the_range_excess(self) -> None:
+        """RBR brings the worst over-range DOF far closer to its range."""
+        truncated_ratio = np.max(np.abs(self.solve_truncated()) / self.ranges)
+        _, info = self.solve_rbr(return_info=True)
+
+        self.assertGreater(truncated_ratio, 10.0)
+        self.assertLess(info["max_ratio"], truncated_ratio)
+        self.assertLess(info["max_ratio"], RBR_DEFAULT_KAPPA)
+
+    def test_converges_at_default_power(self) -> None:
+        """The iteration converges at the steep default exponent.
+
+        A fixed step size does not: at power 3 it enters a limit cycle. The
+        backtracking line search is what makes this pass.
+        """
+        _, info = self.solve_rbr(return_info=True)
+        self.assertTrue(info["converged"])
+        self.assertLess(info["n_iter"], 200)
+
+    def test_objective_decreases_monotonically(self) -> None:
+        """Each additional iteration leaves the objective no worse.
+
+        Run with a rising iteration cap rather than by instrumenting the
+        solver, so the property is checked through the public interface.
+        """
+        objectives = []
+        for n_iter in range(1, 8):
+            _, info = self.solve_rbr(n_iter=n_iter, return_info=True)
+            objectives.append(info["objective"])
+
+        for earlier, later in zip(objectives, objectives[1:]):
+            self.assertLessEqual(later, earlier + 1e-12)
+
+    def test_stronger_penalty_binds_harder(self) -> None:
+        """A tighter knee yields a state further inside the allowed range."""
+        ratios = []
+        for kappa in (16.0, 4.0, 1.0):
+            _, info = self.solve_rbr(kappa=kappa, return_info=True)
+            ratios.append(info["max_ratio"])
+
+        for looser, tighter in zip(ratios, ratios[1:]):
+            self.assertLess(tighter, looser)
+
+    def test_residual_cost_is_bounded(self) -> None:
+        """The wavefront given up for the range bound stays modest.
+
+        RBR must degrade the achieved residual -- it is solving a constrained
+        problem -- but a bound that cost most of the fit would not be usable.
+        """
+        truncated = self.solve_truncated()
+        bounded = self.solve_rbr()
+
+        residual_truncated = achieved_residual(
+            self.wavefront,
+            truncated,
+            self.estimator.U_eff,
+            self.sigma,
+            self.v_retained,
+            self.weights,
+        )
+        residual_bounded = achieved_residual(
+            self.wavefront,
+            bounded,
+            self.estimator.U_eff,
+            self.sigma,
+            self.v_retained,
+            self.weights,
+        )
+
+        self.assertGreaterEqual(residual_bounded, residual_truncated)
+        self.assertLess(residual_bounded, 1.5 * residual_truncated)
+
+    def test_achieved_residual_zero_for_exact_state(self) -> None:
+        """A state that reproduces the wavefront leaves no residual."""
+        coefficients = self.rng.normal(size=N_KEEP)
+        wavefront = self.estimator.U_eff @ (self.sigma * coefficients)
+        dof = self.weights * (self.v_retained @ coefficients)
+
+        residual = achieved_residual(
+            wavefront,
+            dof,
+            self.estimator.U_eff,
+            self.sigma,
+            self.v_retained,
+            self.weights,
+        )
+        self.assertLess(residual, 1e-10)
+
+    def test_rejects_non_positive_ranges(self) -> None:
+        """A zero or negative range raises rather than dividing by zero."""
+        bad = self.ranges.copy()
+        bad[5] = 0.0
+        with self.assertRaises(ValueError):
+            invert_range_penalty(
+                self.wavefront,
+                self.estimator.U_eff,
+                self.sigma,
+                self.v_retained,
+                self.weights,
+                bad,
+            )
+
+    def test_estimator_method_matches_the_solver(self) -> None:
+        """`dof_range_bounded` is the solver applied per visit."""
+        direct = self.solve_rbr()
+        through_estimator = self.estimator.dof_range_bounded(self.wavefront)
+        np.testing.assert_allclose(through_estimator, direct, rtol=1e-12, atol=1e-14)
+
+    def test_estimator_method_handles_several_visits(self) -> None:
+        """Each visit is solved independently.
+
+        The inversion is nonlinear, so it does not commute with any average
+        over visits and cannot be applied to a stacked mean.
+        """
+        wavefronts = self.rng.normal(scale=0.05, size=(3, len(self.estimator.kj_grid)))
+        states, info = self.estimator.dof_range_bounded(wavefronts, return_info=True)
+
+        self.assertEqual(states.shape, (3, N_DOF))
+        self.assertEqual(len(info), 3)
+        for visit in range(3):
+            expected = invert_range_penalty(
+                wavefronts[visit],
+                self.estimator.U_eff,
+                self.sigma,
+                self.v_retained,
+                self.weights,
+                self.ranges,
+            )
+            np.testing.assert_allclose(states[visit], expected, rtol=1e-12, atol=1e-14)
+
+    def test_defaults_are_the_documented_pair(self) -> None:
+        """Check the defaults are the settled knee and exponent."""
+        self.assertEqual(RBR_DEFAULT_KAPPA, 4.0)
+        self.assertEqual(RBR_DEFAULT_POWER, 3)
+
+
+if __name__ == "__main__":
+    unittest.main()

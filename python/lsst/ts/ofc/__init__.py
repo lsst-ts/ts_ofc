@@ -30,6 +30,8 @@ except ModuleNotFoundError:
 from .bend_mode_to_force import *
 from .sensitivity_matrix import *
 from .state_estimator import *
+from .range_bounded_recovery import *
+from .dz_state_estimator import *
 from .correction import *
 from .ofc_data import OFCData
 from .ofc import *

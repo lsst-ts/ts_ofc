@@ -1,5 +1,6 @@
 Added ``DoubleZernikeStateEstimator``, which estimates the optical state from double-Zernike wavefront coefficients over a focal-order by pupil-Noll grid, rather than from the wavefront at discrete sensor positions as ``StateEstimator`` does.
 Added Range-Bounded Recovery (RBR) in ``range_bounded_recovery``: a superlinear per-degree-of-freedom penalty on leaving the allowed range of motion, so a recovered state stays within the stroke the hexapods and mirrors can physically reach.
 RBR is opt-in through ``DoubleZernikeStateEstimator.dof_range_bounded`` and changes nothing unless called; ``kappa`` and ``power`` may be set per call or through the ``rbr_kappa`` and ``rbr_power`` controller configuration keys, defaulting to 4.0 and 3.
+Added ``wavefront_from_dof`` and the matching ``DoubleZernikeStateEstimator`` method: the forward map from a recovered state to the wavefront it reproduces, for removing that state from a measured wavefront. Applied to an unregularized state it reduces to the projection onto the retained u-modes; applied to a range-bounded one it does not, leaving wavefront that would need out-of-range motion in the residual.
 Added ``OFCData.dof_ranges``, returning the allowed range per degree of freedom, which ``generate_normalization_weights`` now uses in place of its own copy of that expression.
 ``StateEstimator`` is unchanged.

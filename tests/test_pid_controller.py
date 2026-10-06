@@ -133,10 +133,12 @@ class TestPIDController(unittest.TestCase):
         ):
             raise AssertionError("Integral history not reset correctly.")
 
-        np.testing.assert_array_equal(
-            self.pid_controller.integral,
-            np.zeros(len(self.pid_controller.ofc_data.dof_idx)),
-        )
+        for name in ("integral", "integral_unclipped", "derivative", "filtered_derivative"):
+            with self.subTest(attribute=name):
+                np.testing.assert_array_equal(
+                    getattr(self.pid_controller, name),
+                    np.zeros(len(self.pid_controller.ofc_data.dof_idx)),
+                )
         self.assertEqual(len(self.pid_controller.previous_error), 0)
 
     def test_derivative_filter(self) -> None:
@@ -213,6 +215,54 @@ class TestPIDController(unittest.TestCase):
             self.pid_controller.integral.squeeze(),
             (1 + self.ofc_data.i_factor + self.ofc_data.i_factor**2) * error,
             err_msg="Leaky integral should weight older errors by i_factor.",
+        )
+
+    def test_integral_before_and_after_clipping(self) -> None:
+        """Test the integral is kept before and after clipping."""
+        self.ofc_data.max_integral = np.full(50, 0.6)
+        error = self.pid_controller.setpoint - self.dof_state
+
+        for use_leaky_integrator, expected_unclipped in (
+            (False, 2 * error),
+            (True, (1 + self.ofc_data.i_factor) * error),
+        ):
+            with self.subTest(use_leaky_integrator=use_leaky_integrator):
+                self.pid_controller.reset_history()
+                self.pid_controller.use_leaky_integrator = use_leaky_integrator
+
+                self.pid_controller.control_step(self.filter_name, self.dof_state)
+                self.pid_controller.control_step(self.filter_name, self.dof_state)
+
+                np.testing.assert_array_almost_equal(
+                    self.pid_controller.integral_unclipped,
+                    expected_unclipped,
+                    err_msg="Integral before clipping does not match expected.",
+                )
+                np.testing.assert_array_almost_equal(
+                    self.pid_controller.integral,
+                    np.clip(expected_unclipped, -0.6, 0.6),
+                    err_msg="Integral after clipping does not match expected.",
+                )
+
+    def test_derivative_before_and_after_filtering(self) -> None:
+        """Test the derivative is kept before and after filtering."""
+        self.pid_controller.derivative_filter_coeff = 0.5
+        first_state = 0.7 * np.ones(50)
+        second_state = 0.8 * np.ones(50)
+        first_error = self.pid_controller.setpoint - first_state
+        second_error = self.pid_controller.setpoint - second_state
+
+        self.pid_controller.control_step(self.filter_name, first_state)
+
+        np.testing.assert_array_almost_equal(self.pid_controller.derivative, first_error)
+        np.testing.assert_array_almost_equal(self.pid_controller.filtered_derivative, 0.5 * first_error)
+
+        self.pid_controller.control_step(self.filter_name, second_state)
+
+        np.testing.assert_array_almost_equal(self.pid_controller.derivative, second_error - first_error)
+        np.testing.assert_array_almost_equal(
+            self.pid_controller.filtered_derivative,
+            0.5 * (second_error - first_error) + 0.5 * 0.5 * first_error,
         )
 
     def test_derivative_behavior(self) -> None:

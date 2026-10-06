@@ -1,0 +1,1 @@
+In ``base_controller.py``, kept the integral before clipping (``integral_unclipped``) and the derivative before filtering (``derivative``) of the last PID step as controller attributes, so they can be published by ``MTAOS``.

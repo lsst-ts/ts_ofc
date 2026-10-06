@@ -161,6 +161,29 @@ class TestOFC(unittest.TestCase):
             ):
                 assert np.abs(expected_value - computed_value) < 1e-1
 
+    def test_optical_state(self) -> None:
+        """Test the optical state of the last calculation is kept and is the
+        input of the PID controller.
+        """
+        self.ofc.set_controller("PID")
+        dof_idx = self.ofc_data.dof_idx
+
+        np.testing.assert_array_equal(self.ofc.optical_state, np.zeros(len(dof_idx)))
+
+        self.ofc.calculate_corrections(
+            wfe=self.wfe,
+            sensor_ids=self.sensor_id_list,
+            filter_name="R",
+            rotation_angle=0.0,
+        )
+
+        self.assertEqual(len(self.ofc.optical_state), len(dof_idx))
+        self.assertTrue(np.any(self.ofc.optical_state != 0))
+        np.testing.assert_array_almost_equal(
+            self.ofc.controller.previous_error[-1],
+            self.ofc.controller.setpoint[dof_idx] - self.ofc.optical_state,
+        )
+
     def test_get_state_correction_from_last_visit(self) -> None:
         """Test the get_state_correction_from_last_visit method."""
         new_comp_dof_idx = dict(

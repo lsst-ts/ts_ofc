@@ -1,0 +1,1 @@
+In ``ofc.py``, kept the optical state estimated in the last ``calculate_corrections`` call as ``OFC.optical_state``, so it can be published by ``MTAOS``.

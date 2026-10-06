@@ -31,6 +31,7 @@ from lsst.ts.ofc import (
     achieved_residual,
     invert_range_penalty,
     invert_truncated,
+    wavefront_from_dof,
 )
 
 I_ZS = [j for j in range(4, 27) if j not in (20, 21)]
@@ -250,6 +251,69 @@ class TestRangeBoundedRecovery(unittest.TestCase):
                 self.ranges,
             )
             np.testing.assert_allclose(states[visit], expected, rtol=1e-12, atol=1e-14)
+
+    def forward(self, dof: np.ndarray) -> np.ndarray:
+        return wavefront_from_dof(
+            dof, self.estimator.U_eff, self.sigma, self.v_retained, self.weights
+        )
+
+    def test_forward_map_of_truncated_is_the_umode_projection(self) -> None:
+        """An unregularized state reproduces the retained-subspace projection.
+
+        This is the identity that makes Range-Bounded Recovery a drop-in for a
+        build that currently subtracts ``U_eff @ (U_eff.T @ dW)``: with the
+        penalty off, the two agree. They agree numerically, not bit for bit --
+        the round trip through physical DOF associates the products
+        differently -- so a caller needing an exactly reproducible
+        unconstrained result must keep using the direct projection.
+        """
+        projection = self.estimator.U_eff @ (self.estimator.U_eff.T @ self.wavefront)
+        np.testing.assert_allclose(
+            self.forward(self.solve_truncated()), projection, rtol=1e-9, atol=1e-13
+        )
+
+    def test_forward_map_inverts_the_recovery(self) -> None:
+        """Recovering from a forward-mapped state returns that state.
+
+        True only for a state already inside the retained row space, which the
+        recovered one is by construction.
+        """
+        dof = self.solve_truncated()
+        recovered = invert_truncated(
+            self.forward(dof),
+            self.estimator.U_eff,
+            self.sigma,
+            self.v_retained,
+            self.weights,
+        )
+        np.testing.assert_allclose(recovered, dof, rtol=1e-8, atol=1e-12)
+
+    def test_forward_map_of_range_bounded_differs(self) -> None:
+        """A range-bounded state does not reproduce the full projection.
+
+        The point of the constraint: wavefront needing out-of-range motion is
+        left in the residual rather than removed.
+        """
+        projection = self.estimator.U_eff @ (self.estimator.U_eff.T @ self.wavefront)
+        bounded = self.forward(self.solve_rbr())
+        self.assertGreater(
+            float(np.sqrt(np.mean((bounded - projection) ** 2))), 1e-4
+        )
+
+    def test_forward_map_batches_over_visits(self) -> None:
+        """A stack of states maps row by row."""
+        states = np.stack([self.solve_truncated(), self.solve_rbr()])
+        batched = self.forward(states)
+        self.assertEqual(batched.shape, (2, len(self.estimator.kj_grid)))
+        for visit in range(2):
+            np.testing.assert_allclose(batched[visit], self.forward(states[visit]))
+
+    def test_estimator_forward_map_matches_the_function(self) -> None:
+        """The estimator method is the free function with its own arrays."""
+        dof = self.solve_rbr()
+        np.testing.assert_array_equal(
+            self.estimator.wavefront_from_dof(dof), self.forward(dof)
+        )
 
     def test_defaults_are_the_documented_pair(self) -> None:
         """Check the defaults are the settled knee and exponent."""

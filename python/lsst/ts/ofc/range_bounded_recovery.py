@@ -25,6 +25,7 @@ __all__ = [
     "achieved_residual",
     "invert_range_penalty",
     "invert_truncated",
+    "wavefront_from_dof",
 ]
 
 import numpy as np
@@ -70,6 +71,48 @@ def invert_truncated(
     return normalization_weights * (v_retained @ (amplitudes / sigma))
 
 
+def wavefront_from_dof(
+    dof: np.ndarray,
+    u_eff: np.ndarray,
+    sigma: np.ndarray,
+    v_retained: np.ndarray,
+    normalization_weights: np.ndarray,
+) -> np.ndarray:
+    """Wavefront a recovered state reproduces, through the rank-limited operator.
+
+    The forward direction of `invert_truncated` and `invert_range_penalty`:
+    ``dW = U Sigma V^T N^-1 d``, restricted to the retained modes. This is what
+    a build subtracts to remove a recovered state from a measured wavefront.
+
+    Applied to `invert_truncated`'s output this reduces to the orthogonal
+    projection ``U_eff @ (U_eff.T @ dW)``, so an unregularized recovery
+    subtracts exactly the retained-subspace projection. A range-bounded state
+    does not, which is the point: it cannot reach parts of that subspace that
+    need out-of-range motion.
+
+    Parameters
+    ----------
+    dof : `np.ndarray`
+        Physical DOF, ``(n_dof,)`` or ``(n_visits, n_dof)``, um or arcsec
+        per DOF.
+    u_eff : `np.ndarray`
+        Left singular vectors of the retained modes, ``(n_kj, n_keep)``.
+    sigma : `np.ndarray`
+        Singular values of the retained modes, ``(n_keep,)``.
+    v_retained : `np.ndarray`
+        Right singular vectors of the retained modes, ``(n_dof, n_keep)``.
+    normalization_weights : `np.ndarray`
+        Weights ``w_j``, ``(n_dof,)``.
+
+    Returns
+    -------
+    `np.ndarray`
+        Wavefront, ``(n_kj,)`` or ``(n_visits, n_kj)``, um of wavefront.
+    """
+    normalized_dof = np.asarray(dof, dtype=float) / normalization_weights
+    return np.einsum("kn,n,dn,...d->...k", u_eff, sigma, v_retained, normalized_dof)
+
+
 def achieved_residual(
     wavefront: np.ndarray,
     dof: np.ndarray,
@@ -107,8 +150,9 @@ def achieved_residual(
         Root-mean-square of the residual, um of wavefront.
     """
     wavefront = np.nan_to_num(np.asarray(wavefront, dtype=float))
-    normalized_dof = np.asarray(dof, dtype=float) / normalization_weights
-    predicted = u_eff @ (sigma * (v_retained.T @ normalized_dof))
+    predicted = wavefront_from_dof(
+        dof, u_eff, sigma, v_retained, normalization_weights
+    )
     residual = wavefront - predicted
     return float(np.sqrt(np.mean(residual**2)))
 

@@ -36,6 +36,7 @@ from .range_bounded_recovery import (
     RBR_DEFAULT_KAPPA,
     RBR_DEFAULT_POWER,
     invert_range_penalty,
+    wavefront_from_dof,
 )
 
 # 50-DOF state vector in the ts_ofc ordering: M2 hexapod (5), camera hexapod
@@ -420,6 +421,34 @@ class DoubleZernikeStateEstimator:
         if single:
             dof_out = dof_out[0]
         return (dof_out, info_out) if return_info else dof_out
+
+    def wavefront_from_dof(self, dof: np.ndarray) -> np.ndarray:
+        """DZ wavefront a recovered state reproduces.
+
+        The forward map of `dof` and `dof_range_bounded`, for subtracting a
+        recovered state from a measured wavefront. For an unregularized state
+        this equals the orthogonal projection onto the retained u-modes; for a
+        range-bounded one it does not.
+
+        Parameters
+        ----------
+        dof : `np.ndarray`
+            Physical DOF, ``(n_visits, n_dof)`` or ``(n_dof,)``, in the mixed
+            units of `DOF_UNITS_50` over `dof_idx`.
+
+        Returns
+        -------
+        `np.ndarray`
+            DZ coefficients in `kj_grid` order, ``(n_visits, n_kj)`` or
+            ``(n_kj,)``, um of wavefront.
+        """
+        return wavefront_from_dof(
+            dof,
+            self.U_eff,
+            self.Sigma[self.keep_idx],
+            self.V[:, self.keep_idx],
+            self.normalization_weights,
+        )
 
     def dof_labels(self) -> tuple:
         """Labels and units for the used DOF.

@@ -52,8 +52,14 @@ class BaseController:
         State of telescope in the basis of degrees of freedom.
     dof_state0 : `np.array`
         Initial state of telescope in the basis of degrees of freedom.
+    derivative : `np.array`
+        Derivative of the error from the last step, before filtering.
+    filtered_derivative : `np.array`
+        Derivative of the error from the last step, after filtering.
     integral : `np.array`
-        Integral of the error.
+        Integral of the error, after clipping.
+    integral_unclipped : `np.array`
+        Integral of the error from the last step, before clipping.
     kp : `float`
         Proportional gain.
     ki : `float`
@@ -133,6 +139,8 @@ class BaseController:
         self.previous_error: deque[np.ndarray] = deque(maxlen=self._n_iterms)
         self._set_integral_weights()
         self.integral = np.zeros(len(self.ofc_data.dof_idx))
+        self.integral_unclipped = np.zeros(len(self.ofc_data.dof_idx))
+        self.derivative = np.zeros(len(self.ofc_data.dof_idx))
         self.filtered_derivative = np.zeros(len(self.ofc_data.dof_idx))
 
         # Initialize PSSN data
@@ -299,8 +307,10 @@ class BaseController:
         """Reset the history of the controller."""
         self.dof_state0 = self.dof_state.copy()
         self.integral = np.zeros(len(self.ofc_data.dof_idx))
+        self.integral_unclipped = np.zeros(len(self.ofc_data.dof_idx))
         self.previous_error = deque(maxlen=self._n_iterms)
         self._set_integral_weights()
+        self.derivative = np.zeros(len(self.ofc_data.dof_idx))
         self.filtered_derivative = np.zeros(len(self.ofc_data.dof_idx))
 
     def control_step(
@@ -350,7 +360,7 @@ class BaseController:
         previous_error = (
             self.previous_error[-1] if len(self.previous_error) > 0 else np.zeros(len(self.ofc_data.dof_idx))
         )
-        derivative = error - previous_error
+        self.derivative = error - previous_error
         self.previous_error.append(error)
 
         if self.use_leaky_integrator:
@@ -362,6 +372,7 @@ class BaseController:
             )
         else:
             self.integral += error
+        self.integral_unclipped = self.integral.copy()
         pid_log_message += f"Integral component before clipping is {self.integral}.\n"
         self.integral = np.clip(
             self.integral,
@@ -372,7 +383,7 @@ class BaseController:
 
         # Apply low-pass filter to the derivative term
         self.filtered_derivative = (
-            self.derivative_filter_coeff * derivative
+            self.derivative_filter_coeff * self.derivative
             + (1 - self.derivative_filter_coeff) * self.filtered_derivative
         )
         uk = (

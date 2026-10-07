@@ -26,6 +26,7 @@ import numpy as np
 from lsst.ts.ofc import (
     RBR_DEFAULT_KAPPA,
     RBR_DEFAULT_POWER,
+    RBR_DEFAULT_WEIGHT,
     DoubleZernikeStateEstimator,
     OFCData,
     achieved_residual,
@@ -223,6 +224,131 @@ class TestRangeBoundedRecovery(unittest.TestCase):
                 self.weights,
                 bad,
             )
+
+    def test_default_weight_reproduces_the_unweighted_barrier(self) -> None:
+        """The default weight is the value the barrier carried before it had one.
+
+        Pins backward compatibility: the paired-difference studies ran with the
+        barrier at an implicit weight of 1, so the default must leave their
+        results unchanged.
+        """
+        self.assertEqual(RBR_DEFAULT_WEIGHT, 1.0)
+        np.testing.assert_allclose(
+            self.solve_rbr(penalty_weight=1.0), self.solve_rbr(), rtol=1e-12, atol=1e-14
+        )
+
+    def test_weight_is_equivalent_to_moving_the_knee(self) -> None:
+        """Scaling the weight equals rescaling kappa by lambda**(-1/(2p)).
+
+        The two knobs are the same knob. Documented on
+        `invert_range_penalty`, and relied on when choosing a weight, so it is
+        pinned rather than left as an identity in prose.
+        """
+        weight, power = 1e-4, RBR_DEFAULT_POWER
+        kappa_equivalent = RBR_DEFAULT_KAPPA * weight ** (-1.0 / (2 * power))
+        np.testing.assert_allclose(
+            self.solve_rbr(penalty_weight=weight, power=power),
+            self.solve_rbr(kappa=kappa_equivalent, power=power),
+            rtol=1e-7,
+            atol=1e-9,
+        )
+
+    def test_weaker_weight_bounds_less(self) -> None:
+        """A smaller weight leaves the state further outside the range."""
+        _, strong = self.solve_rbr(penalty_weight=1.0, return_info=True)
+        _, weak = self.solve_rbr(penalty_weight=1e-6, return_info=True)
+        self.assertGreater(weak["max_ratio"], strong["max_ratio"])
+
+    def test_full_dof_spans_directions_the_retained_solve_cannot(self) -> None:
+        """The full-DOF solve is not confined to the retained-mode subspace.
+
+        This is the structural difference the mode exists for. The
+        retained-mode solve returns ``d = (w . V_r) b``, so every solution lies
+        in a ``n_keep``-dimensional subspace and no DOF can move independently
+        of the others; the full-DOF solve has all ``n_dof`` directions
+        available.
+
+        What that coupling costs on real data is not asserted here. It depends
+        on the measured wavefront -- on the MIW it crushes hexapod DOF sitting
+        at a tenth of their range -- and it is not reproducible from a
+        synthetic input, because the truncated inverse redistributes an
+        injected state rather than returning it.
+        """
+        forward = self.estimator.forward_operator()
+        retained = self.solve_rbr()
+        full = invert_range_penalty(
+            self.wavefront,
+            self.estimator.U_eff,
+            self.sigma,
+            None,
+            self.weights,
+            self.ranges,
+            forward_operator=forward,
+        )
+
+        # The retained solve lies in the span of (w . V_r); the full one need not.
+        basis = self.weights[:, None] * self.v_retained
+        projector = basis @ np.linalg.pinv(basis)
+        residual_retained = np.linalg.norm(retained - projector @ retained)
+        residual_full = np.linalg.norm(full - projector @ full)
+        self.assertLess(residual_retained / np.linalg.norm(retained), 1e-10)
+        self.assertGreater(residual_full / np.linalg.norm(full), 1e-3)
+
+    def test_full_dof_bounds_the_range_excess(self) -> None:
+        """The barrier alone bounds the state, with no mode truncation."""
+        truncated_ratio = np.max(np.abs(self.solve_truncated()) / self.ranges)
+        full, info = invert_range_penalty(
+            self.wavefront,
+            self.estimator.U_eff,
+            self.sigma,
+            None,
+            self.weights,
+            self.ranges,
+            forward_operator=self.estimator.forward_operator(),
+            return_info=True,
+        )
+        self.assertGreater(truncated_ratio, 10.0)
+        self.assertLess(info["max_ratio"], truncated_ratio)
+        self.assertLess(info["max_ratio"], RBR_DEFAULT_KAPPA)
+        self.assertTrue(info["converged"])
+
+    def test_full_dof_needs_no_retained_basis(self) -> None:
+        """`v_retained` may be None when a forward operator is given."""
+        full = invert_range_penalty(
+            self.wavefront,
+            self.estimator.U_eff,
+            self.sigma,
+            None,
+            self.weights,
+            self.ranges,
+            forward_operator=self.estimator.forward_operator(),
+        )
+        self.assertEqual(full.shape, (N_DOF,))
+        self.assertTrue(np.all(np.isfinite(full)))
+
+    def test_forward_operator_matches_the_forward_map(self) -> None:
+        """`forward_operator` applied to DOF is `wavefront_from_dof`."""
+        dof = self.rng.normal(size=N_DOF)
+        np.testing.assert_allclose(
+            self.estimator.forward_operator() @ dof,
+            self.estimator.wavefront_from_dof(dof),
+            rtol=1e-9,
+            atol=1e-12,
+        )
+
+    def test_estimator_full_dof_matches_the_solver(self) -> None:
+        """`dof_range_bounded(full_dof=True)` is the full-DOF solver."""
+        direct = invert_range_penalty(
+            self.wavefront,
+            self.estimator.U_eff,
+            self.sigma,
+            None,
+            self.weights,
+            self.ranges,
+            forward_operator=self.estimator.forward_operator(),
+        )
+        through_estimator = self.estimator.dof_range_bounded(self.wavefront, full_dof=True)
+        np.testing.assert_allclose(through_estimator, direct, rtol=1e-12, atol=1e-14)
 
     def test_estimator_method_matches_the_solver(self) -> None:
         """`dof_range_bounded` is the solver applied per visit."""

@@ -22,6 +22,7 @@
 __all__ = [
     "RBR_DEFAULT_KAPPA",
     "RBR_DEFAULT_POWER",
+    "RBR_DEFAULT_WEIGHT",
     "achieved_residual",
     "invert_range_penalty",
     "invert_truncated",
@@ -34,6 +35,14 @@ import numpy as np
 # |d_j| ** (2 * RBR_DEFAULT_POWER).
 RBR_DEFAULT_KAPPA = 4.0
 RBR_DEFAULT_POWER = 3
+
+# Weight on the barrier relative to the data term, um**2 of wavefront.  The
+# barrier is dimensionless and the data term is um**2 of wavefront, so the two
+# are commensurate only through this weight.  1.0 is what the paired-difference
+# studies ran at before the weight was named; it is the right scale when the
+# input wavefront puts the worst DOF around ten times its range, and far too
+# strong when it puts it around fifty (see the module notes).
+RBR_DEFAULT_WEIGHT = 1.0
 
 
 def invert_truncated(
@@ -161,12 +170,14 @@ def invert_range_penalty(
     wavefront: np.ndarray,
     u_eff: np.ndarray,
     sigma: np.ndarray,
-    v_retained: np.ndarray,
+    v_retained: np.ndarray | None,
     normalization_weights: np.ndarray,
     ranges: np.ndarray,
     *,
     kappa: float = RBR_DEFAULT_KAPPA,
     power: int = RBR_DEFAULT_POWER,
+    penalty_weight: float = RBR_DEFAULT_WEIGHT,
+    forward_operator: np.ndarray | None = None,
     tikhonov: float = 0.0,
     n_iter: int = 200,
     tol: float = 1e-10,
@@ -182,13 +193,20 @@ def invert_range_penalty(
     DOF ``x`` with physical ``d = w * x``::
 
         || dW - S x ||**2  +  tikhonov**2 * || x ||**2
-                           +  sum_j ( |d_j| / (kappa * r_j) ) ** (2 * power)
+            +  lambda * sum_j ( |d_j| / (kappa * r_j) ) ** (2 * power)
 
     The penalty is far below unity while ``|d_j| / r_j`` stays under ``kappa``
     and rises steeply as the ratio approaches and passes it. It is therefore a
     barrier, not a shrinkage term: it leaves a DOF comfortably inside its range
     essentially untouched, unlike a quadratic penalty which pulls on every DOF
     everywhere.
+
+    The barrier sum is dimensionless and the data term is um**2 of wavefront,
+    so ``lambda`` (``penalty_weight``) carries um**2 of wavefront and sets how
+    the two compare. It matters: because the barrier grows as the ratio to the
+    ``2 p`` power, an input wavefront whose worst DOF sits at fifty times its
+    range rather than ten produces a barrier some six orders of magnitude
+    larger, and at ``lambda = 1`` that swamps the data term entirely.
 
     Parameters
     ----------
@@ -199,8 +217,9 @@ def invert_range_penalty(
         Left singular vectors of the retained modes, ``(n_kj, n_keep)``.
     sigma : `np.ndarray`
         Singular values of the retained modes, ``(n_keep,)``.
-    v_retained : `np.ndarray`
+    v_retained : `np.ndarray` or `None`
         Right singular vectors of the retained modes, ``(n_dof, n_keep)``.
+        Ignored, and may be `None`, when ``forward_operator`` is given.
     normalization_weights : `np.ndarray`
         Weights ``w_j``, ``(n_dof,)``.
     ranges : `np.ndarray`
@@ -213,6 +232,19 @@ def invert_range_penalty(
         Penalty exponent ``p``; the penalty grows as ``|d_j| ** (2 * p)``, so
         ``p = 1`` is Tikhonov on ``d_j / r_j`` and larger ``p`` leaves the
         sub-knee region progressively freer.
+    penalty_weight : `float`, optional
+        Weight ``lambda`` on the barrier, um**2 of wavefront, which is what
+        makes it commensurate with the data term. Scaling it is equivalent to
+        moving the knee, since ``lambda * (t / kappa) ** (2 p)`` equals
+        ``(t / kappa_eff) ** (2 p)`` with
+        ``kappa_eff = kappa * lambda ** (-1 / (2 p))``, but it is the better
+        conditioned of the two knobs.
+    forward_operator : `np.ndarray` or `None`, optional
+        Sensitivity in um of wavefront per unit *physical* DOF,
+        ``(n_kj, n_dof)``. When given, the solve runs over all ``n_dof``
+        physical DOF with the barrier as the only regularizer, and
+        ``v_retained`` is ignored; when `None`, the solve is restricted to the
+        retained modes. See the Notes for when each is appropriate.
     tikhonov : `float`, optional
         Optional Tikhonov floor on ``x``, in singular-value units, to keep the
         normal equations well posed if the retained rank exposes near-null
@@ -260,6 +292,33 @@ def invert_range_penalty(
     answer exactly. In that basis the data term is diagonal, so each iteration
     costs one ``n_keep`` by ``n_keep`` solve.
 
+    **That restriction couples the DOF, which is why ``forward_operator``
+    exists.** With ``d`` confined to the ``n_keep``-dimensional column space of
+    ``V_r``, no DOF can move independently of the others. Bounding one DOF that
+    sits far outside its range therefore drags every DOF sharing those mode
+    directions, including ones whose own barrier term is negligible -- a
+    hexapod piston at a tenth of its range gets pulled by orders of magnitude
+    while contributing a penalty around 1e-10. The pulled DOF are not being
+    penalized; they are being reparametrized. A per-DOF ``lambda`` does not fix
+    this, because the coupling is in the parametrization and not in the
+    penalty.
+
+    Passing ``forward_operator`` instead solves over all ``n_dof`` physical DOF
+    with no mode truncation, letting the barrier be the only regularizer. Each
+    DOF is then free, and one comfortably inside its range stays where the data
+    puts it. Use this when the input wavefront drives some DOF far outside
+    range; use the retained-mode form when the penalty-off limit must reproduce
+    a truncated scheme exactly.
+
+    Two properties of the full-DOF form are worth knowing. It has no truncated
+    solution to start from, so it starts cold at ``d = 0``. And because the
+    barrier is very flat below the knee, its objective has a broad shallow
+    basin: different starts reach DOF differing by a few tenths of ``r_j``
+    while the wavefront ``S d`` they produce agrees to well under a percent.
+    The recovered wavefront is therefore reliable and the recovered DOF are not
+    a unique optical state -- fine for subtracting a wavefront, not for
+    quoting an amplitude.
+
     Each step is backtracked until the objective decreases. For ``power >= 2``
     the objective is convex in ``b``, but the reweighting is only a local model
     and a full step can overshoot: at ``power = 3`` a fixed half-step enters a
@@ -281,22 +340,43 @@ def invert_range_penalty(
     # DOF units; the penalty equals unity here.
     scale = float(kappa) * range_vector
 
-    sigma_squared = sigma**2
-    rhs = sigma * (u_eff.T @ wavefront)
-    # d = weighted_v @ b maps retained mode coefficients to physical DOF.
-    weighted_v = weights[:, None] * v_retained
+    lam = float(penalty_weight)
+    full_dof = forward_operator is not None
+    if full_dof:
+        # Solve over all n_dof physical DOF, with the barrier as the only
+        # regularizer, so there is no retained-mode basis to restrict to.
+        forward = np.asarray(forward_operator, dtype=float)
+        gram = forward.T @ forward
+        normal_rhs = forward.T @ wavefront
+    else:
+        sigma_squared = sigma**2
+        rhs = sigma * (u_eff.T @ wavefront)
+        # d = weighted_v @ b maps retained mode coefficients to physical DOF.
+        weighted_v = weights[:, None] * v_retained
 
     def objective(dof_trial: np.ndarray) -> float:
         """Penalized least-squares objective, um of wavefront squared."""
-        coefficients = np.linalg.lstsq(weighted_v, dof_trial, rcond=None)[0]
-        misfit = wavefront - u_eff @ (sigma * coefficients)
+        if full_dof:
+            misfit = wavefront - forward @ dof_trial
+            ridge = 0.0
+        else:
+            coefficients = np.linalg.lstsq(weighted_v, dof_trial, rcond=None)[0]
+            misfit = wavefront - u_eff @ (sigma * coefficients)
+            ridge = float(tikhonov) ** 2 * float(coefficients @ coefficients)
         return (
             float(misfit @ misfit)
-            + float(tikhonov) ** 2 * float(coefficients @ coefficients)
-            + float(np.sum((np.abs(dof_trial) / scale) ** (2 * exponent)))
+            + ridge
+            + lam * float(np.sum((np.abs(dof_trial) / scale) ** (2 * exponent)))
         )
 
-    dof = invert_truncated(wavefront, u_eff, sigma, v_retained, weights)
+    if full_dof:
+        # The truncated solution is not available without a retained basis, and
+        # a cold start is the neutral choice.  The barrier basin is broad below
+        # the knee, so the recovered DOF depend weakly on the start even though
+        # the wavefront they produce does not; see the Notes.
+        dof = np.zeros(forward.shape[1])
+    else:
+        dof = invert_truncated(wavefront, u_eff, sigma, v_retained, weights)
     current_objective = objective(dof)
     converged, used_iterations, relative_change = False, 0, np.inf
 
@@ -304,12 +384,15 @@ def invert_range_penalty(
         used_iterations = iteration + 1
         magnitude = np.maximum(np.abs(dof), eps)
         # Penalty curvature in DOF units.
-        curvature = scale ** (-2 * exponent) * magnitude ** (2 * exponent - 2)
-        normal_matrix = np.diag(sigma_squared + float(tikhonov) ** 2) + weighted_v.T @ (
-            curvature[:, None] * weighted_v
-        )
-        coefficients = np.linalg.solve(normal_matrix, rhs)
-        dof_full_step = weighted_v @ coefficients
+        curvature = lam * scale ** (-2 * exponent) * magnitude ** (2 * exponent - 2)
+        if full_dof:
+            dof_full_step = np.linalg.solve(gram + np.diag(curvature), normal_rhs)
+        else:
+            normal_matrix = np.diag(
+                sigma_squared + float(tikhonov) ** 2
+            ) + weighted_v.T @ (curvature[:, None] * weighted_v)
+            coefficients = np.linalg.solve(normal_matrix, rhs)
+            dof_full_step = weighted_v @ coefficients
 
         step = float(relax)
         for _ in range(40):

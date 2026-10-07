@@ -35,6 +35,7 @@ from .ofc_data import OFCData
 from .range_bounded_recovery import (
     RBR_DEFAULT_KAPPA,
     RBR_DEFAULT_POWER,
+    RBR_DEFAULT_WEIGHT,
     invert_range_penalty,
     wavefront_from_dof,
 )
@@ -350,6 +351,8 @@ class DoubleZernikeStateEstimator:
         wavefront: np.ndarray,
         kappa: float | None = None,
         power: int | None = None,
+        penalty_weight: float | None = None,
+        full_dof: bool = False,
         return_info: bool = False,
         **kwargs: dict,
     ) -> np.ndarray | tuple:
@@ -375,6 +378,16 @@ class DoubleZernikeStateEstimator:
             Penalty exponent ``p``, the penalty growing as ``|d_j| ** (2 p)``.
             `None` takes the controller configuration, falling back to
             `RBR_DEFAULT_POWER`.
+        penalty_weight : `float` or `None`, optional
+            Barrier weight ``lambda``, um**2 of wavefront. `None` takes the
+            controller configuration key ``rbr_penalty_weight``, falling back
+            to `RBR_DEFAULT_WEIGHT`.
+        full_dof : `bool`, optional
+            Solve over all used DOF with the barrier as the only regularizer,
+            instead of restricting to the retained modes. The retained-mode
+            solve couples the DOF, so bounding one that is far out of range
+            drags others that are well inside theirs; see
+            `invert_range_penalty` for why and for what this costs.
         return_info : `bool`, optional
             If `True`, also return the per-visit diagnostics `list` of `dict`.
         **kwargs : `dict`
@@ -392,13 +405,18 @@ class DoubleZernikeStateEstimator:
             kappa = self.ofc_data.controller.get("rbr_kappa", RBR_DEFAULT_KAPPA)
         if power is None:
             power = self.ofc_data.controller.get("rbr_power", RBR_DEFAULT_POWER)
+        if penalty_weight is None:
+            penalty_weight = self.ofc_data.controller.get(
+                "rbr_penalty_weight", RBR_DEFAULT_WEIGHT
+            )
 
         wavefront = np.atleast_2d(np.asarray(wavefront, dtype=float))
         single = wavefront.shape[0] == 1
 
         ranges = self.dof_ranges()
-        v_retained = self.V[:, self.keep_idx]
+        v_retained = None if full_dof else self.V[:, self.keep_idx]
         sigma_retained = self.Sigma[self.keep_idx]
+        forward = self.forward_operator() if full_dof else None
 
         dof_out = np.empty((wavefront.shape[0], self.n_dof))
         info_out = []
@@ -412,6 +430,8 @@ class DoubleZernikeStateEstimator:
                 ranges,
                 kappa=kappa,
                 power=power,
+                penalty_weight=penalty_weight,
+                forward_operator=forward,
                 return_info=True,
                 **kwargs,
             )
@@ -476,3 +496,24 @@ class DoubleZernikeStateEstimator:
             estimator uses.
         """
         return self.ofc_data.dof_ranges()[self.dof_idx]
+
+    def forward_operator(self) -> np.ndarray:
+        """Sensitivity per unit physical DOF, over the retained modes.
+
+        Returns
+        -------
+        `np.ndarray`
+            ``(n_kj, n_dof)``, um of wavefront per um or arcsec of DOF. Formed
+            from the retained modes, so with every mode retained it is the full
+            sensitivity and with a truncation it is the rank-limited one.
+
+        Notes
+        -----
+        For `dof_range_bounded` with ``full_dof``, where the barrier replaces
+        mode truncation as the regularizer and the solve needs the map in
+        physical DOF rather than in retained mode coefficients.
+        """
+        sigma = self.Sigma[self.keep_idx]
+        v_retained = self.V[:, self.keep_idx]
+        normalized = self.U_eff @ (sigma[:, None] * v_retained.T)
+        return normalized / self.normalization_weights[None, :]

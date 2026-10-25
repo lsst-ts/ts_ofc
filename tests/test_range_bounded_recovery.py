@@ -20,6 +20,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
+from typing import Any
 
 import numpy as np
 
@@ -74,7 +75,7 @@ class TestRangeBoundedRecovery(unittest.TestCase):
             self.wavefront, self.estimator.U_eff, self.sigma, self.v_retained, self.weights
         )
 
-    def solve_rbr(self, **kwargs: dict):
+    def solve_rbr(self, **kwargs: Any) -> Any:
         return invert_range_penalty(
             self.wavefront,
             self.estimator.U_eff,
@@ -226,7 +227,7 @@ class TestRangeBoundedRecovery(unittest.TestCase):
             )
 
     def test_default_weight_reproduces_the_unweighted_barrier(self) -> None:
-        """The default weight is the value the barrier carried before it had one.
+        """The default weight is the value the unweighted barrier had.
 
         Pins backward compatibility: the paired-difference studies ran with the
         barrier at an implicit weight of 1, so the default must leave their
@@ -286,7 +287,8 @@ class TestRangeBoundedRecovery(unittest.TestCase):
             forward_operator=forward,
         )
 
-        # The retained solve lies in the span of (w . V_r); the full one need not.
+        # The retained solve lies in the span of (w . V_r); the full one
+        # need not.
         basis = self.weights[:, None] * self.v_retained
         projector = basis @ np.linalg.pinv(basis)
         residual_retained = np.linalg.norm(retained - projector @ retained)
@@ -379,9 +381,7 @@ class TestRangeBoundedRecovery(unittest.TestCase):
             np.testing.assert_allclose(states[visit], expected, rtol=1e-12, atol=1e-14)
 
     def forward(self, dof: np.ndarray) -> np.ndarray:
-        return wavefront_from_dof(
-            dof, self.estimator.U_eff, self.sigma, self.v_retained, self.weights
-        )
+        return wavefront_from_dof(dof, self.estimator.U_eff, self.sigma, self.v_retained, self.weights)
 
     def test_forward_map_of_truncated_is_the_umode_projection(self) -> None:
         """An unregularized state reproduces the retained-subspace projection.
@@ -394,9 +394,7 @@ class TestRangeBoundedRecovery(unittest.TestCase):
         unconstrained result must keep using the direct projection.
         """
         projection = self.estimator.U_eff @ (self.estimator.U_eff.T @ self.wavefront)
-        np.testing.assert_allclose(
-            self.forward(self.solve_truncated()), projection, rtol=1e-9, atol=1e-13
-        )
+        np.testing.assert_allclose(self.forward(self.solve_truncated()), projection, rtol=1e-9, atol=1e-13)
 
     def test_forward_map_inverts_the_recovery(self) -> None:
         """Recovering from a forward-mapped state returns that state.
@@ -422,9 +420,7 @@ class TestRangeBoundedRecovery(unittest.TestCase):
         """
         projection = self.estimator.U_eff @ (self.estimator.U_eff.T @ self.wavefront)
         bounded = self.forward(self.solve_rbr())
-        self.assertGreater(
-            float(np.sqrt(np.mean((bounded - projection) ** 2))), 1e-4
-        )
+        self.assertGreater(float(np.sqrt(np.mean((bounded - projection) ** 2))), 1e-4)
 
     def test_forward_map_batches_over_visits(self) -> None:
         """A stack of states maps row by row."""
@@ -437,9 +433,7 @@ class TestRangeBoundedRecovery(unittest.TestCase):
     def test_estimator_forward_map_matches_the_function(self) -> None:
         """The estimator method is the free function with its own arrays."""
         dof = self.solve_rbr()
-        np.testing.assert_array_equal(
-            self.estimator.wavefront_from_dof(dof), self.forward(dof)
-        )
+        np.testing.assert_array_equal(self.estimator.wavefront_from_dof(dof), self.forward(dof))
 
     def test_defaults_are_the_documented_pair(self) -> None:
         """Check the defaults are the settled knee and exponent."""

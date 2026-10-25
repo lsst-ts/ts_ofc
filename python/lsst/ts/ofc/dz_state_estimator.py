@@ -27,6 +27,7 @@ __all__ = [
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import yaml
@@ -249,7 +250,7 @@ class DoubleZernikeStateEstimator:
         self.V = Vh.T
 
         n_modes = U.shape[1]
-        if np.isscalar(n_keep):
+        if isinstance(n_keep, (int, np.integer)):
             self.keep_idx = list(range(min(int(n_keep), n_modes)))
         else:
             self.keep_idx = sorted(k for k in (int(x) for x in n_keep) if k < n_modes)
@@ -274,7 +275,7 @@ class DoubleZernikeStateEstimator:
         """Resolve the used DOF indices from `None`, a count or a list."""
         if n_dof is None:
             return list(range(n_dof_full))
-        if np.isscalar(n_dof):
+        if isinstance(n_dof, (int, np.integer)):
             return list(range(int(n_dof)))
         return sorted(int(d) for d in n_dof)
 
@@ -354,7 +355,7 @@ class DoubleZernikeStateEstimator:
         penalty_weight: float | None = None,
         full_dof: bool = False,
         return_info: bool = False,
-        **kwargs: dict,
+        **kwargs: Any,
     ) -> np.ndarray | tuple:
         """Physical DOF under Range-Bounded Recovery (RBR).
 
@@ -406,9 +407,7 @@ class DoubleZernikeStateEstimator:
         if power is None:
             power = self.ofc_data.controller.get("rbr_power", RBR_DEFAULT_POWER)
         if penalty_weight is None:
-            penalty_weight = self.ofc_data.controller.get(
-                "rbr_penalty_weight", RBR_DEFAULT_WEIGHT
-            )
+            penalty_weight = self.ofc_data.controller.get("rbr_penalty_weight", RBR_DEFAULT_WEIGHT)
 
         wavefront = np.atleast_2d(np.asarray(wavefront, dtype=float))
         single = wavefront.shape[0] == 1

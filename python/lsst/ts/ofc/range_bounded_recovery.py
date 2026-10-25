@@ -87,7 +87,7 @@ def wavefront_from_dof(
     v_retained: np.ndarray,
     normalization_weights: np.ndarray,
 ) -> np.ndarray:
-    """Wavefront a recovered state reproduces, through the rank-limited operator.
+    """Wavefront a recovered state reproduces via the rank-limited operator.
 
     The forward direction of `invert_truncated` and `invert_range_penalty`:
     ``dW = U Sigma V^T N^-1 d``, restricted to the retained modes. This is what
@@ -159,9 +159,7 @@ def achieved_residual(
         Root-mean-square of the residual, um of wavefront.
     """
     wavefront = np.nan_to_num(np.asarray(wavefront, dtype=float))
-    predicted = wavefront_from_dof(
-        dof, u_eff, sigma, v_retained, normalization_weights
-    )
+    predicted = wavefront_from_dof(dof, u_eff, sigma, v_retained, normalization_weights)
     residual = wavefront - predicted
     return float(np.sqrt(np.mean(residual**2)))
 
@@ -388,9 +386,9 @@ def invert_range_penalty(
         if full_dof:
             dof_full_step = np.linalg.solve(gram + np.diag(curvature), normal_rhs)
         else:
-            normal_matrix = np.diag(
-                sigma_squared + float(tikhonov) ** 2
-            ) + weighted_v.T @ (curvature[:, None] * weighted_v)
+            normal_matrix = np.diag(sigma_squared + float(tikhonov) ** 2) + weighted_v.T @ (
+                curvature[:, None] * weighted_v
+            )
             coefficients = np.linalg.solve(normal_matrix, rhs)
             dof_full_step = weighted_v @ coefficients
 

@@ -332,6 +332,49 @@ class OFCData(BaseOFCData):
         """Mask to select Degree of Freedom (DOF)."""
         return self._dof_idx_mask
 
+    def dof_ranges(self) -> np.ndarray[float]:
+        """Return the allowed range of motion per degree of freedom (DOF).
+
+        The stroke a rigid-body DOF can reach, and the bending-mode amplitude
+        whose actuator forces reach the allowed force range.
+
+        Returns
+        -------
+        `np.ndarray` of `float`
+            Allowed range over all 50 DOF: um for the hexapod translations and
+            the mirror bending-mode amplitudes, arcsec for the hexapod
+            rotations, following the ts_ofc DOF ordering (0-4 M2 rigid body,
+            5-9 camera rigid body, 10-29 M1M3 bending, 30-49 M2 bending).
+
+        Notes
+        -----
+        This is the ``r_j`` entering the normalization weights, which are
+        ``w_j = r_j**0.5 * f_j**-0.5`` with ``f_j`` the field-averaged PSF
+        width response. Returning it here rather than recomputing it at each
+        call site keeps one definition: `generate_normalization_weights`
+        builds the weights from it and `range_bounded_recovery` penalizes
+        against it.
+
+        The bending-mode range divides the force range by 20 because the
+        shipped bending-mode force matrices are normalized to an amplitude of
+        20 um.
+
+        `BendModeToForce` is imported inside the method: it imports `OFCData`,
+        so a module-level import would be circular.
+        """
+        from ..bend_mode_to_force import BendModeToForce
+
+        m1m3_rot_mat = BendModeToForce("M1M3", self).rot_mat
+        m2_rot_mat = BendModeToForce("M2", self).rot_mat
+
+        return np.concatenate(
+            (
+                self.rb_stroke,
+                (self.m1m3_force_range / 20) / np.max(np.abs(m1m3_rot_mat), axis=0),
+                (self.m2_force_range / 20) / np.max(np.abs(m2_rot_mat), axis=0),
+            )
+        )
+
     @property
     def comp_dof_idx(self) -> dict:
         """Index of Degree of Freedom (DOF) per component."""

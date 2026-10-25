@@ -26,7 +26,7 @@ import yaml
 
 from lsst.ts.wep.utils import convertZernikesToPsfWidth
 
-from .. import BendModeToForce, OFCData, SensitivityMatrix
+from .. import OFCData, SensitivityMatrix
 
 
 def compute_fwhm_matrix(
@@ -64,19 +64,7 @@ def compute_normalization_weights(ofc_data: OFCData, fwhm_matrix: np.ndarray) ->
     np.ndarray
         Normalization weights.
     """
-    m1m3_bending_range = ofc_data.m1m3_force_range / 20
-    m2_bending_range = ofc_data.m2_force_range / 20
-
-    m1m3_bmf = BendModeToForce("M1M3", ofc_data)
-    m2_bmf = BendModeToForce("M2", ofc_data)
-
-    range_weights = np.concatenate(
-        (
-            ofc_data.rb_stroke,
-            m1m3_bending_range / np.max(np.abs(m1m3_bmf.rot_mat), axis=0),
-            m2_bending_range / np.max(np.abs(m2_bmf.rot_mat), axis=0),
-        )
-    )
+    range_weights = ofc_data.dof_ranges()
 
     fwhm_weights = np.zeros(50)
     for i in range(50):

@@ -92,6 +92,9 @@ class OFCData(BaseOFCData):
         Asyncio future that tracks whether the class is setup and ready or not.
     xref_list : `list` of `string`
         Available reference point strategies.
+    vmodes_selected : `np.ndarray` of `int` or `None`
+        Explicit v-mode indices selected in the current estimator basis.
+        If `None`, the estimator uses its automatic truncation logic.
     y2_correction : `np.ndarray` of `float`
         Y2 correction.
     zn_idx : `np.ndarray` of `int`
@@ -171,6 +174,7 @@ class OFCData(BaseOFCData):
         self._zn_idx = np.arange(self.znmax - self.znmin + 1, dtype=int)
         self._zn_idx_mask = np.ones_like(self._zn_idx, dtype=bool)
         self._zn_selected = np.arange(self.znmin, self.znmax + 1, dtype=int)
+        self._vmodes_selected: np.ndarray | None = None
 
         # Set the name of the instrument. This reads the instrument-related
         # configuration files.
@@ -323,6 +327,88 @@ class OFCData(BaseOFCData):
         self._zn_idx_mask = np.isin(self._zn_idx, self._zn_selected - self.znmin)
 
     @property
+    def default_vmodes_selected(self) -> np.ndarray[int]:
+        """Default v-mode selection: all v-modes (1-based)."""
+        return np.arange(1, len(self.dof_idx) + 1)
+
+    @property
+    def vmodes_selected(self) -> np.ndarray[int]:
+        """V-mode indices selected in the current estimator basis (1-based).
+
+        Returns the explicit selection if set, otherwise all v-modes.
+        """
+        return self._vmodes_selected if self._vmodes_selected is not None else self.default_vmodes_selected
+
+    @vmodes_selected.setter
+    def vmodes_selected(self, value: np.ndarray[int] | None) -> None:
+        """Set the v-mode indices selected in the current estimator basis.
+
+        Parameters
+        ----------
+        value : `np.ndarray` or `None`
+            V-mode indices (1-based) selected in the current estimator
+            basis. Use `None` to clear any explicit selection and revert
+            to the default (all v-modes).
+
+        Raises
+        ------
+        ValueError
+            If the selected v-modes are invalid for the current DOF mask.
+        """
+        if value is None:
+            self._vmodes_selected = None
+            return
+
+        self._vmodes_selected = self._validate_vmodes_selected(value)
+
+    def _validate_vmodes_selected(
+        self, value: np.ndarray[int] | list[int], n_vmodes: int | None = None
+    ) -> np.ndarray[int]:
+        """Validate selected v-mode indices against the active DOF mask.
+
+        Parameters
+        ----------
+        value : `np.ndarray` or `list` [`int`]
+            V-mode indices (1-based) to validate.
+        n_vmodes : `int` or `None`, optional
+            Maximum number of v-modes to validate against. If `None`,
+            uses the current number of used DOFs.
+
+        Returns
+        -------
+        vmodes_selected : `np.ndarray` [`int`]
+            Sorted, validated array of v-mode indices.
+
+        Raises
+        ------
+        ValueError
+            If input is not a 1-d non-empty array, or contains
+            out-of-range values.
+        """
+        vmodes_selected = np.asarray(value)
+
+        if vmodes_selected.ndim != 1 or vmodes_selected.size == 0:
+            raise ValueError(
+                "vmodes_selected must be a one-dimensional, non-empty array. "
+                f"Received: ndim={vmodes_selected.ndim} (expected 1), "
+                f"size={vmodes_selected.size} (expected >0)."
+            )
+
+        vmodes_selected = np.sort(np.unique(np.array(vmodes_selected, dtype=int)))
+        max_vmode = len(self.dof_idx) if n_vmodes is None else n_vmodes
+
+        mask = np.bitwise_or(vmodes_selected < 1, vmodes_selected > max_vmode)
+        if np.any(mask):
+            all_vmodes = ", ".join(str(v) for v in vmodes_selected)
+            bad_vmodes = ", ".join(str(v) for v in vmodes_selected[mask])
+            raise ValueError(
+                f"V-mode index must be between 1 and {max_vmode}. "
+                f"Received vmodes ({all_vmodes}) contains invalid values: {bad_vmodes}."
+            )
+
+        return vmodes_selected
+
+    @property
     def dof_idx(self) -> np.ndarray[int]:
         """Index of Degree of Freedom (DOF)."""
         return self._dof_idx[self.dof_idx_mask]
@@ -358,6 +444,8 @@ class OFCData(BaseOFCData):
         if not isinstance(value, dict):
             raise ValueError(f"comp_dof_idx must be a dictionary with {self.comp_dof_idx.keys()} entries.")
 
+        new_dof_idx_mask = self._dof_idx_mask.copy()
+
         for comp in self.comp_dof_idx:
             start_idx = self.comp_dof_idx[comp]["startIdx"]
             length = self.comp_dof_idx[comp]["idxLength"]
@@ -372,7 +460,13 @@ class OFCData(BaseOFCData):
                 )
             if not isinstance(value[comp], np.ndarray) or value[comp].dtype.type is not np.bool_:
                 raise RuntimeError("Input should be np.ndarray of type bool.")
-            self._dof_idx_mask[start_idx:end_idx] = value[comp]
+            new_dof_idx_mask[start_idx:end_idx] = value[comp]
+
+        if self._vmodes_selected is not None:
+            n_vmodes = int(np.count_nonzero(new_dof_idx_mask))
+            self._vmodes_selected = self._validate_vmodes_selected(self._vmodes_selected, n_vmodes=n_vmodes)
+
+        self._dof_idx_mask = new_dof_idx_mask
 
     @property
     def default_comp_dof_idx(self) -> dict:
@@ -746,6 +840,8 @@ class OFCData(BaseOFCData):
         # the controller configuration
         if "zn_selected" in self.controller:
             self.zn_selected = np.array(self.controller["zn_selected"])
+
+        self.vmodes_selected = self.controller.get("vmodes_selected", None)
 
         if "rotation_offset" in self.controller:
             self.rotation_offset = self.controller["rotation_offset"]

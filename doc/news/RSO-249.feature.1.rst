@@ -1,0 +1,1 @@
+Add optional ``vmodes_selected`` property to ``OFCData`` with validation and controller configuration loading, allowing explicit v-mode selection that overrides ``truncation_index`` and ``truncation_threshold`` when present.

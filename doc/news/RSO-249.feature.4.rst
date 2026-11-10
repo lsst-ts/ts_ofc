@@ -1,0 +1,1 @@
+Accept both compact and padded vectors in ``get_vmodes_from_dofs`` and ``get_dofs_from_vmodes`` to support the explicit v-mode selection feature with different callers.

@@ -1,0 +1,1 @@
+Move truncation validation from per-call (``get_sensitivity_matrix``) to cache-time (``_compute_effective_vmode_indices``) as part of the explicit v-mode selection feature. Errors now surface at initialization rather than at first use.

@@ -97,6 +97,69 @@ class StateEstimator:
             full_matrices=False,
         )
 
+        # Cache effective v-mode selection and basis vectors
+        self.effective_vmode_idx = self._compute_effective_vmode_indices()
+        self.effective_vh = self.Vh[self.effective_vmode_idx]
+
+        self.log.debug(
+            f"Active estimator v-modes {(self.effective_vmode_idx + 1).tolist()} "
+            f"with singular values {self.S[self.effective_vmode_idx].tolist()}."
+        )
+
+    def _compute_effective_vmode_indices(self) -> np.ndarray[int]:
+        """Compute the effective v-mode indices from config.
+
+        If ``vmodes_selected`` is set explicitly in ``ofc_data``, those
+        indices are used (converted from 1-based to 0-based). Otherwise,
+        automatic selection is performed using either ``truncation_index``
+        or ``truncation_threshold`` (rcond). These two are mutually
+        exclusive (enforced by ``configure_controller``); if both are
+        somehow set, ``truncation_index`` takes precedence.
+
+        Returns
+        -------
+        effective_vmode_idx : `np.ndarray` [`int`]
+            Zero-based indices of the selected v-modes.
+        """
+        if self.ofc_data._vmodes_selected is not None:
+            if self.truncate_index is not None or self.rcond is not None:
+                self.log.warning(
+                    "vmodes_selected is configured explicitly and overrides the "
+                    "automatic truncation settings."
+                )
+            return self.ofc_data.vmodes_selected - 1
+
+        n_vmodes = len(self.ofc_data.dof_idx)
+
+        if self.truncate_index is not None:
+            if self.truncate_index > n_vmodes:
+                self.log.warning(
+                    f"Truncation index ({self.truncate_index}) exceeds the number of used DOF ({n_vmodes}). "
+                )
+            return np.arange(min(self.truncate_index, n_vmodes), dtype=int)
+
+        if self.rcond is not None:
+            if len(self.S) == 0:
+                raise ValueError("No singular values available to determine active v-modes.")
+            active_vmode_idx = np.flatnonzero(self.S > self.rcond * self.S[0])
+            if len(active_vmode_idx) == 0:
+                raise ValueError(
+                    "Truncation threshold removed all v-modes. Adjust truncation_threshold or "
+                    "configure vmodes_selected explicitly."
+                )
+            return active_vmode_idx.astype(int)
+
+        raise ValueError(
+            "Either truncation_threshold or truncation_index must be configured "
+            "when vmodes_selected is not set."
+        )
+
+    def _pad_vmode_vector(self, v_modes: np.ndarray[float]) -> np.ndarray[float]:
+        """Pad a compact v-mode vector to the full active DOF dimension."""
+        padded_v_modes = np.zeros(len(self.ofc_data.dof_idx))
+        padded_v_modes[self.effective_vmode_idx] = v_modes
+        return padded_v_modes
+
     def dof_state(
         self,
         filter_name: str,
@@ -195,9 +258,7 @@ class StateEstimator:
         if basis == ControlBasis.DoF:
             return self.get_dofs_from_vmodes(v_state)
         elif basis == ControlBasis.VMode:
-            v_state_padded = np.zeros(len(self.ofc_data.dof_idx))
-            v_state_padded[: len(v_state)] = v_state
-            return v_state_padded
+            return self._pad_vmode_vector(v_state)
         else:
             raise RuntimeError("Basis used for state estimation is no allowed.")
 
@@ -207,20 +268,28 @@ class StateEstimator:
         Parameters
         ----------
         dof : `numpy.ndarray`
-            Optical state in the basis of DOF. Vector of length 50 but
-            only the used DOF will be considered.
+            Optical state in the basis of DOF. Accepts either a vector
+            with the number of used DOFs or the full DOF dimension.
 
         Returns
         -------
         numpy.ndarray
-            Optical state in the basis of v-modes. Vector of length
-            matching the number of used DOF.
+            Optical state in the basis of v-modes. Returns a vector with the
+            same dimension as the number of used DOF, with unselected modes
+            padded with zeros.
         """
-        return (
-            np.linalg.inv(self.normalization_matrix)
-            @ dof[self.ofc_data.dof_idx]
-            @ self.Vh[: self.truncate_index].T
-        )
+        if len(dof) == len(self.ofc_data.dof_idx):
+            active_dof = dof
+        elif len(dof) == self.ofc_data.ndofs:
+            active_dof = dof[self.ofc_data.dof_idx]
+        else:
+            raise ValueError(
+                "DOF vector length must match either the number of used DOF or the full DOF dimension."
+            )
+
+        v_modes = np.linalg.inv(self.normalization_matrix) @ active_dof @ self.effective_vh.T
+
+        return self._pad_vmode_vector(v_modes)
 
     def get_dofs_from_vmodes(self, v_modes: np.ndarray[float]) -> np.ndarray[float]:
         """Get the DOF state from the v-modes.
@@ -233,10 +302,21 @@ class StateEstimator:
         Returns
         -------
         numpy.ndarray
-            Optical state in the basis of DOF. Returns vector
-            with dimension 50, with unused DOF set to zero.
+            Optical state in the basis of DOF. Returns a vector with the
+            dimension of the used DOF.
         """
-        weighted_v_modes = v_modes[: self.truncate_index] @ self.Vh[: self.truncate_index]
+        v_modes = np.asarray(v_modes)
+
+        if len(v_modes) == len(self.effective_vmode_idx):
+            selected_v_modes = v_modes
+        elif len(v_modes) == len(self.ofc_data.dof_idx):
+            selected_v_modes = v_modes[self.effective_vmode_idx]
+        else:
+            raise ValueError(
+                "V-mode vector length must match either the selected modes or the number of used DOF."
+            )
+
+        weighted_v_modes = selected_v_modes @ self.effective_vh
         return self.normalization_matrix @ weighted_v_modes
 
     def get_normalization_matrix(self) -> np.ndarray[float]:
@@ -327,34 +407,18 @@ class StateEstimator:
         if num_zk < num_dof and check_invertible:
             raise RuntimeError(f"Equation number ({num_zk}) < variable number ({num_dof}).")
 
-        sensitivity_matrix_v = sensitivity_matrix @ self.Vh.T
         if truncate:
-            # Compute the pseudo-inverse of the sensitivity matrix
-            # rcond sets the truncation of different modes.
-            # If rcond is None, it is computed from the singular values
-            # of the sensitivity matrix, using truncation index as reference.
-            if self.truncate_index is None:
-                raise ValueError(
-                    "Truncation index set incorrectly in the controller. "
-                    "Configured to truncate but truncation index is 'None', "
-                    "check OFC configuration."
-                )
-            elif self.truncate_index > len(self.ofc_data.dof_idx):
-                self.log.warning(
-                    f"Truncation index ({self.truncate_index}) exceeds the "
-                    f"number of used DOF ({len(self.ofc_data.dof_idx)}). "
-                )
-
-            sensitivity_matrix_v = sensitivity_matrix @ self.Vh[: self.truncate_index].T
-
-            sensitivity_matrix = sensitivity_matrix_v @ self.Vh[: self.truncate_index]
+            sensitivity_matrix_v = sensitivity_matrix @ self.effective_vh.T
+            sensitivity_matrix = sensitivity_matrix_v @ self.effective_vh
+        else:
+            sensitivity_matrix_v = sensitivity_matrix @ self.effective_vh.T
 
         if basis == ControlBasis.DoF:
             return sensitivity_matrix
         elif basis == ControlBasis.VMode:
             return sensitivity_matrix_v
         else:
-            raise RuntimeError("Basis used for sensitivity matrix is no allowed.")
+            raise RuntimeError("Basis used for sensitivity matrix is not allowed.")
 
     def get_noise_covariance(self, sensor_names: list) -> np.ndarray[float]:
         """Get the noise covariance matrix.

@@ -103,6 +103,33 @@ class TestOFCData(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.ofc_data.zn_selected = [29, 30]
 
+    def test_selected_vmodes_idx(self) -> None:
+        """Test the selected vmodes property."""
+        # Default returns all v-modes
+        np.testing.assert_array_equal(self.ofc_data.vmodes_selected, self.ofc_data.default_vmodes_selected)
+
+        new_vmodes_selected = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+        self.ofc_data.vmodes_selected = new_vmodes_selected
+
+        np.testing.assert_array_equal(self.ofc_data.vmodes_selected, new_vmodes_selected)
+
+        # Check that selecting v-modes below 1 raises an error
+        with self.assertRaises(ValueError):
+            self.ofc_data.vmodes_selected = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+        # Raise an error if selecting v-modes above the number of DOFs
+        with self.assertRaises(ValueError):
+            self.ofc_data.vmodes_selected = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 51]
+
+        # Check that duplicates are removed and result is unique
+        self.ofc_data.vmodes_selected = [1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 10, 11]
+        result = self.ofc_data.vmodes_selected
+        self.assertEqual(len(result), len(np.unique(result)))
+
+        # Check that setting vmodes_selected to None reverts to default
+        self.ofc_data.vmodes_selected = None
+        np.testing.assert_array_equal(self.ofc_data.vmodes_selected, self.ofc_data.default_vmodes_selected)
+
     def test_comp_dof_idx(self) -> None:
         """Test the comp_dof_idx property."""
         self.assertTrue(isinstance(self.ofc_data.comp_dof_idx, dict))
@@ -139,6 +166,23 @@ class TestOFCData(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             self.ofc_data.comp_dof_idx = new_dof_mask
+
+    def test_comp_dof_idx_rejects_invalid_vmodes_selection(self) -> None:
+        """Test that v-mode selection is revalidated when DOFs change."""
+        self.ofc_data.vmodes_selected = np.array([6])
+
+        new_dof_mask = dict(
+            m2HexPos=np.zeros(5, dtype=bool),
+            camHexPos=np.ones(5, dtype=bool),
+            M1M3Bend=np.zeros(20, dtype=bool),
+            M2Bend=np.zeros(20, dtype=bool),
+        )
+
+        # Raise an error if the new DOF selection excludes the selected v-modes
+        with self.assertRaises(ValueError):
+            self.ofc_data.comp_dof_idx = new_dof_mask
+
+        self.assertEqual(len(self.ofc_data.dof_idx), 50)
 
 
 class TestAsyncOFCDataConstructor(unittest.IsolatedAsyncioTestCase):

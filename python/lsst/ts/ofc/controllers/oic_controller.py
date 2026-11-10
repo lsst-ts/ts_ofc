@@ -46,6 +46,8 @@ class OICController(BaseController):
         self.m1m3_bmf = BendModeToForce("M1M3", self.ofc_data)
         self.m2_bmf = BendModeToForce("M2", self.ofc_data)
 
+        self.ofc_data.controller["name"] = "OIC"
+
     def authority(self) -> np.ndarray[float]:
         """Compute the authority of the system.
 

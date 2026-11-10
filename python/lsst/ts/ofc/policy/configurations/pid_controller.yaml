@@ -5,6 +5,9 @@
 # ki is the integral gain defined as ki = kp*T/T_i
 # kd is the derivative gain defined as kd = kp*T_d/T
 # derivative_filter_coeff is the coefficient of the derivative filter
+# use_leaky_integrator enables a finite-history integral with exponential decay
+# n_iterms is the maximum number of error terms to be included in the PID integral
+# i_factor is the factor by which older errors are reduced in the leaky integrator
 # zn_selected is the zernike coefficients selected to be used by the controller in Noll index
 # setpoint is the setpoint for each degree of freedom (array of 50 elements)
 
@@ -15,6 +18,9 @@ kp: 0.7
 ki: 0.0
 kd: 0.1
 derivative_filter_coeff: 1.0
+use_leaky_integrator: true
+n_iterms: 10
+i_factor: 0.5
 zn_selected: [
   4, 5, 6, 7, 8,
   9, 10, 11

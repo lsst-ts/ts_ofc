@@ -1,6 +1,6 @@
 # This file is part of ts_ofc.
 #
-# Developed for Vera Rubin Observatory.
+# Developed for the Vera C. Rubin Observatory Telescope and Site Systems.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
 # See the COPYRIGHT file at the top-level directory of this distribution
@@ -13,11 +13,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ["OFCData"]
 
@@ -407,6 +407,39 @@ class OFCData(BaseOFCData):
         self._controller_filename = value
         self.configure_controller()
 
+    @property
+    def n_iterms(self) -> int:
+        """Number of error terms in the leaky integrator.
+
+        Returns
+        -------
+        `int`
+            Number of error terms.
+        """
+        return self._n_iterms
+
+    @property
+    def i_factor(self) -> float:
+        """Leaky integrator decay factor.
+
+        Returns
+        -------
+        `float`
+            Decay factor for older error terms.
+        """
+        return self._i_factor
+
+    @property
+    def use_leaky_integrator(self) -> bool:
+        """Use the leaky integrator for the integral term.
+
+        Returns
+        -------
+        `bool`
+            Whether to use the leaky integrator.
+        """
+        return self._use_leaky_integrator
+
     def load_yaml_file(self, file_path: Path | str) -> dict:
         """Load yaml file.
 
@@ -721,6 +754,10 @@ class OFCData(BaseOFCData):
             self.max_integral = np.array(self.controller["max_integral"], dtype=float)
         else:
             self.max_integral = np.ones(50, dtype=float)
+
+        self._n_iterms = self.controller.get("n_iterms", 1)
+        self._i_factor = self.controller.get("i_factor", 1.0)
+        self._use_leaky_integrator = self.controller.get("use_leaky_integrator", False)
 
         if self.controller["name"] == "PID":
             for key in ["kp", "ki", "kd", "setpoint"]:

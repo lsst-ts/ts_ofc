@@ -17,6 +17,23 @@ Version History
 
 .. towncrier release notes start
 
+v4.9.0 (2026-11-10)
+===================
+
+New Features
+------------
+
+- Added a configurable leaky integrator to PID control.
+  When enabled, it retains the latest ``n_iterms`` error samples and applies exponentially decaying weights controlled by ``i_factor``.
+  When disabled or not configured, the controller retains its cumulative integral behavior. (`RSO-889 <https://rubinobs.atlassian.net//browse/RSO-889>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Updated license headers, enabled the ``insert-license`` check in the ts-pre-commit configuration, and migrated linting to the shared ``tssw_workflows`` workflow. (`RSO-889 <https://rubinobs.atlassian.net//browse/RSO-889>`_)
+
+
 v4.8.1 (2026-03-18)
 ===================
 

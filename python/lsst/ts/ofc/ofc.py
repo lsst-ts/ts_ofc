@@ -65,6 +65,9 @@ class OFC:
         Controller class.
     ofc_data : `OFCData`
         OFC data container.
+    optical_state : `np.ndarray[float]`
+        Optical state estimated in the last `calculate_corrections` call, for
+        the used DOFs. In the v-mode basis when controlling v-modes.
     pssn_data : `dict`
         Normalized point source sensitivity data.
     state_estimator : `StateEstimator`
@@ -93,6 +96,9 @@ class OFC:
 
         # Last visit dof
         self.lv_dof = self.controller.dof_state.copy()
+
+        # Optical state from the last correction calculation
+        self.optical_state: np.ndarray[float] = np.zeros(len(self.ofc_data.dof_idx))
 
         self.dof_order = ("m2HexPos", "camHexPos", "M1M3Bend", "M2Bend")
 
@@ -204,7 +210,7 @@ class OFC:
         # Get sensor names from sensor ids
         sensor_names = get_sensor_names(ofc_data=self.ofc_data, sensor_ids=sensor_ids)
 
-        optical_state = self.state_estimator.dof_state(
+        self.optical_state = self.state_estimator.dof_state(
             filter_name,
             wfe,
             sensor_names,
@@ -214,7 +220,7 @@ class OFC:
         )
 
         uk = -self.controller.control_step(
-            filter_name, optical_state, sensor_names, control_vmodes=control_vmodes
+            filter_name, self.optical_state, sensor_names, control_vmodes=control_vmodes
         )
 
         if control_vmodes:

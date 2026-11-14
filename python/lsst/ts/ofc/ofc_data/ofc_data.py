@@ -342,7 +342,7 @@ class OFCData(BaseOFCData):
         -------
         `np.ndarray` of `float`
             Allowed range over all 50 DOF: um for the hexapod translations and
-            the mirror bending-mode amplitudes, arcsec for the hexapod
+            the mirror bending-mode amplitudes, deg for the hexapod
             rotations, following the ts_ofc DOF ordering (0-4 M2 rigid body,
             5-9 camera rigid body, 10-29 M1M3 bending, 30-49 M2 bending).
 

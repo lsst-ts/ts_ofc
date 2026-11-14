@@ -48,7 +48,7 @@ N_DOF = 50
 EXPECTED_RANGES = {
     0: (5900.0, "um, M2 piston"),
     1: (6700.0, "um, M2 decenter y"),
-    3: (0.12, "arcsec, M2 tilt x"),
+    3: (0.12, "deg, M2 tilt x"),
     12: (0.0877126, "um, M1M3 bending mode 3"),
     21: (0.00908752, "um, M1M3 bending mode 12"),
 }

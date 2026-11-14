@@ -73,7 +73,7 @@ def invert_truncated(
     Returns
     -------
     `np.ndarray`
-        Physical DOF, ``(n_dof,)``, um or arcsec per DOF.
+        Physical DOF, ``(n_dof,)``, um or deg per DOF.
     """
     wavefront = np.nan_to_num(np.asarray(wavefront, dtype=float))
     amplitudes = u_eff.T @ wavefront
@@ -102,7 +102,7 @@ def wavefront_from_dof(
     Parameters
     ----------
     dof : `np.ndarray`
-        Physical DOF, ``(n_dof,)`` or ``(n_visits, n_dof)``, um or arcsec
+        Physical DOF, ``(n_dof,)`` or ``(n_visits, n_dof)``, um or deg
         per DOF.
     u_eff : `np.ndarray`
         Left singular vectors of the retained modes, ``(n_kj, n_keep)``.
@@ -143,7 +143,7 @@ def achieved_residual(
     wavefront : `np.ndarray`
         Measured wavefront, ``(n_kj,)``, um of wavefront.
     dof : `np.ndarray`
-        Recovered physical DOF, ``(n_dof,)``, um or arcsec per DOF.
+        Recovered physical DOF, ``(n_dof,)``, um or deg per DOF.
     u_eff : `np.ndarray`
         Left singular vectors of the retained modes, ``(n_kj, n_keep)``.
     sigma : `np.ndarray`
@@ -221,7 +221,7 @@ def invert_range_penalty(
     normalization_weights : `np.ndarray`
         Weights ``w_j``, ``(n_dof,)``.
     ranges : `np.ndarray`
-        Allowed range ``r_j``, ``(n_dof,)``, um or arcsec per DOF, from
+        Allowed range ``r_j``, ``(n_dof,)``, um or deg per DOF, from
         `OFCData.dof_ranges`. Must be strictly positive and finite.
     kappa : `float`, optional
         Dimensionless knee position as a multiple of the range: the penalty
@@ -265,7 +265,7 @@ def invert_range_penalty(
     Returns
     -------
     dof : `np.ndarray`
-        Physical DOF, ``(n_dof,)``, um or arcsec per DOF.
+        Physical DOF, ``(n_dof,)``, um or deg per DOF.
     info : `dict`, optional
         Present when ``return_info``. Keys ``n_iter`` (`int`), ``converged``
         (`bool`), ``delta`` (`float`, final relative change, dimensionless),

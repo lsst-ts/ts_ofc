@@ -99,8 +99,8 @@ LABELS_50DOF = [
 # Unicode "μm" rather than ASCII "um": these strings are used directly as plot
 # axis labels and as units in written tables.
 DOF_UNITS_50 = (
-    ["μm", "μm", "μm", "arcsec", "arcsec"]
-    + ["μm", "μm", "μm", "arcsec", "arcsec"]
+    ["μm", "μm", "μm", "deg", "deg"]
+    + ["μm", "μm", "μm", "deg", "deg"]
     + ["μm"] * 20
     + ["μm"] * 20
 )
@@ -477,7 +477,7 @@ class DoubleZernikeStateEstimator:
         labels : `list` of `str`
             DOF names over `dof_idx`.
         units : `list` of `str`
-            Unit per DOF, um or arcsec.
+            Unit per DOF, um or deg.
         """
         return (
             [LABELS_50DOF[i] for i in self.dof_idx],
@@ -490,7 +490,7 @@ class DoubleZernikeStateEstimator:
         Returns
         -------
         `np.ndarray`
-            Allowed range ``r_j`` over `dof_idx`, um or arcsec per DOF — the
+            Allowed range ``r_j`` over `dof_idx`, um or deg per DOF — the
             full-50 vector from `OFCData.dof_ranges` restricted to the DOF this
             estimator uses.
         """
@@ -502,7 +502,7 @@ class DoubleZernikeStateEstimator:
         Returns
         -------
         `np.ndarray`
-            ``(n_kj, n_dof)``, um of wavefront per um or arcsec of DOF. Formed
+            ``(n_kj, n_dof)``, um of wavefront per um or deg of DOF. Formed
             from the retained modes, so with every mode retained it is the full
             sensitivity and with a truncation it is the rank-limited one.
 

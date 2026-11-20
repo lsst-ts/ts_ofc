@@ -1,0 +1,3 @@
+Added a configurable leaky integrator to PID control.
+When enabled, it retains the latest ``n_iterms`` error samples and applies exponentially decaying weights controlled by ``i_factor``.
+When disabled or not configured, the controller retains its cumulative integral behavior.

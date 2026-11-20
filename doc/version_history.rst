@@ -17,6 +17,16 @@ Version History
 
 .. towncrier release notes start
 
+v4.10.0 (2026-11-20)
+====================
+
+New Features
+------------
+
+- Updated ``OFC`` to keep the optical state estimated in the last ``calculate_corrections`` call. (`RSO-1009 <https://rubinobs.atlassian.net//browse/RSO-1009>`_)
+- Updated ``BaseController`` to keep the raw integral and derivative terms of the last PID step. (`RSO-1009 <https://rubinobs.atlassian.net//browse/RSO-1009>`_)
+
+
 v4.9.0 (2026-11-10)
 ===================
 

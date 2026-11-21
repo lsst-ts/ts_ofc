@@ -98,12 +98,7 @@ LABELS_50DOF = [
 
 # Unicode "μm" rather than ASCII "um": these strings are used directly as plot
 # axis labels and as units in written tables.
-DOF_UNITS_50 = (
-    ["μm", "μm", "μm", "deg", "deg"]
-    + ["μm", "μm", "μm", "deg", "deg"]
-    + ["μm"] * 20
-    + ["μm"] * 20
-)
+DOF_UNITS_50 = ["μm", "μm", "μm", "deg", "deg"] + ["μm", "μm", "μm", "deg", "deg"] + ["μm"] * 20 + ["μm"] * 20
 
 
 class DoubleZernikeStateEstimator:
